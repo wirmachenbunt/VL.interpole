@@ -1,0 +1,5 @@
+C:\clips\Clips\bin\Debug\Clips.dll
+C:\clips\Clips\bin\Debug\Clips.pdb
+C:\clips\Clips\obj\Debug\Clips.csprojResolveAssemblyReference.cache
+C:\clips\Clips\obj\Debug\Clips.dll
+C:\clips\Clips\obj\Debug\Clips.pdb
