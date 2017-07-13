@@ -47,6 +47,8 @@ namespace VVVV.Nodes
         TextBox FTextBox = new TextBox();
         TrackBar FSlider = new TrackBar();
 
+        ClipsDrawing p = new ClipsDrawing(); // create AutomataPaint Object
+
         #endregion fields & pins
 
         #region constructor and init
@@ -62,45 +64,15 @@ namespace VVVV.Nodes
             //clear controls in case init is called multiple times
             Controls.Clear();
 
-            //add a button
-            var button = new Button();
-            button.Text = "Bang";
-            //set position and size
-            button.Bounds = new Rectangle(10, 10, 100, 25);
-            button.FlatStyle = FlatStyle.Flat;
-            //listen to click event
-            button.Click += ButtonClicked;
+            Paint += p.PaintAutomata; //paint event
+            SetStyle(ControlStyles.ResizeRedraw, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
 
-            //add a checkbox
-            FCheckBox.Text = "Toggle";
-            FCheckBox.Bounds = new Rectangle(15, 50, 100, 25);
-            FCheckBox.FlatStyle = FlatStyle.Flat;
+        
 
-            //add a textbox
-            FTextBox.Bounds = new Rectangle(130, 10, 150, 25);
-            FTextBox.BorderStyle = BorderStyle.FixedSingle;
-
-            //add a slider
-            FSlider.Maximum = 1000;
-            FSlider.TickFrequency = 20;
-            FSlider.Bounds = new Rectangle(125, 50, 160, 25);
-
-            //add to controls
-            Controls.Add(button);
-            Controls.Add(FCheckBox);
-            Controls.Add(FTextBox);
-            Controls.Add(FSlider);
+           
         }
 
-        //called if the button is clicked
-        void ButtonClicked(object sender, EventArgs e)
-        {
-            if (sender is Button)
-            {
-                //set button click to true to read it in Evaluate()
-                FButtonClick = true;
-            }
-        }
 
 
         #endregion constructor and init
@@ -108,15 +80,8 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            //set outputs
-            FButtonOut[0] = FButtonClick;
-            FButtonClick = false;
-
-            FCheckBoxOut[0] = FCheckBox.Checked;
-
-            FTextBoxOut[0] = FTextBox.Text;
-
-            FSliderOut[0] = FSlider.Value / 1000.0;
+            
+            //Invalidate();
         }
     }
 }

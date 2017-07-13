@@ -1,15 +1,49 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.7.dtd" >
    <PATCH nodename="C:\clips\Clips (help).v4p" systemname="Clips (help)" filename="C:\clips\Clips (help).v4p">
-   <BOUNDS type="Window" left="16515" top="12180" width="9000" height="6000">
+   <BOUNDS type="Window" left="7275" top="8625" width="9000" height="6000">
    </BOUNDS>
    <NODE systemname="Clips (GUI)" filename="Clips\bin\Debug\Clips.dll" nodename="Clips (GUI)" componentmode="InAWindow" id="1">
    <BOUNDS type="Node" left="3345" top="2565" width="100" height="100">
    </BOUNDS>
    <BOUNDS type="Box" left="3345" top="2565" width="3000" height="3000">
    </BOUNDS>
-   <BOUNDS type="Window" left="14985" top="6420" width="9030" height="4485">
+   <BOUNDS type="Window" left="7260" top="4275" width="16485" height="7185">
    </BOUNDS>
+   <PIN pinname="Button" visible="1">
+   </PIN>
+   <PIN pinname="Check Box" visible="1">
+   </PIN>
+   <PIN pinname="Slider" visible="1">
+   </PIN>
    </NODE>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
+   <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
+   <BOUNDS type="Node" left="5295" top="2550" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Maximum Foreground FPS" visible="1">
+   </PIN>
+   <PIN pinname="Maximum Background FPS" visible="1">
+   </PIN>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="2">
+   <BOUNDS type="Box" left="5520" top="1320" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5520" top="1320" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="60">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="2" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Foreground FPS">
+   </LINK>
+   <LINK srcnodeid="2" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Background FPS">
+   </LINK>
    </PATCH>
