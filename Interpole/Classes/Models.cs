@@ -7,11 +7,18 @@ using System.Drawing;
 
 namespace VVVV.Nodes
 {
-    partial class Clips
+    partial class Interpole
     {
         public class Clip
         {
-            public int Name
+            public string ID
+            {
+                get;
+                set;
+            }
+
+
+            public string Name
             {
                 get;
                 set;

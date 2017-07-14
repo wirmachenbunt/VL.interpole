@@ -1,0 +1,9 @@
+C:\clips\Clips\bin\Debug\Clips.dll
+C:\clips\Clips\bin\Debug\Clips.pdb
+C:\clips\Clips\obj\Debug\Clips.dll
+C:\clips\Clips\obj\Debug\Clips.pdb
+C:\clips\Interpole\bin\Debug\Clips.dll
+C:\clips\Interpole\bin\Debug\Clips.pdb
+C:\clips\Interpole\obj\Debug\Interpole.csprojResolveAssemblyReference.cache
+C:\clips\Interpole\obj\Debug\Clips.dll
+C:\clips\Interpole\obj\Debug\Clips.pdb

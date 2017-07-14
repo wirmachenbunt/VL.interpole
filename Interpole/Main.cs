@@ -16,15 +16,19 @@ using VVVV.Core.Logging;
 namespace VVVV.Nodes
 {
     #region PluginInfo
-    [PluginInfo(Name = "Clips",
+    [PluginInfo(Name = "Interpole",
                 Category = "GUI",
                 Help = "Clip Timeline",
                 Tags = "c#",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public partial class Clips : UserControl, IPluginEvaluate
+    public partial class Interpole : UserControl, IPluginEvaluate
     {
         #region fields & pins
+
+        [Output("Clips")]
+        public ISpread<Interpole> ClipsOut;
+
 
         [Import()]
         public ILogger FLogger;
@@ -37,7 +41,7 @@ namespace VVVV.Nodes
 
         #region constructor and init
 
-        public Clips()
+        public Interpole()
         {
             //setup the gui
             InitializeComponent();
@@ -67,8 +71,14 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-           // FLogger.Log(LogType.Debug,Convert.ToString(deltaX));
+            // FLogger.Log(LogType.Debug,Convert.ToString(deltaX));
             //Invalidate();
+
+
+
+
+            ClipsOut.SliceCount = 1; // set output for additional nodes
+            ClipsOut[0] = this;
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Drawing;
 
 namespace VVVV.Nodes
 {
-    partial class Clips
+    partial class Interpole
     {
 
         public Point prevMousePos; //previous Mouse Pos
@@ -29,31 +29,30 @@ namespace VVVV.Nodes
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            //x = Convert.ToInt32((e.X - p.StagePos.X) / p.dpi);
-            //y = Convert.ToInt32((e.Y - p.StagePos.Y) / p.dpi);
+            int x = Convert.ToInt32((e.X - StagePos.X) / dpi);
+            int y = Convert.ToInt32((e.Y - StagePos.Y) / dpi);
 
-            /*
-            if (ClipDialog(ref input, ref frames, "Add State", p.dpi) == DialogResult.OK)
+            string input = "MyClip";
+            int frames = 0;
+            if (ClipDialog(ref input, ref frames, "Add State", dpi) == DialogResult.OK)
             {
                 //add state to state list
-                stateList.Add(new State()
+                clipList.Add(new Clip()
                 {
-                    ID = Automata.Data.State.RNGCharacterMask(),
+                    ID = RNGCharacterMask(),
                     Name = input,
-                    Frames = frames,
-                    Bounds = new Rectangle(new Point(x - (p.StateSize / 2), y - (p.StateSize / 2)), new Size(p.StateSize, p.StateSize))
+                    StartFrame = frames,
+                    Bounds = new Rectangle(new Point(x , y ), new Size(300, 30))
                 });
 
-                UpdateStateConfigs(); // update JSON,Enums and Redraw
-                UpdateOutputs();
+               
             }
-
-            */
+            
         }
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            TranslateStage(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
+            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
                
             
 
@@ -61,7 +60,7 @@ namespace VVVV.Nodes
         }
 
 
-        public void TranslateStage(Point mousePos, bool click)
+        public void CalcStagePosition(Point mousePos, bool click)
         {
             if (click)
             {

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clips", "Clips.csproj", "{5C4B8D79-23D9-49E8-80B0-5F8B6F46E292}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interpole", "Interpole.csproj", "{5C4B8D79-23D9-49E8-80B0-5F8B6F46E292}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

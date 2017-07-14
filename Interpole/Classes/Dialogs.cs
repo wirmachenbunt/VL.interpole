@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace VVVV.Nodes
 {
-    partial class Clips
+    partial class Interpole
     {
         public static DialogResult ClipDialog(ref string input, ref int frames, string DialogName, float dpi)
         {

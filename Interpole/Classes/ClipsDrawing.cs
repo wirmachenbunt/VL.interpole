@@ -9,7 +9,7 @@ using System.Drawing.Drawing2D;
 
 namespace VVVV.Nodes
 {
-    partial class Clips
+    partial class Interpole
     {
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
@@ -17,16 +17,12 @@ namespace VVVV.Nodes
         public Point StagePos; //StagePosition
         public float dpi = 1; //DPI Value
 
-
-
         public void PaintAutomata(object sender, PaintEventArgs e)
         {
 
 
             try
             {
-
-
                 e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
                 //e.Graphics.ScaleTransform(dpi, dpi); //dpi scaling 
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
@@ -35,8 +31,6 @@ namespace VVVV.Nodes
                 Rectangle Bounds = new Rectangle(new Point(100, 100), new Size(100, 20));
 
                 e.Graphics.FillRectangle(OrangeBrush, Bounds);
-
-
             }
             catch { }
         }
