@@ -3,9 +3,9 @@
    <BOUNDS type="Window" left="9255" top="9135" width="9000" height="6000">
    </BOUNDS>
    <NODE systemname="Clips (GUI)" filename="Clips\bin\Debug\Clips.dll" nodename="Clips (GUI)" componentmode="InAWindow" id="1">
-   <BOUNDS type="Node" left="1905" top="3585" width="1620" height="270">
+   <BOUNDS type="Node" left="1080" top="855" width="1620" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="1905" top="3585" width="3000" height="3000">
+   <BOUNDS type="Box" left="1080" top="855" width="3000" height="3000">
    </BOUNDS>
    <BOUNDS type="Window" left="7260" top="4275" width="16485" height="7185">
    </BOUNDS>

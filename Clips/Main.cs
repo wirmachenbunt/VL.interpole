@@ -67,7 +67,7 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            
+           // FLogger.Log(LogType.Debug,Convert.ToString(deltaX));
             //Invalidate();
         }
     }

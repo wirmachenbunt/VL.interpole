@@ -4,14 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace VVVV.Nodes
 {
     partial class Clips
     {
+
+        public Point prevMousePos; //previous Mouse Pos
+
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-
+            prevMousePos = MousePosition; // for delta calculation below
 
 
 
@@ -49,8 +53,25 @@ namespace VVVV.Nodes
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+            TranslateStage(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
+               
+            
 
             this.Invalidate(); //redraw
         }
+
+
+        public void TranslateStage(Point mousePos, bool click)
+        {
+            if (click)
+            {
+                int deltaX = mousePos.X - prevMousePos.X;
+                prevMousePos = mousePos;
+                StagePos.X += deltaX;
+                if (StagePos.X > 0) StagePos.X = 0;         
+            }
+        }
+
+
     }
 }
