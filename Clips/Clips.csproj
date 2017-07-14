@@ -60,6 +60,9 @@
     <Compile Include="Classes\ClipsDrawing.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Classes\Dialogs.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Classes\MouseEvents.cs">
       <SubType>UserControl</SubType>
     </Compile>
