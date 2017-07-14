@@ -15,7 +15,8 @@ namespace VVVV.Nodes
 
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
-        SolidBrush darkBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
+        SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
+        SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
 
         public Point StagePos; //StagePosition
         public float dpi = 1; //DPI Value
@@ -34,6 +35,7 @@ namespace VVVV.Nodes
                 e.Graphics.Clear(MyBackgroundColor);
 
                 DrawClips(e);
+                DrawPlayBar(e);
             }
             catch { FLogger.Log(LogType.Debug, "Something went wrong with drawing !"); }
         }
@@ -56,13 +58,18 @@ namespace VVVV.Nodes
                 Convert.ToInt32(stringSize.Height + 1)));       
 
                 //e.Graphics.FillRectangle(transBackColor, Bounds);
-                e.Graphics.DrawString(text, myfont, darkBrush, Bounds, format); //text
+                e.Graphics.DrawString(text, myfont, textBrush, Bounds, format); //text
 
 
             }          
         }
 
-
+        public void DrawPlayBar(PaintEventArgs e)
+        {
+            e.Graphics.FillRectangle(grayBrush, new Rectangle(new Point(0-StagePos.X,0),new Size(this.Width,30)));
+            Point[] points = { new Point(10, 10), new Point(100, 10), new Point(50, 100) };
+            e.Graphics.FillPolygon(new SolidBrush(Color.Red), points);
+        }
 
     }
 }
