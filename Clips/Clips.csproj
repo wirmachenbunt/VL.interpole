@@ -57,7 +57,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\ClipsDrawing.cs" />
+    <Compile Include="Classes\ClipsDrawing.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Classes\MouseEvents.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>UserControl</SubType>
     </Compile>

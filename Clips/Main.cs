@@ -22,32 +22,16 @@ namespace VVVV.Nodes
                 Tags = "c#",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class Clips : UserControl, IPluginEvaluate
+    public partial class Clips : UserControl, IPluginEvaluate
     {
         #region fields & pins
-
-        [Output("Button")]
-        public ISpread<bool> FButtonOut;
-
-        [Output("Check Box")]
-        public ISpread<bool> FCheckBoxOut;
-
-        [Output("Text Box")]
-        public ISpread<string> FTextBoxOut;
-
-        [Output("Slider")]
-        public ISpread<double> FSliderOut;
 
         [Import()]
         public ILogger FLogger;
 
-        //gui controls
-        bool FButtonClick = false;
-        CheckBox FCheckBox = new CheckBox();
-        TextBox FTextBox = new TextBox();
-        TrackBar FSlider = new TrackBar();
+    
 
-        ClipsDrawing p = new ClipsDrawing(); // create AutomataPaint Object
+        //ClipsDrawing p = new ClipsDrawing(); // create AutomataPaint Object
 
         #endregion fields & pins
 
@@ -64,15 +48,18 @@ namespace VVVV.Nodes
             //clear controls in case init is called multiple times
             Controls.Clear();
 
-            Paint += p.PaintAutomata; //paint event
+            Paint += PaintAutomata; //paint event
             SetStyle(ControlStyles.ResizeRedraw, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
 
-        
+            //bind events
+            MouseMove += Form1_MouseMove; //mouse move event
+            MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
+            MouseDown += Form1_MouseDown; //mouse down event
+            MouseUp += Form1_MouseUp;
 
-           
+
         }
-
 
 
         #endregion constructor and init

@@ -9,7 +9,7 @@ using System.Drawing.Drawing2D;
 
 namespace VVVV.Nodes
 {
-    class ClipsDrawing
+    partial class Clips
     {
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
@@ -31,9 +31,6 @@ namespace VVVV.Nodes
                 Rectangle Bounds = new Rectangle(new Point(100, 100), new Size(100, 20));
 
                 e.Graphics.FillRectangle(OrangeBrush, Bounds);
-
-
-
 
 
             }
