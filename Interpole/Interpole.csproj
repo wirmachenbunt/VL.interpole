@@ -8,8 +8,8 @@
     <ProjectGuid>{5C4B8D79-23D9-49E8-80B0-5F8B6F46E292}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Clips</RootNamespace>
-    <AssemblyName>Clips</AssemblyName>
+    <RootNamespace>Interpole</RootNamespace>
+    <AssemblyName>Interpole</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
@@ -57,7 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\ClipsDrawing.cs">
+    <Compile Include="Classes\Drawing.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Classes\DataHandling.cs">

@@ -1,5 +1,5 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.7.dtd" >
-   <PATCH nodename="C:\clips\Interpol (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="420" scrolly="0">
    <BOUNDS type="Window" left="9255" top="9135" width="9000" height="6000">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
@@ -40,14 +40,6 @@
    <BOUNDS type="Window" left="18315" top="10575" width="6240" height="5085">
    </BOUNDS>
    </NODE>
-   <NODE systemname="Interpole (GUI)" filename="Clips\bin\Debug\Clips.dll" nodename="Interpole (GUI)" componentmode="Hidden" id="5">
-   <BOUNDS type="Node" left="1560" top="1065" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="1560" top="1065" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Clips" visible="1">
-   </PIN>
-   </NODE>
    <NODE nodename="IOBox (Node)" componentmode="InABox" id="6" systemname="IOBox (Node)">
    <BOUNDS type="Box" left="1545" top="1965" width="795" height="240">
    </BOUNDS>
@@ -55,7 +47,19 @@
    </BOUNDS>
    <PIN pinname="Descriptive Name" slicecount="1" values="Clips">
    </PIN>
+   <PIN pinname="Input Node" visible="1">
+   </PIN>
    </NODE>
-   <LINK srcnodeid="5" srcpinname="Clips" dstnodeid="6" dstpinname="Input Node">
+   <NODE systemname="Interpole (GUI)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole (GUI)" componentmode="InAWindow" id="7">
+   <BOUNDS type="Node" left="1545" top="750" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="1545" top="750" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Clips" visible="1">
+   </PIN>
+   <BOUNDS type="Window" left="4845" top="315" width="15735" height="9690">
+   </BOUNDS>
+   </NODE>
+   <LINK srcnodeid="7" srcpinname="Clips" dstnodeid="6" dstpinname="Input Node">
    </LINK>
    </PATCH>

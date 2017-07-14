@@ -9,9 +9,9 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        public static DialogResult ClipDialog(ref string input, ref int frames, string DialogName, float dpi)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int endFrame, string DialogName, float dpi)
         {
-            System.Drawing.Size size = new System.Drawing.Size(200, 100);
+            System.Drawing.Size size = new System.Drawing.Size(200, 130);
 
             Form inputBox = new Form();
 
@@ -33,22 +33,38 @@ namespace VVVV.Nodes
             timeUpDown.Size = new System.Drawing.Size(80, 20);
             timeUpDown.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             timeUpDown.Maximum = Decimal.MaxValue;
-            timeUpDown.Value = frames;
+            timeUpDown.Value = startFrame;
             timeUpDown.TabIndex = 0;
             inputBox.Controls.Add(timeUpDown);
 
             System.Windows.Forms.Label framesLabel = new System.Windows.Forms.Label();
             framesLabel.Location = new System.Drawing.Point(88, 42);
             framesLabel.Size = new System.Drawing.Size(100, 23);
-            framesLabel.Text = "Locked(f)";
+            framesLabel.Text = "StartFrame";
             inputBox.Controls.Add(framesLabel);
+
+            System.Windows.Forms.NumericUpDown timeUpDownend = new System.Windows.Forms.NumericUpDown();
+            timeUpDownend.Name = "Time(f)";
+            timeUpDownend.Location = new System.Drawing.Point(5, 69);
+            timeUpDownend.Size = new System.Drawing.Size(80, 20);
+            timeUpDownend.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            timeUpDownend.Maximum = Decimal.MaxValue;
+            timeUpDownend.Value = endFrame;
+            timeUpDownend.TabIndex = 0;
+            inputBox.Controls.Add(timeUpDownend);
+
+            System.Windows.Forms.Label framesLabelend = new System.Windows.Forms.Label();
+            framesLabelend.Location = new System.Drawing.Point(88, 72);
+            framesLabelend.Size = new System.Drawing.Size(100, 23);
+            framesLabelend.Text = "EndFrame";
+            inputBox.Controls.Add(framesLabelend);          
 
             Button okButton = new Button();
             okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(90, 23);
             okButton.Text = "&OK";
-            okButton.Location = new System.Drawing.Point(5, 70);
+            okButton.Location = new System.Drawing.Point(5, 100);
             inputBox.Controls.Add(okButton);
 
             Button cancelButton = new Button();
@@ -56,7 +72,7 @@ namespace VVVV.Nodes
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(90, 23);
             cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 70);
+            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 100);
             inputBox.Controls.Add(cancelButton);
 
             inputBox.AcceptButton = okButton;
@@ -68,7 +84,8 @@ namespace VVVV.Nodes
             DialogResult result = inputBox.ShowDialog();
             if (textBox.Text.Length > 0) input = textBox.Text;
             else input = "empty";
-            frames = Convert.ToInt16(timeUpDown.Value);
+            startFrame = Convert.ToInt16(timeUpDown.Value);
+            endFrame = Convert.ToInt16(timeUpDownend.Value);
             return result;
         }
 

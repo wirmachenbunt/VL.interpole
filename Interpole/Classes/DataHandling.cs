@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Windows.Forms;
+using System.Drawing;
 
 namespace VVVV.Nodes
 {
@@ -11,7 +13,25 @@ namespace VVVV.Nodes
     {
         public List<Clip> clipList = new List<Clip>();
 
+        public void AddClip()
+        {
+            string input = "MyClip";
+            int startFrame = 0;
+            int endFrame = 60;
 
+            if (ClipDialog(ref input, ref startFrame, ref endFrame, "Add Clip", dpi) == DialogResult.OK)
+            {
+                //add state to state list
+                clipList.Add(new Clip()
+                {
+                    ID = RNGCharacterMask(),
+                    Name = input,
+                    StartFrame = startFrame,
+                    EndFrame = endFrame,
+                    Bounds = new Rectangle(mousePos, new Size(100, 20))
+                });
+            }
+        }
 
 
         public static string RNGCharacterMask()

@@ -7,3 +7,8 @@ C:\clips\Interpole\bin\Debug\Clips.pdb
 C:\clips\Interpole\obj\Debug\Interpole.csprojResolveAssemblyReference.cache
 C:\clips\Interpole\obj\Debug\Clips.dll
 C:\clips\Interpole\obj\Debug\Clips.pdb
+C:\INTERPOLE\Interpole\bin\Debug\Interpole.dll
+C:\INTERPOLE\Interpole\bin\Debug\Interpole.pdb
+C:\INTERPOLE\Interpole\obj\Debug\Interpole.csprojResolveAssemblyReference.cache
+C:\INTERPOLE\Interpole\obj\Debug\Interpole.dll
+C:\INTERPOLE\Interpole\obj\Debug\Interpole.pdb

@@ -52,7 +52,7 @@ namespace VVVV.Nodes
             //clear controls in case init is called multiple times
             Controls.Clear();
 
-            Paint += PaintAutomata; //paint event
+            Paint += MainDraw; //paint event
             SetStyle(ControlStyles.ResizeRedraw, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
 
@@ -73,9 +73,10 @@ namespace VVVV.Nodes
         {
             // FLogger.Log(LogType.Debug,Convert.ToString(deltaX));
             //Invalidate();
+            
+        
 
-
-
+            //FLogger.Log(LogType.Debug, Convert.ToString(this.Width));
 
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
