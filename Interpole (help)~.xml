@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.7.dtd" >
    <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="420" scrolly="0">
-   <BOUNDS type="Window" left="9255" top="9135" width="9000" height="6000">
+   <BOUNDS type="Window" left="2460" top="9780" width="9000" height="6000">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -37,7 +37,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="5640" top="3915" width="2400" height="1800">
    </BOUNDS>
-   <BOUNDS type="Window" left="18315" top="10575" width="6240" height="5085">
+   <BOUNDS type="Window" left="23055" top="7335" width="6240" height="5085">
    </BOUNDS>
    </NODE>
    <NODE nodename="IOBox (Node)" componentmode="InABox" id="6" systemname="IOBox (Node)">
