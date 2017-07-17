@@ -18,8 +18,9 @@ namespace VVVV.Nodes
             string input = "MyClip";
             int startFrame = 0;
             int endFrame = 60;
+            string colorName = lastColorName;
 
-            if (ClipDialog(ref input, ref startFrame, ref endFrame, "Add Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref endFrame, ref colorName, "Add Clip", dpi) == DialogResult.OK)
             {
                 //add state to state list
                 clipList.Add(new Clip()
@@ -28,8 +29,11 @@ namespace VVVV.Nodes
                     Name = input,
                     StartFrame = startFrame,
                     EndFrame = endFrame,
-                    Bounds = new Rectangle(mousePos, new Size(100, 20))
+                    Bounds = new Rectangle(mousePos, new Size(100, 20)),
+                    Color = colorName
                 });
+
+                lastColorName = colorName;
             }
         }
 

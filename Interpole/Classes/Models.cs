@@ -42,7 +42,7 @@ namespace VVVV.Nodes
                 set;
             }
 
-            public Color ClipColor
+            public string Color
             {
                 get;
                 set;

@@ -12,7 +12,6 @@ namespace VVVV.Nodes
     {
         public Point mousePos; //current Mouse Pos
         public Point prevMousePos; //previous Mouse Pos
-        
 
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
@@ -43,7 +42,6 @@ namespace VVVV.Nodes
             this.Invalidate(); //redraw
         }
 
-
         public void CalcStagePosition(Point mousePos, bool click)
         {
             if (click)
@@ -54,12 +52,13 @@ namespace VVVV.Nodes
                 if (StagePos.X > 0) StagePos.X = 0;         
             }
         }
+
         public void SetGlobalMousePos(MouseEventArgs e)
         {
             mousePos.X = Convert.ToInt32((e.X - StagePos.X) / dpi);
             mousePos.Y = Convert.ToInt32((e.Y - StagePos.Y) / dpi);
         }
 
-
+ 
     }
 }

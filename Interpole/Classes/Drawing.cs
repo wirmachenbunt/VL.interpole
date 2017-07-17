@@ -43,8 +43,11 @@ namespace VVVV.Nodes
         public void DrawClips(PaintEventArgs e)
         {
             foreach (Clip clip in clipList)
-            {             
-                e.Graphics.FillRectangle(OrangeBrush, clip.Bounds);
+            {
+                Color ClipColor = Color.FromName(clip.Color);
+                SolidBrush ClipBrush = new SolidBrush(ClipColor);
+
+                e.Graphics.FillRectangle(ClipBrush, clip.Bounds);
 
                 string text = clip.Name; // create text
                 SizeF stringSize = new SizeF();
@@ -57,7 +60,6 @@ namespace VVVV.Nodes
                 new Size(Convert.ToInt32(stringSize.Width + 1),
                 Convert.ToInt32(stringSize.Height + 1)));       
 
-                //e.Graphics.FillRectangle(transBackColor, Bounds);
                 e.Graphics.DrawString(text, myfont, textBrush, Bounds, format); //text
 
 

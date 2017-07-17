@@ -33,8 +33,6 @@ namespace VVVV.Nodes
         [Import()]
         public ILogger FLogger;
 
-    
-
         //ClipsDrawing p = new ClipsDrawing(); // create AutomataPaint Object
 
         #endregion fields & pins
