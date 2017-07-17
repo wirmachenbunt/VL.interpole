@@ -19,9 +19,12 @@ namespace VVVV.Nodes
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
 
         public Point StagePos; //StagePosition
+        public int stageZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
 
-        Font myfont = new Font("Serif", 8, FontStyle.Regular);
+        Font clipFont = new Font("Serif", 8, FontStyle.Regular);
+        Font timeCodefont = new Font("Courier New",10, FontStyle.Regular);
+
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
 
@@ -51,7 +54,7 @@ namespace VVVV.Nodes
 
                 string text = clip.Name; // create text
                 SizeF stringSize = new SizeF();
-                stringSize = e.Graphics.MeasureString(text, myfont, 400);
+                stringSize = e.Graphics.MeasureString(text, clipFont, 400);
 
                 Point center = new Point(clip.Bounds.Location.X,clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
 
@@ -60,17 +63,23 @@ namespace VVVV.Nodes
                 new Size(Convert.ToInt32(stringSize.Width + 1),
                 Convert.ToInt32(stringSize.Height + 1)));       
 
-                e.Graphics.DrawString(text, myfont, textBrush, Bounds, format); //text
-
-
+                e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
             }          
         }
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            e.Graphics.FillRectangle(grayBrush, new Rectangle(new Point(0-StagePos.X,0),new Size(this.Width,30)));
-            Point[] points = { new Point(10, 10), new Point(100, 10), new Point(50, 100) };
-            e.Graphics.FillPolygon(new SolidBrush(Color.Red), points);
+            e.Graphics.FillRectangle(grayBrush, new Rectangle(new Point(0-StagePos.X,0),new Size(this.Width,30))); // background
+
+            Point[] points = { new Point(-7 + playPosFrames, 20), new Point(7 + playPosFrames, 20), new Point(0 + playPosFrames, 30) }; //play head triangle
+            e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
+
+            Rectangle Bounds = new Rectangle(
+                new Point(0 - StagePos.X, 0),
+                new Size(200,100));
+
+            e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text
+
         }
 
     }

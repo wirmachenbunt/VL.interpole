@@ -12,6 +12,7 @@ namespace VVVV.Nodes
     partial class Interpole
     {
         public List<Clip> clipList = new List<Clip>();
+        int playPosFrames = 20; 
 
         public void AddClip()
         {

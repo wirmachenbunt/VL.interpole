@@ -42,6 +42,18 @@ namespace VVVV.Nodes
                 set;
             }
 
+            public int FadeIn
+            {
+                get;
+                set;
+            }
+
+            public int FadeOut
+            {
+                get;
+                set;
+            }
+
             public string Color
             {
                 get;
