@@ -39,6 +39,8 @@ namespace VVVV.Nodes
 
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick 
 
+            hittest();
+
             this.Invalidate(); //redraw
         }
 
