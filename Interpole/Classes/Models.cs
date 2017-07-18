@@ -9,7 +9,7 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        public class Clip
+        public abstract class UIelement
         {
             public string ID
             {
@@ -29,7 +29,9 @@ namespace VVVV.Nodes
                 get;
                 set;
             }
-
+        }
+        public class Clip : UIelement
+        {
             public int StartFrame
             {
                 get;
@@ -59,6 +61,10 @@ namespace VVVV.Nodes
                 get;
                 set;
             }
+        }
+        public class Playbar : UIelement
+        {
+
         }
     }
 }

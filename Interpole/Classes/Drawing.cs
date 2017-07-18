@@ -12,7 +12,7 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-
+        #region variables
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
@@ -23,10 +23,13 @@ namespace VVVV.Nodes
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
-        Font timeCodefont = new Font("Courier New",10, FontStyle.Regular);
+        Font timeCodefont = new Font("Courier New", 10, FontStyle.Regular);
 
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
+        Playbar myplaybar = new Playbar();  // playbar
+
+        #endregion
 
         public void MainDraw(object sender, PaintEventArgs e)
         {
@@ -69,17 +72,29 @@ namespace VVVV.Nodes
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            e.Graphics.FillRectangle(grayBrush, new Rectangle(new Point(0-StagePos.X,0),new Size(this.Width,30))); // background
+            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); //update playbar bounds
+            e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
+            DrawPlayHead(e);
+
+            DrawTimeCode(e);
+
+
+        }
+
+        public void DrawPlayHead(PaintEventArgs e)
+        {
             Point[] points = { new Point(-7 + playPosFrames, 20), new Point(7 + playPosFrames, 20), new Point(0 + playPosFrames, 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
+        }
 
+        public void DrawTimeCode(PaintEventArgs e)
+        {
             Rectangle Bounds = new Rectangle(
                 new Point(0 - StagePos.X, 0),
-                new Size(200,100));
+                new Size(200, 100));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text
-
         }
 
     }

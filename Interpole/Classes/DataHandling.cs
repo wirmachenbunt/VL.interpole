@@ -12,8 +12,8 @@ namespace VVVV.Nodes
     partial class Interpole
     {
         public List<Clip> clipList = new List<Clip>();
-        int playPosFrames = 20; 
-
+        int playPosFrames = 20;
+        
         public void AddClip()
         {
             string input = "MyClip";
@@ -39,8 +39,6 @@ namespace VVVV.Nodes
                 lastColorName = colorName;
             }
         }
-
-
         public static string RNGCharacterMask()
         {
             int maxSize = 8;

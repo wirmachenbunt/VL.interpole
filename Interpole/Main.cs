@@ -29,11 +29,8 @@ namespace VVVV.Nodes
         [Output("Clips")]
         public ISpread<Interpole> ClipsOut;
 
-
         [Import()]
         public ILogger FLogger;
-
-        //ClipsDrawing p = new ClipsDrawing(); // create AutomataPaint Object
 
         #endregion fields & pins
 
@@ -43,6 +40,7 @@ namespace VVVV.Nodes
         {
             //setup the gui
             InitializeComponent();
+            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); // setup playbar
         }
 
         void InitializeComponent()
@@ -59,8 +57,6 @@ namespace VVVV.Nodes
             MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
-
-
         }
 
 
