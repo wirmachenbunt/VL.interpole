@@ -11,21 +11,25 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        List<UIelement> hitestList = new List<UIelement>();
+        List<UIelement> hitTestList = new List<UIelement>();
+        dynamic hitObject;
 
         public void hittest()
         {
-            hitestList.Clear();
-            hitestList.Add(myplaybar); //add playbar
+            hitTestList.Clear();
+            hitTestList.Add(myplaybar); //add playbar
 
             foreach(Clip myclip in clipList)
             {
-
+                hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
             }
 
-
-            var hitObject = hitestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y)));
+            
+            hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); // the actual hitTest
             if (hitObject != null) FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
+
+           
+
         }
 
     }

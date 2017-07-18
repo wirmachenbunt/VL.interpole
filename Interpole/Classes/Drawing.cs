@@ -23,7 +23,7 @@ namespace VVVV.Nodes
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
-        Font timeCodefont = new Font("Courier New", 10, FontStyle.Regular);
+        Font timeCodefont = new Font("Courier New", 12, FontStyle.Regular);
 
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
@@ -91,7 +91,7 @@ namespace VVVV.Nodes
         public void DrawTimeCode(PaintEventArgs e)
         {
             Rectangle Bounds = new Rectangle(
-                new Point(0 - StagePos.X, 0),
+                new Point(2 - StagePos.X, 2),
                 new Size(200, 100));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
+using VVVV.Core.Logging;
 
 namespace VVVV.Nodes
 {
@@ -16,21 +17,21 @@ namespace VVVV.Nodes
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             prevMousePos = MousePosition; // for delta calculation below
-
-
+            hittest(); //global hittest for everything
 
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-
+            hitObject = null; //clear hitObject in case there is no button pressed
 
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
 
-            AddClip();
+            if(hitObject == null) AddClip(); //ADD CLIP
+           
         }
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -39,7 +40,7 @@ namespace VVVV.Nodes
 
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick 
 
-            hittest();
+            
 
             this.Invalidate(); //redraw
         }
