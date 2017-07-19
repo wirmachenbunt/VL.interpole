@@ -18,6 +18,8 @@ namespace VVVV.Nodes
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
 
+        Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
+
         public Point StagePos; //StagePosition
         public int stageZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
@@ -86,6 +88,7 @@ namespace VVVV.Nodes
         {
             Point[] points = { new Point(-7 + playPosFrames, 20), new Point(7 + playPosFrames, 20), new Point(0 + playPosFrames, 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
+            e.Graphics.DrawLine(GrayPen,new Point(playPosFrames,30),new Point(playPosFrames,3000));
         }
 
         public void DrawTimeCode(PaintEventArgs e)

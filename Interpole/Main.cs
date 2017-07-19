@@ -66,10 +66,6 @@ namespace VVVV.Nodes
         public void Evaluate(int SpreadMax)
         {
             
-           
-            
-        
-
             //FLogger.Log(LogType.Debug, Convert.ToString(this.Width));
 
             ClipsOut.SliceCount = 1; // set output for additional nodes

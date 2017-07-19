@@ -18,29 +18,27 @@ namespace VVVV.Nodes
         {
             prevMousePos = MousePosition; // for delta calculation below
             hittest(); //global hittest for everything
-
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             hitObject = null; //clear hitObject in case there is no button pressed
-
+            this.Invalidate(); //redraw
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-
-            if(hitObject == null) AddClip(); //ADD CLIP
-           
+            if (hitObject == null && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
+            this.Invalidate(); //redraw
         }
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 
-            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick 
+            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
 
-            
+            SetPlayPosition(); // set playhead
 
             this.Invalidate(); //redraw
         }
@@ -60,6 +58,15 @@ namespace VVVV.Nodes
         {
             mousePos.X = Convert.ToInt32((e.X - StagePos.X) / dpi);
             mousePos.Y = Convert.ToInt32((e.Y - StagePos.Y) / dpi);
+        }
+
+        public void SetPlayPosition()
+        {
+            if (hitObject is Playbar)
+            {
+                playPosFrames = mousePos.X;
+                if (mousePos.X < 0) playPosFrames = 0;
+            }
         }
 
  
