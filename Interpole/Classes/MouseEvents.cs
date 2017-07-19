@@ -13,14 +13,22 @@ namespace VVVV.Nodes
     {
         public Point mousePos; //current Mouse Pos
         public Point prevMousePos; //previous Mouse Pos
-        public Point holdMousePos;
+        public Point holdMousePos; // hold mouse for selection rectangle
+        public Point deltaMousePos; // better delta variable, get rid of prevMouse
 
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             
             prevMousePos = MousePosition; // for delta calculation below
             holdMousePos = mousePos; //keep last Mouseposition for rectangle selection
+
             hittest(); //global hittest for everything
+
+            SetPlayPosition();// set playhead
+
+            if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
+
+            this.Invalidate(); //redraw
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -47,12 +55,16 @@ namespace VVVV.Nodes
 
             SetSelectionRectangle(e); // selection rectangle
 
+            if (hitObject is Clip) DragClip(hitObject,e);
+
+            deltaMousePos = mousePos;
+
             this.Invalidate(); //redraw
         }
 
         public void CalcStagePosition(Point mousePos, bool click)
         {
-            if (click)
+            if (click && !(hitObject is Clip))
             {
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;

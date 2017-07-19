@@ -54,7 +54,29 @@ namespace VVVV.Nodes
                 clip.Duration = duration;
                 clip.Color = colorName;
                 clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
+                lastColorName = colorName;
             }
+        }
+
+        public void DragClip(Clip clip, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && Form.ModifierKeys == Keys.Control)
+            {
+                int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
+                clip.Bounds = new Rectangle(new Point(dragHorizontal, clip.Bounds.Location.Y), clip.Bounds.Size);
+                clip.StartFrame = dragHorizontal;
+            }
+
+            if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
+            {
+                int dragVertical = clip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
+                clip.Bounds = new Rectangle(new Point(clip.Bounds.Location.X, dragVertical), clip.Bounds.Size);
+            }
+        }
+
+        public void DeleteClip(Clip clip)
+        {
+            clipList.Remove(clip);
         }
 
 

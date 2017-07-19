@@ -48,9 +48,6 @@ namespace VVVV.Nodes
                 DrawPlayBar(e);
                 DrawSelectionRect(e);
 
-                e.Graphics.DrawEllipse(GrayPen, new Rectangle(mousePos, new Size(2, 2)));
-                e.Graphics.DrawEllipse(GrayPen, new Rectangle(holdMousePos, new Size(2, 2)));
-
             }
             catch { FLogger.Log(LogType.Debug, "Something went wrong with drawing !"); }
         }
