@@ -22,11 +22,8 @@ namespace VVVV.Nodes
             foreach(Clip myclip in clipList)
             {
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
-            }
-
-            
+            } 
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); // the actual hitTest
-         
         }
 
     }

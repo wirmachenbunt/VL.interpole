@@ -17,7 +17,7 @@ namespace VVVV.Nodes
         public void AddClip()
         {
             string input = "MyClip";
-            int startFrame = 0;
+            int startFrame = mousePos.X;
             int duration = 60;
             string colorName = lastColorName;
 
@@ -32,7 +32,7 @@ namespace VVVV.Nodes
                     Name = input,
                     StartFrame = startFrame,
                     Duration = duration,
-                    Bounds = new Rectangle(mousePos, new Size(duration, 20)),
+                    Bounds = new Rectangle(new Point(startFrame,mousePos.Y), new Size(duration, 20)),
                     Color = colorName
                 });
 
