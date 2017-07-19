@@ -39,6 +39,25 @@ namespace VVVV.Nodes
                 lastColorName = colorName;
             }
         }
+
+        public void EditClip(Clip clip)
+        {
+            string input = clip.Name;
+            int startFrame = clip.StartFrame;
+            int duration = clip.Duration;
+            string colorName = clip.Color;
+
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref colorName, "Edit Clip", dpi) == DialogResult.OK)
+            {
+                clip.Name = input;
+                clip.StartFrame = startFrame;
+                clip.Duration = duration;
+                clip.Color = colorName;
+                clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
+            }
+        }
+
+
         public static string RNGCharacterMask()
         {
             int maxSize = 8;

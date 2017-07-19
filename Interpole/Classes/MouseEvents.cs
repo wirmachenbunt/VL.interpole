@@ -33,6 +33,7 @@ namespace VVVV.Nodes
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (hitObject == null && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
+            if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
             this.Invalidate(); //redraw
         }
 
