@@ -13,16 +13,20 @@ namespace VVVV.Nodes
     {
         public Point mousePos; //current Mouse Pos
         public Point prevMousePos; //previous Mouse Pos
+        public Point holdMousePos;
 
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+            
             prevMousePos = MousePosition; // for delta calculation below
+            holdMousePos = mousePos; //keep last Mouseposition for rectangle selection
             hittest(); //global hittest for everything
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             hitObject = null; //clear hitObject in case there is no button pressed
+            selectionRectangle = Rectangle.Empty;
             this.Invalidate(); //redraw
         }
 
@@ -39,6 +43,8 @@ namespace VVVV.Nodes
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
 
             SetPlayPosition(); // set playhead
+
+            SetSelectionRectangle(e); // selection rectangle
 
             this.Invalidate(); //redraw
         }
@@ -71,6 +77,14 @@ namespace VVVV.Nodes
             }
         }
 
+        public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)
+        {
+            if(hitObject == null && e.Button == MouseButtons.Left)
+            {
+                Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
+                selectionRectangle = new Rectangle(holdMousePos, targetSize);
+            }
+        }
  
     }
 }

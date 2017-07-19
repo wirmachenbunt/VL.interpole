@@ -19,6 +19,8 @@ namespace VVVV.Nodes
             hitTestList.Clear();
             hitTestList.Add(myplaybar); //add playbar
 
+            
+
             foreach(Clip myclip in clipList)
             {
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point

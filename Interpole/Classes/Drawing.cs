@@ -27,6 +27,8 @@ namespace VVVV.Nodes
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
         Font timeCodefont = new Font("Courier New", 12, FontStyle.Regular);
 
+        Rectangle selectionRectangle = new Rectangle(); //multiselection rectangle
+
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
         Playbar myplaybar = new Playbar();  // playbar
@@ -44,6 +46,11 @@ namespace VVVV.Nodes
 
                 DrawClips(e);
                 DrawPlayBar(e);
+                DrawSelectionRect(e);
+
+                e.Graphics.DrawEllipse(GrayPen, new Rectangle(mousePos, new Size(2, 2)));
+                e.Graphics.DrawEllipse(GrayPen, new Rectangle(holdMousePos, new Size(2, 2)));
+
             }
             catch { FLogger.Log(LogType.Debug, "Something went wrong with drawing !"); }
         }
@@ -98,6 +105,14 @@ namespace VVVV.Nodes
                 new Size(200, 100));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text
+        }
+
+        public void DrawSelectionRect(PaintEventArgs e)
+        {
+            if(selectionRectangle != Rectangle.Empty)
+            {
+                e.Graphics.DrawRectangle(GrayPen, selectionRectangle);
+            }
         }
 
     }
