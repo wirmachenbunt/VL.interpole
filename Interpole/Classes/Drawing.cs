@@ -21,7 +21,7 @@ namespace VVVV.Nodes
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
 
         public Point StagePos; //StagePosition
-        public int stageZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
+        public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
