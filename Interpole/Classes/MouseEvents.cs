@@ -62,6 +62,8 @@ namespace VVVV.Nodes
 
         public void SetPlayPosition()
         {
+           
+
             if (hitObject is Playbar)
             {
                 playPosFrames = mousePos.X;

@@ -18,12 +18,12 @@ namespace VVVV.Nodes
         {
             string input = "MyClip";
             int startFrame = 0;
-            int endFrame = 60;
+            int duration = 60;
             string colorName = lastColorName;
 
-            if (ClipDialog(ref input, ref startFrame, ref endFrame, ref colorName, "Add Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref colorName, "Add Clip", dpi) == DialogResult.OK)
             {
-                int lenght = endFrame - startFrame;
+                //int duration = duration;
                 
                 //add state to state list
                 clipList.Add(new Clip()
@@ -31,8 +31,8 @@ namespace VVVV.Nodes
                     ID = RNGCharacterMask(),
                     Name = input,
                     StartFrame = startFrame,
-                    EndFrame = endFrame,
-                    Bounds = new Rectangle(mousePos, new Size(lenght, 20)),
+                    Duration = duration,
+                    Bounds = new Rectangle(mousePos, new Size(duration, 20)),
                     Color = colorName
                 });
 

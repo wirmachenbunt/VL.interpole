@@ -13,7 +13,7 @@ namespace VVVV.Nodes
     {
         string lastColorName = "Aqua";
          
-        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int endFrame, ref string colorName, string DialogName, float dpi)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration, ref string colorName, string DialogName, float dpi)
         {
             System.Drawing.Size size = new System.Drawing.Size(200, 165);
 
@@ -54,14 +54,14 @@ namespace VVVV.Nodes
             timeUpDownend.Size = new System.Drawing.Size(80, 20);
             timeUpDownend.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             timeUpDownend.Maximum = Decimal.MaxValue;
-            timeUpDownend.Value = endFrame;
+            timeUpDownend.Value = duration;
             timeUpDownend.TabIndex = 0;
             inputBox.Controls.Add(timeUpDownend);
 
             System.Windows.Forms.Label framesLabelend = new System.Windows.Forms.Label();
             framesLabelend.Location = new System.Drawing.Point(88, 72);
             framesLabelend.Size = new System.Drawing.Size(100, 23);
-            framesLabelend.Text = "EndFrame";
+            framesLabelend.Text = "Duration (f)";
             inputBox.Controls.Add(framesLabelend);
             #endregion
 
@@ -111,7 +111,7 @@ namespace VVVV.Nodes
             if (textBox.Text.Length > 0) input = textBox.Text;
             else input = "empty";
             startFrame = Convert.ToInt16(timeUpDown.Value);
-            endFrame = Convert.ToInt16(timeUpDownend.Value);
+            duration = Convert.ToInt16(timeUpDownend.Value);
 
             colorName = cmbboxClr.SelectedItem.ToString();
             return result;

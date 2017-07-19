@@ -38,7 +38,7 @@ namespace VVVV.Nodes
                 set;
             }
 
-            public int EndFrame
+            public int Duration
             {
                 get;
                 set;
