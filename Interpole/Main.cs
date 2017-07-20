@@ -26,6 +26,9 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
+        [Config("Framerate",DefaultValue = 50 )]
+        public IDiffSpread<int> Framerate;
+
         [Output("Clips")]
         public ISpread<Interpole> ClipsOut;
 

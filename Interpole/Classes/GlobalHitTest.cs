@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using VVVV.Core.Logging;
 
+
 namespace VVVV.Nodes
 {
     partial class Interpole
@@ -18,6 +19,7 @@ namespace VVVV.Nodes
         {
             hitTestList.Clear();
             hitTestList.Add(myplaybar); //add playbar
+            hitTestList.Add(mytimecode); //add timecode
 
             
 
@@ -26,6 +28,8 @@ namespace VVVV.Nodes
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
             } 
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); // the actual hitTest
+
+            //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
         }
 
     }

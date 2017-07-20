@@ -66,13 +66,13 @@ namespace VVVV.Nodes
         {
 
         }
-        public class ZoomBar : UIelement
+        public class TimeCode : UIelement
         {
-            public int Value
-            {
-                get;
-                set;
-            }
+            
+        }
+        public class ZoomBar :UIelement
+        {
+
         }
     }
 }

@@ -59,6 +59,8 @@
    </PIN>
    <BOUNDS type="Window" left="4845" top="315" width="15735" height="9690">
    </BOUNDS>
+   <PIN pinname="Framerate" slicecount="1" values="60">
+   </PIN>
    </NODE>
    <LINK srcnodeid="7" srcpinname="Clips" dstnodeid="6" dstpinname="Input Node">
    </LINK>

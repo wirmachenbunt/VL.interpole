@@ -25,13 +25,14 @@ namespace VVVV.Nodes
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
-        Font timeCodefont = new Font("Courier New", 12, FontStyle.Regular);
+        Font timeCodefont = new Font("Consolas", 12, FontStyle.Regular);
 
         Rectangle selectionRectangle = new Rectangle(); //multiselection rectangle
 
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
         Playbar myplaybar = new Playbar();  // playbar
+        TimeCode mytimecode = new TimeCode();
         ZoomBar myzoombar = new ZoomBar();
 
         #endregion
@@ -100,11 +101,13 @@ namespace VVVV.Nodes
 
         public void DrawTimeCode(PaintEventArgs e)
         {
-            Rectangle Bounds = new Rectangle(
-                new Point(2 - StagePos.X, 2),
-                new Size(200, 100));
+            mytimecode.Bounds = new Rectangle(
+                new Point(2 - StagePos.X, 30),
+                new Size(200, 30));
 
-            e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text
+            //e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //draw frameCount
+            
+            e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0]), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
         public void DrawZoomValue(PaintEventArgs e)

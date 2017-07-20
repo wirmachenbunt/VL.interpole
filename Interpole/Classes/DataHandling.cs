@@ -79,6 +79,14 @@ namespace VVVV.Nodes
             clipList.Remove(clip);
         }
 
+        public string Frames2Timecode(int frameCount, int frameRate)
+        {       
+            int Frames = frameCount % frameRate;
+            int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
+            int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
+            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;     
+            return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
+        }
 
         public static string RNGCharacterMask()
         {
