@@ -111,6 +111,8 @@ namespace VVVV.Nodes
         {
             myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 20), new Size(50, 20)); //update playbar bounds
             e.Graphics.FillRectangle(grayBrush, myzoombar.Bounds); // background
+
+            e.Graphics.DrawString(Convert.ToString(timeZoom) + "x", timeCodefont, textBrush, myzoombar.Bounds, format); //text
         }
 
         public void DrawSelectionRect(PaintEventArgs e)
