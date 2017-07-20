@@ -32,6 +32,7 @@ namespace VVVV.Nodes
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
         Playbar myplaybar = new Playbar();  // playbar
+        ZoomBar myzoombar = new ZoomBar();
 
         #endregion
 
@@ -81,6 +82,8 @@ namespace VVVV.Nodes
             myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); //update playbar bounds
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
+            DrawZoomValue(e);
+
             DrawPlayHead(e);
 
             DrawTimeCode(e);
@@ -102,6 +105,12 @@ namespace VVVV.Nodes
                 new Size(200, 100));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //text
+        }
+
+        public void DrawZoomValue(PaintEventArgs e)
+        {
+            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 20), new Size(50, 20)); //update playbar bounds
+            e.Graphics.FillRectangle(grayBrush, myzoombar.Bounds); // background
         }
 
         public void DrawSelectionRect(PaintEventArgs e)

@@ -57,6 +57,7 @@ namespace VVVV.Nodes
             MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
+            MouseWheel += Form1_MouseWheel;
         }
 
 

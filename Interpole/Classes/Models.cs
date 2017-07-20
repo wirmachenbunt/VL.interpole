@@ -66,5 +66,13 @@ namespace VVVV.Nodes
         {
 
         }
+        public class ZoomBar : UIelement
+        {
+            public int Value
+            {
+                get;
+                set;
+            }
+        }
     }
 }

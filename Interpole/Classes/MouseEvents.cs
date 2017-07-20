@@ -45,6 +45,12 @@ namespace VVVV.Nodes
             this.Invalidate(); //redraw
         }
 
+        private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            FLogger.Log(LogType.Debug, e.Delta.ToString());
+            this.Invalidate(); //redraw
+        }
+
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
