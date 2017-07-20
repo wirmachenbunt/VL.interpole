@@ -48,6 +48,8 @@ namespace VVVV.Nodes
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             FLogger.Log(LogType.Debug, e.Delta.ToString());
+            if (e.Delta > 0 && timeZoom < 20) timeZoom += 1;
+            if (e.Delta < 0 && timeZoom > 1) timeZoom -= 1;
             this.Invalidate(); //redraw
         }
 

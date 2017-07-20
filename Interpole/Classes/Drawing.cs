@@ -109,10 +109,13 @@ namespace VVVV.Nodes
 
         public void DrawZoomValue(PaintEventArgs e)
         {
-            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 20), new Size(50, 20)); //update playbar bounds
-            e.Graphics.FillRectangle(grayBrush, myzoombar.Bounds); // background
+            string Percentage = Convert.ToString(100 / timeZoom) + "%";
+            var format = new StringFormat() { Alignment = StringAlignment.Far };
 
-            e.Graphics.DrawString(Convert.ToString(timeZoom) + "x", timeCodefont, textBrush, myzoombar.Bounds, format); //text
+            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 20), new Size(50, 20)); //update playbar bounds
+            //e.Graphics.FillRectangle(grayBrush, myzoombar.Bounds); // background
+
+            e.Graphics.DrawString(Percentage, timeCodefont, textBrush, myzoombar.Bounds, format); //text
         }
 
         public void DrawSelectionRect(PaintEventArgs e)
