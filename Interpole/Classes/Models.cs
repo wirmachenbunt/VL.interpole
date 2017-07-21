@@ -7,7 +7,7 @@ using System.Drawing;
 
 namespace VVVV.Nodes
 {
-    partial class Interpole
+    public partial class Interpole
     {
         public abstract class UIelement
         {

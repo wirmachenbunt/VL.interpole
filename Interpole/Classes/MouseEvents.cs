@@ -36,12 +36,14 @@ namespace VVVV.Nodes
             hitObject = null; //clear hitObject in case there is no button pressed
             selectionRectangle = Rectangle.Empty;
             this.Invalidate(); //redraw
+            UpdateClipXML();
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (hitObject == null && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
+            if (hitObject is TimeCode && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
             this.Invalidate(); //redraw
         }
 
@@ -77,6 +79,14 @@ namespace VVVV.Nodes
             this.Invalidate(); //redraw
         }
 
+        private void Form_Keydown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                play = !play; // invert bool play
+            }
+        }
+
         public void CalcStagePosition(Point mousePos, bool click)
         {
             if (click && !(hitObject is Clip))
@@ -102,6 +112,7 @@ namespace VVVV.Nodes
             {
                 playPosFrames = mousePos.X*timeZoom;
                 if (mousePos.X < 0) playPosFrames = 0;
+                play = false;
             }
         }
 

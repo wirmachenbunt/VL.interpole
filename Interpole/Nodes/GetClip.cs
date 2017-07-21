@@ -9,6 +9,7 @@ using VVVV.Utils.VMath;
 using System.Linq;
 using VVVV.Nodes;
 
+
 using VVVV.Core.Logging;
 #endregion usings
 
@@ -24,18 +25,21 @@ namespace VVVV.Nodes
     public class GetState : IPluginEvaluate, IPartImportsSatisfiedNotification
     {
         #region fields & pins
-        protected IDiffSpread<EnumEntry> EnumState;
+        protected IDiffSpread<EnumEntry> EnumClip;
 
         [Input("Interpole")]
         public Pin<Interpole> InterpoleIn;
 
-        [Output("ElapsedStateTime")]
-        public ISpread<int> ElapsedStateTime;
+        [Output("FramePosition")]
+        public ISpread<int> FramePosition;
 
         [Output("FadeInOut")]
         public ISpread<double> FadeInOut;
 
-        
+        [Output("IsActive")]
+        public ISpread<bool> IsActive;
+
+        Interpole.Clip myclip = new Interpole.Clip();
 
         [Import()]
         public ILogger FLogger;
@@ -46,7 +50,7 @@ namespace VVVV.Nodes
 
         string EnumName;
 
-        private bool invalidate = true;
+        //private bool invalidate = true;
 
         #endregion fields & pins
 
@@ -60,100 +64,54 @@ namespace VVVV.Nodes
             InputAttribute attr = new InputAttribute("Clip"); //name of pin
             attr.EnumName = EnumName;
             //attr.DefaultEnumEntry = "Init"; //default state
-            EnumState = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
+            EnumClip = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
         }
 
         private void Input_Disconnected(object sender, PinConnectionEventArgs args)
         {
             FLogger.Log(LogType.Debug, "DisConnected");
-            invalidate = true;
+            //invalidate = true;
         }
 
         private void Input_Connected(object sender, PinConnectionEventArgs args)
         {
-
-            invalidate = true;
+            //invalidate = true;
             FLogger.Log(LogType.Debug, "connected");
+        }
+
+        public void UpdateEnum()
+        {
+            if (InterpoleIn[0].clipList.Count > 0 && InterpoleIn[0].needsUpdate)
+            {
+                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).ToArray());
+            }
+            InterpoleIn[0].needsUpdate = false;
+        }
+
+        public void UpdateOutputs()
+        {
+            
+            myclip = InterpoleIn[0].clipList[EnumClip[0].Index]; // get enum index of selected clip
+
+            int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
+            if (ClipFramePos < 0) ClipFramePos = 0;
+            if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
+            FramePosition[0] = ClipFramePos;
         }
 
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            //ElapsedStateTime.SliceCount = SpreadMax;
+            UpdateEnum();
 
             if (InterpoleIn.IsConnected)
             {
                 UpdateEnum();
+                UpdateOutputs();
 
             }
         }
-
-
-        public void UpdateEnum()
-        {
-            if(InterpoleIn[0].clipList.Count > 0)
-            {
-                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).ToArray());
-                invalidate = false;
-            }
-            
-        }
-
-
-        /*
-         * if (invalidate || AutomataUI[0].StatesChanged)
-                {
-                    EnumManager.UpdateEnum(EnumName, AutomataUI[0].stateList[0].Name, AutomataUI[0].stateList.Select(x => x.Name).ToArray());
-                    invalidate = false;
-                }
-
-                StateActive.SliceCount = EnumState.SliceCount * AutomataUI[0].ActiveStateIndex.SliceCount; //set Slicecount to amount of incoming Automatas
-                FadeInOut.SliceCount = ElapsedStateTime.SliceCount = FadeDirection.SliceCount = StateActive.SliceCount;
-
-                for (int j = 0; j < EnumState.SliceCount; j++)
-                {
-                    for (int i = 0; i < AutomataUI[0].ActiveStateIndex.SliceCount; i++) // spreaded
-                    {
-                        int offset = i + (j * AutomataUI[0].ActiveStateIndex.SliceCount);
-                        //FLogger.Log(LogType.Debug, Convert.ToString(offset));
-
-                        // find out if selected state is active
-                        if (AutomataUI[0].ActiveStateIndex[i] == EnumState[j].Index && // Selected State is Active and Time is running ?
-                            AutomataUI[0].ElapsedStateTime[i] > 0)
-                        {
-                            StateActive[offset] = true;
-                            ElapsedStateTime[offset] = AutomataUI[0].ElapsedStateTime[i];
-                            //FadeDirection[offset] = "reached";
-                        }
-                        else
-                        {
-                            StateActive[offset] = false;
-                            ElapsedStateTime[offset] = 0;
-                            FadeDirection[offset] = "";
-                        }
-
-                        //output in timing
-                        if (AutomataUI[0].TransitionFramesOut[i] > 0 &&
-                            AutomataUI[0].transitionList.ElementAt(AutomataUI[0].TransitionIndex[i]).endState == AutomataUI[0].stateList.ElementAt(EnumState[j].Index)) // is the selected state the target state of the active transition ?
-                        {
-                            FadeInOut[offset] = 1.0 - ((1.0 / AutomataUI[0].transitionList.ElementAt(AutomataUI[0].TransitionIndex[i]).Frames) * AutomataUI[0].TransitionFramesOut[i]);
-                            FadeDirection[offset] = "in";
-                        }
-                        else FadeInOut[offset] = Convert.ToDouble(StateActive[offset]);
-
-                        if (AutomataUI[0].TransitionFramesOut[i] > 0 &&
-                            AutomataUI[0].transitionList.ElementAt(AutomataUI[0].TransitionIndex[i]).startState == AutomataUI[0].stateList.ElementAt(EnumState[j].Index)) // is the selected state the target state of the active transition ?
-                        {
-                            FadeInOut[offset] = (1.0 / AutomataUI[0].transitionList.ElementAt(AutomataUI[0].TransitionIndex[i]).Frames) * AutomataUI[0].TransitionFramesOut[i];
-                            FadeDirection[offset] = "out";
-                        }
-                    }
-                }
-         
-
-    */
-
 
 
 

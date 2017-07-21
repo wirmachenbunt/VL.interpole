@@ -39,6 +39,8 @@ namespace VVVV.Nodes
         public ILogger FLogger;
 
         bool initialized = false; // controlling init of plugin
+        bool play = false;
+        public bool needsUpdate = true;
 
         #endregion fields & pins
 
@@ -66,6 +68,7 @@ namespace VVVV.Nodes
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
             MouseWheel += Form1_MouseWheel;
+            KeyDown += Form_Keydown;
             
         }
 
@@ -81,6 +84,7 @@ namespace VVVV.Nodes
                 {
                     clipList = DeserializeClipList(ClipXML[0]);
                     FLogger.Log(LogType.Debug, "Interpole successful initialized");
+                    ApplyTimeZoom();
                     Invalidate();
                 }
                 catch { FLogger.Log(LogType.Debug, "Loading clip list failed :("); }
@@ -89,16 +93,30 @@ namespace VVVV.Nodes
             }
         }
 
+        public void Play()
+        {
+            if (play)
+            {
+                playPosFrames += 1;
+                Invalidate();
+            }
+            
+        }
+
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
             InitInterpole();
+            Play();
 
             //FLogger.Log(LogType.Debug, Convert.ToString(this.Width));
 
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
+
+            if(needsUpdate) FLogger.Log(LogType.Debug, "update");
+            //needsUpdate = false;
         }
     }
 }

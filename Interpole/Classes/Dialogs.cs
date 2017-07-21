@@ -118,17 +118,55 @@ namespace VVVV.Nodes
             return result;
         }
 
-        class MyTransparentTrackBar : TrackBar
+        public static DialogResult TimecodeDialog(ref string TimeCode)
         {
-            protected override void OnCreateControl()
-            {
-                SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-                if (Parent != null)
-                    BackColor = Parent.BackColor;
+            System.Drawing.Size size = new System.Drawing.Size(200, 165);
 
-                base.OnCreateControl();
-            }
+            Form inputBox = new Form();
+
+            inputBox.StartPosition = FormStartPosition.Manual;
+            inputBox.Location = new Point(Cursor.Position.X, Cursor.Position.Y);
+
+            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            inputBox.ClientSize = size;
+            inputBox.Text = "Timecode";
+
+            System.Windows.Forms.TextBox textBox = new TextBox();
+            textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
+            textBox.Location = new System.Drawing.Point(5, 5);
+            textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
+            textBox.Text = TimeCode;
+            inputBox.Controls.Add(textBox);
+
+            #region buttons
+            Button okButton = new Button();
+            okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(90, 23);
+            okButton.Text = "&OK";
+            okButton.Location = new System.Drawing.Point(5, 133);
+            inputBox.Controls.Add(okButton);
+
+            Button cancelButton = new Button();
+            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(90, 23);
+            cancelButton.Text = "&Cancel";
+            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 133);
+
+
+            inputBox.Controls.Add(cancelButton);
+            inputBox.AcceptButton = okButton;
+            inputBox.CancelButton = cancelButton;
+            #endregion
+
+            DialogResult result = inputBox.ShowDialog();
+
+            TimeCode = "empty";
+            return result;
         }
+
+        
     }
 
 }

@@ -14,7 +14,7 @@ namespace VVVV.Nodes
     partial class Interpole
     {
         public List<Clip> clipList = new List<Clip>();
-        int playPosFrames = 100;
+        public int playPosFrames = 100;
         
         public void AddClip()
         {
@@ -69,14 +69,12 @@ namespace VVVV.Nodes
                 int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
                 clip.Bounds = new Rectangle(new Point(dragHorizontal, clip.Bounds.Location.Y), clip.Bounds.Size);
                 clip.StartFrame = dragHorizontal*timeZoom;
-                UpdateClipXML();
             }
 
             if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
             {
                 int dragVertical = clip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
                 clip.Bounds = new Rectangle(new Point(clip.Bounds.Location.X, dragVertical), clip.Bounds.Size);
-                UpdateClipXML();
             }
         }
 
@@ -86,11 +84,21 @@ namespace VVVV.Nodes
             UpdateClipXML();
         }
 
+        public void EditTimeCode()
+        {
+            string input = Frames2Timecode(playPosFrames, Framerate[0]);
+
+            if (TimecodeDialog(ref input) == DialogResult.OK)
+            {
+
+            }
+
+        }
+
         private void UpdateClipXML()
         {
-
             ClipXML[0] = SerializeClipList(clipList); //save config
-            //StatesChanged = true;
+            needsUpdate = true;
         }
 
         public static string SerializeClipList(List<Clip> myList)
