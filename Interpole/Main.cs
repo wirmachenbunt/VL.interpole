@@ -29,11 +29,16 @@ namespace VVVV.Nodes
         [Config("Framerate",DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
+        [Config("ClipXML")]
+        public IDiffSpread<string> ClipXML;
+
         [Output("Clips")]
         public ISpread<Interpole> ClipsOut;
 
         [Import()]
         public ILogger FLogger;
+
+        bool initialized = false; // controlling init of plugin
 
         #endregion fields & pins
 
@@ -61,15 +66,35 @@ namespace VVVV.Nodes
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
             MouseWheel += Form1_MouseWheel;
+            
         }
 
 
         #endregion constructor and init
 
+
+        public void InitInterpole()
+        {
+            if(!initialized)
+            {
+                try
+                {
+                    clipList = DeserializeClipList(ClipXML[0]);
+                    FLogger.Log(LogType.Debug, "Interpole successful initialized");
+                    Invalidate();
+                }
+                catch { FLogger.Log(LogType.Debug, "Loading clip list failed :("); }
+
+                initialized = true;
+            }
+        }
+
+
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            
+            InitInterpole();
+
             //FLogger.Log(LogType.Debug, Convert.ToString(this.Width));
 
             ClipsOut.SliceCount = 1; // set output for additional nodes

@@ -78,6 +78,7 @@
     <Compile Include="Main.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Nodes\GetClip.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

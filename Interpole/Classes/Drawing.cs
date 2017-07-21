@@ -21,7 +21,7 @@ namespace VVVV.Nodes
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
 
         public Point StagePos; //StagePosition
-        public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
+        public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
@@ -61,7 +61,20 @@ namespace VVVV.Nodes
                 Color ClipColor = Color.FromName(clip.Color);
                 SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
-                e.Graphics.FillRectangle(ClipBrush, clip.Bounds);
+                e.Graphics.FillRectangle(grayBrush, clip.Bounds);
+
+                int fadeIn = 50/timeZoom;
+                int fadeOut = 50/timeZoom;
+
+                Point[] points = {
+                    new Point(clip.Bounds.X, clip.Bounds.Y+20),
+                    new Point(clip.Bounds.X+fadeIn, clip.Bounds.Y),
+                    new Point(clip.Bounds.Width - fadeOut + clip.Bounds.X, clip.Bounds.Y),
+                    new Point(clip.Bounds.Width + clip.Bounds.X, clip.Bounds.Y+20) };
+
+
+            e.Graphics.FillPolygon(ClipBrush, points);
+
 
                 string text = clip.Name; // create text
                 SizeF stringSize = new SizeF();
@@ -94,9 +107,11 @@ namespace VVVV.Nodes
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            Point[] points = { new Point(-7 + playPosFrames, 20), new Point(7 + playPosFrames, 20), new Point(0 + playPosFrames, 30) }; //play head triangle
+            int pos = playPosFrames / timeZoom;
+
+            Point[] points = { new Point(-7 + pos, 20), new Point(7 + pos, 20), new Point(0 + pos, 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen,new Point(playPosFrames,30),new Point(playPosFrames,3000));
+            e.Graphics.DrawLine(GrayPen,new Point(pos,30),new Point(pos,3000));
         }
 
         public void DrawTimeCode(PaintEventArgs e)
@@ -126,6 +141,17 @@ namespace VVVV.Nodes
             if(selectionRectangle != Rectangle.Empty)
             {
                 e.Graphics.DrawRectangle(GrayPen, selectionRectangle);
+            }
+        }
+
+        public void ApplyTimeZoom()
+        {
+            foreach (Clip myclip in clipList)
+            {
+                Point mypoint = new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Y);
+                Size mysize = new Size(myclip.Duration / timeZoom, myclip.Bounds.Size.Height);
+
+                myclip.Bounds = new Rectangle(mypoint, mysize);
             }
         }
 

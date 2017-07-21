@@ -6,19 +6,21 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Xml.Serialization;
+using System.IO;
 
 namespace VVVV.Nodes
 {
     partial class Interpole
     {
         public List<Clip> clipList = new List<Clip>();
-        int playPosFrames = 20;
+        int playPosFrames = 100;
         
         public void AddClip()
         {
             string input = "MyClip";
-            int startFrame = mousePos.X;
-            int duration = 60;
+            int startFrame = mousePos.X*timeZoom;
+            int duration = 160;
             string colorName = lastColorName;
 
             if (ClipDialog(ref input, ref startFrame, ref duration, ref colorName, "Add Clip", dpi) == DialogResult.OK)
@@ -32,11 +34,12 @@ namespace VVVV.Nodes
                     Name = input,
                     StartFrame = startFrame,
                     Duration = duration,
-                    Bounds = new Rectangle(new Point(startFrame,mousePos.Y), new Size(duration, 20)),
+                    Bounds = new Rectangle(new Point(startFrame/timeZoom,mousePos.Y), new Size(duration/timeZoom, 20)),
                     Color = colorName
                 });
 
                 lastColorName = colorName;
+                UpdateClipXML();
             }
         }
 
@@ -53,8 +56,9 @@ namespace VVVV.Nodes
                 clip.StartFrame = startFrame;
                 clip.Duration = duration;
                 clip.Color = colorName;
-                clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
+                clip.Bounds = new Rectangle(new Point(startFrame/timeZoom, clip.Bounds.Location.Y), new Size(duration/timeZoom, 20));
                 lastColorName = colorName;
+                UpdateClipXML();
             }
         }
 
@@ -64,19 +68,44 @@ namespace VVVV.Nodes
             {
                 int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
                 clip.Bounds = new Rectangle(new Point(dragHorizontal, clip.Bounds.Location.Y), clip.Bounds.Size);
-                clip.StartFrame = dragHorizontal;
+                clip.StartFrame = dragHorizontal*timeZoom;
+                UpdateClipXML();
             }
 
             if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
             {
                 int dragVertical = clip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
                 clip.Bounds = new Rectangle(new Point(clip.Bounds.Location.X, dragVertical), clip.Bounds.Size);
+                UpdateClipXML();
             }
         }
 
         public void DeleteClip(Clip clip)
         {
             clipList.Remove(clip);
+            UpdateClipXML();
+        }
+
+        private void UpdateClipXML()
+        {
+
+            ClipXML[0] = SerializeClipList(clipList); //save config
+            //StatesChanged = true;
+        }
+
+        public static string SerializeClipList(List<Clip> myList)
+        {
+            StringWriter sw = new StringWriter();
+            XmlSerializer s = new XmlSerializer(myList.GetType());
+            s.Serialize(sw, myList);
+            return sw.ToString();
+        }
+
+        public static List<Clip> DeserializeClipList(string data)
+        {
+            XmlSerializer xs = new XmlSerializer(typeof(List<Clip>));
+            List<Clip> newList = (List<Clip>)xs.Deserialize(new StringReader(data));
+            return newList;
         }
 
         public string Frames2Timecode(int frameCount, int frameRate)
@@ -108,5 +137,7 @@ namespace VVVV.Nodes
             { result.Append(chars[b % (chars.Length - 1)]); }
             return result.ToString();
         }
+
+       
     }
 }

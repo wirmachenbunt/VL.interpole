@@ -47,9 +47,16 @@ namespace VVVV.Nodes
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            FLogger.Log(LogType.Debug, e.Delta.ToString());
-            if (e.Delta > 0 && timeZoom < 20) timeZoom += 1;
-            if (e.Delta < 0 && timeZoom > 1) timeZoom -= 1;
+            if (e.Delta > 0 && timeZoom < 20)
+            {
+                timeZoom += 1;
+                ApplyTimeZoom();
+            }
+            if (e.Delta < 0 && timeZoom > 1)
+            {
+                timeZoom -= 1;
+                ApplyTimeZoom();
+            }
             this.Invalidate(); //redraw
         }
 
@@ -93,7 +100,7 @@ namespace VVVV.Nodes
 
             if (hitObject is Playbar)
             {
-                playPosFrames = mousePos.X;
+                playPosFrames = mousePos.X*timeZoom;
                 if (mousePos.X < 0) playPosFrames = 0;
             }
         }
