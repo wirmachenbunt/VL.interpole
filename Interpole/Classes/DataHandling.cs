@@ -88,13 +88,10 @@ namespace VVVV.Nodes
         public void EditTimeCode()
         {
             string input = Frames2Timecode(playPosFrames, Framerate[0]);
-            int framepos = 0;
             
-
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
-                playPosFrames = 1000;
-                FLogger.Log(LogType.Debug, "edit timecode");
+                playPosFrames = TimeCode2Frames(input, Framerate[0]);
                 Invalidate();
             }
             
@@ -132,10 +129,15 @@ namespace VVVV.Nodes
 
         public int TimeCode2Frames(string TimeCode, int frameRate)
         {
+            int frameCount = 0;
             var numbers = TimeCode.Split(':').Select(Int32.Parse).ToList();
 
+            if(numbers.Count == 4)
+            {
+                frameCount = numbers[3] + (numbers[2] * Framerate[0]) + (numbers[1] * 60 * Framerate[0]) + (numbers[0] * 60 * 60 * Framerate[0]);
+            }
             
-            return 20;
+            return frameCount;
         }
 
         public static string RNGCharacterMask()

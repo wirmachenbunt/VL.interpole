@@ -22,7 +22,8 @@ namespace VVVV.Nodes
             inputBox.StartPosition = FormStartPosition.Manual;
             inputBox.Location = new Point(Cursor.Position.X, Cursor.Position.Y);
 
-            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            inputBox.BackColor = Color.FromArgb(50, 50, 50);
             inputBox.ClientSize = size;
             inputBox.Text = DialogName;
 
@@ -47,6 +48,7 @@ namespace VVVV.Nodes
             framesLabel.Location = new System.Drawing.Point(88, 42);
             framesLabel.Size = new System.Drawing.Size(100, 23);
             framesLabel.Text = "StartFrame";
+            framesLabel.ForeColor = Color.FromArgb(200, 200,200);
             inputBox.Controls.Add(framesLabel);
 
             System.Windows.Forms.NumericUpDown timeUpDownend = new System.Windows.Forms.NumericUpDown();
@@ -63,6 +65,7 @@ namespace VVVV.Nodes
             framesLabelend.Location = new System.Drawing.Point(88, 72);
             framesLabelend.Size = new System.Drawing.Size(100, 23);
             framesLabelend.Text = "Duration (f)";
+            framesLabelend.ForeColor = Color.FromArgb(200, 200, 200);
             inputBox.Controls.Add(framesLabelend);
             #endregion
 
@@ -88,8 +91,13 @@ namespace VVVV.Nodes
             okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(90, 23);
-            okButton.Text = "&OK";
+            okButton.Text = "&Ok";
             okButton.Location = new System.Drawing.Point(5, 133);
+            okButton.FlatStyle = FlatStyle.Flat;
+            okButton.ForeColor = Color.FromArgb(200, 200, 200);
+            okButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            okButton.FlatAppearance.BorderSize = 0;
+            okButton.TabStop = false;
             inputBox.Controls.Add(okButton);
 
             Button cancelButton = new Button();
@@ -98,6 +106,11 @@ namespace VVVV.Nodes
             cancelButton.Size = new System.Drawing.Size(90, 23);
             cancelButton.Text = "&Cancel";
             cancelButton.Location = new System.Drawing.Point(size.Width - 95, 133);
+            cancelButton.FlatStyle = FlatStyle.Flat;
+            cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            cancelButton.TabStop = false;
+            cancelButton.FlatAppearance.BorderSize = 0;
+            cancelButton.ForeColor = Color.FromArgb(200, 200, 200);
 
 
             inputBox.Controls.Add(cancelButton);
@@ -120,14 +133,15 @@ namespace VVVV.Nodes
 
         public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName)
         {
-            System.Drawing.Size size = new System.Drawing.Size(200, 165);
+            System.Drawing.Size size = new System.Drawing.Size(190, 90);
 
             Form timecodeWindow = new Form();
 
             timecodeWindow.StartPosition = FormStartPosition.Manual;
             timecodeWindow.Location = new Point(Cursor.Position.X, Cursor.Position.Y);
 
-            timecodeWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            timecodeWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            timecodeWindow.BackColor = Color.FromArgb(50, 50, 50);
             timecodeWindow.ClientSize = size;
             timecodeWindow.Text = DialogName;
 
@@ -144,7 +158,11 @@ namespace VVVV.Nodes
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(90, 23);
             okButton.Text = "&OK";
-            okButton.Location = new System.Drawing.Point(5, 133);
+            okButton.Location = new System.Drawing.Point(5, 63);
+            okButton.FlatStyle = FlatStyle.Flat;
+            okButton.FlatAppearance.BorderSize = 0;
+            okButton.ForeColor = Color.FromArgb(200, 200, 200);
+            okButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
             timecodeWindow.Controls.Add(okButton);
 
             Button cancelButton = new Button();
@@ -152,7 +170,11 @@ namespace VVVV.Nodes
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(90, 23);
             cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 133);
+            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 63);
+            cancelButton.FlatStyle = FlatStyle.Flat;
+            cancelButton.FlatAppearance.BorderSize = 0;
+            cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            cancelButton.ForeColor = Color.FromArgb(200, 200, 200);
 
 
             timecodeWindow.Controls.Add(cancelButton);
@@ -162,7 +184,7 @@ namespace VVVV.Nodes
 
             DialogResult myresult = timecodeWindow.ShowDialog();
 
-            TimeCode = "empty";
+            TimeCode = textBox.Text;
             return myresult;
         }
 

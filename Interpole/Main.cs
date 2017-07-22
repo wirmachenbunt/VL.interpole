@@ -115,7 +115,7 @@ namespace VVVV.Nodes
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
-            if(needsUpdate) FLogger.Log(LogType.Debug, "update");
+            //if(needsUpdate) FLogger.Log(LogType.Debug, "update");
             //needsUpdate = false;
         }
     }
