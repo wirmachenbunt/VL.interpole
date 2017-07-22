@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Xml.Serialization;
 using System.IO;
+using VVVV.Core.Logging;
 
 namespace VVVV.Nodes
 {
@@ -87,12 +88,16 @@ namespace VVVV.Nodes
         public void EditTimeCode()
         {
             string input = Frames2Timecode(playPosFrames, Framerate[0]);
+            int framepos = 0;
+            
 
-            if (TimecodeDialog(ref input) == DialogResult.OK)
+            if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
-
+                playPosFrames = 1000;
+                FLogger.Log(LogType.Debug, "edit timecode");
+                Invalidate();
             }
-
+            
         }
 
         private void UpdateClipXML()
@@ -123,6 +128,14 @@ namespace VVVV.Nodes
             int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
             int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;     
             return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
+        }
+
+        public int TimeCode2Frames(string TimeCode, int frameRate)
+        {
+            var numbers = TimeCode.Split(':').Select(Int32.Parse).ToList();
+
+            
+            return 20;
         }
 
         public static string RNGCharacterMask()

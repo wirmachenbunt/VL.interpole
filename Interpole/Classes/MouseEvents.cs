@@ -44,7 +44,7 @@ namespace VVVV.Nodes
             if (hitObject == null && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
             if (hitObject is TimeCode && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
-            this.Invalidate(); //redraw
+            Invalidate(); //redraw
         }
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)

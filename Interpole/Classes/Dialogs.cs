@@ -118,25 +118,25 @@ namespace VVVV.Nodes
             return result;
         }
 
-        public static DialogResult TimecodeDialog(ref string TimeCode)
+        public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName)
         {
             System.Drawing.Size size = new System.Drawing.Size(200, 165);
 
-            Form inputBox = new Form();
+            Form timecodeWindow = new Form();
 
-            inputBox.StartPosition = FormStartPosition.Manual;
-            inputBox.Location = new Point(Cursor.Position.X, Cursor.Position.Y);
+            timecodeWindow.StartPosition = FormStartPosition.Manual;
+            timecodeWindow.Location = new Point(Cursor.Position.X, Cursor.Position.Y);
 
-            inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            inputBox.ClientSize = size;
-            inputBox.Text = "Timecode";
+            timecodeWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            timecodeWindow.ClientSize = size;
+            timecodeWindow.Text = DialogName;
 
             System.Windows.Forms.TextBox textBox = new TextBox();
             textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
             textBox.Text = TimeCode;
-            inputBox.Controls.Add(textBox);
+            timecodeWindow.Controls.Add(textBox);
 
             #region buttons
             Button okButton = new Button();
@@ -145,7 +145,7 @@ namespace VVVV.Nodes
             okButton.Size = new System.Drawing.Size(90, 23);
             okButton.Text = "&OK";
             okButton.Location = new System.Drawing.Point(5, 133);
-            inputBox.Controls.Add(okButton);
+            timecodeWindow.Controls.Add(okButton);
 
             Button cancelButton = new Button();
             cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
@@ -155,15 +155,15 @@ namespace VVVV.Nodes
             cancelButton.Location = new System.Drawing.Point(size.Width - 95, 133);
 
 
-            inputBox.Controls.Add(cancelButton);
-            inputBox.AcceptButton = okButton;
-            inputBox.CancelButton = cancelButton;
+            timecodeWindow.Controls.Add(cancelButton);
+            timecodeWindow.AcceptButton = okButton;
+            timecodeWindow.CancelButton = cancelButton;
             #endregion
 
-            DialogResult result = inputBox.ShowDialog();
+            DialogResult myresult = timecodeWindow.ShowDialog();
 
             TimeCode = "empty";
-            return result;
+            return myresult;
         }
 
         
