@@ -25,7 +25,7 @@ namespace VVVV.Nodes
         public float dpi = 1; //DPI Value
 
         Font clipFont = new Font("Serif", 8, FontStyle.Regular);
-        Font timeCodefont = new Font("Consolas", 12, FontStyle.Regular);
+        Font timeCodefont = new Font("Consolas", 20, FontStyle.Regular);
 
         Rectangle selectionRectangle = new Rectangle(); //multiselection rectangle
 

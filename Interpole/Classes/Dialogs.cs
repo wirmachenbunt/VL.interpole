@@ -31,6 +31,7 @@ namespace VVVV.Nodes
             textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Text = input;
+            textBox.TabStop = false;
             inputBox.Controls.Add(textBox);
 
             #region numerics
@@ -149,7 +150,10 @@ namespace VVVV.Nodes
             textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
+            textBox.TabStop = false;
+
             textBox.Text = TimeCode;
+            
             timecodeWindow.Controls.Add(textBox);
 
             #region buttons
