@@ -13,7 +13,7 @@ namespace VVVV.Nodes
     {
         string lastColorName = "Aqua";
          
-        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration, ref string colorName, string DialogName, float dpi)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn,ref int fadeOut, ref string colorName, string DialogName, float dpi)
         {
             System.Drawing.Size size = new System.Drawing.Size(250, 215);
 
@@ -73,14 +73,14 @@ namespace VVVV.Nodes
             #endregion
 
             #region numerics_fade
-            System.Windows.Forms.NumericUpDown fadeIn = new System.Windows.Forms.NumericUpDown();
-            fadeIn.Location = new System.Drawing.Point(10, 105);
-            fadeIn.Size = new System.Drawing.Size(109, 20);
-            fadeIn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            fadeIn.Maximum = Decimal.MaxValue;
-            fadeIn.Value = startFrame;
-            fadeIn.TabIndex = 0;
-            inputBox.Controls.Add(fadeIn);
+            System.Windows.Forms.NumericUpDown fadeInNum = new System.Windows.Forms.NumericUpDown();
+            fadeInNum.Location = new System.Drawing.Point(10, 105);
+            fadeInNum.Size = new System.Drawing.Size(109, 20);
+            fadeInNum.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            fadeInNum.Maximum = Decimal.MaxValue;
+            fadeInNum.Value = fadeIn;
+            fadeInNum.TabIndex = 0;
+            inputBox.Controls.Add(fadeInNum);
 
             System.Windows.Forms.Label fadeInLabel = new System.Windows.Forms.Label();
             fadeInLabel.Location = new System.Drawing.Point(10, 127);
@@ -89,15 +89,15 @@ namespace VVVV.Nodes
             fadeInLabel.ForeColor = Color.FromArgb(110, 110, 110);
             inputBox.Controls.Add(fadeInLabel);
 
-            System.Windows.Forms.NumericUpDown fadeOut = new System.Windows.Forms.NumericUpDown();
-            fadeOut.Location = new System.Drawing.Point(130, 105);
-            fadeOut.Size = new System.Drawing.Size(109, 20);
-            fadeOut.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            fadeOut.Maximum = Decimal.MaxValue;
-            fadeOut.Value = duration;
+            System.Windows.Forms.NumericUpDown fadeOutNum = new System.Windows.Forms.NumericUpDown();
+            fadeOutNum.Location = new System.Drawing.Point(130, 105);
+            fadeOutNum.Size = new System.Drawing.Size(109, 20);
+            fadeOutNum.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            fadeOutNum.Maximum = Decimal.MaxValue;
+            fadeOutNum.Value = fadeOut;
             //timeUpDownend.BackColor = Color.FromArgb(50, 50, 50);
-            fadeOut.TabIndex = 0;
-            inputBox.Controls.Add(fadeOut);
+            fadeOutNum.TabIndex = 0;
+            inputBox.Controls.Add(fadeOutNum);
 
             System.Windows.Forms.Label fadeOutLabel = new System.Windows.Forms.Label();
             fadeOutLabel.Location = new System.Drawing.Point(130, 127);
@@ -165,6 +165,8 @@ namespace VVVV.Nodes
             else input = "empty";
             startFrame = Convert.ToInt16(timeUpDown.Value);
             duration = Convert.ToInt16(timeUpDownend.Value);
+            fadeIn = Convert.ToInt16(fadeInNum.Value);
+            fadeOut = Convert.ToInt16(fadeOutNum.Value);
 
             colorName = cmbboxClr.SelectedItem.ToString();
             return result;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,10 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        public List<Clip> clipList = new List<Clip>();
+        //public List<Clip> clipList = new List<Clip>();
+        public ObservableCollection<Clip> clipList;
+       
+
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
         
@@ -23,9 +27,11 @@ namespace VVVV.Nodes
             string input = "MyClip";
             int startFrame = mousePos.X*timeZoom;
             int duration = 160;
+            int fadeIn = 0;
+            int fadeOut = 0;
             string colorName = lastColorName;
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref colorName, "Add Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Add Clip", dpi) == DialogResult.OK)
             {
                 //int duration = duration;
                 
@@ -36,6 +42,8 @@ namespace VVVV.Nodes
                     Name = input,
                     StartFrame = startFrame,
                     Duration = duration,
+                    FadeIn = fadeIn,
+                    FadeOut = fadeOut,
                     Bounds = new Rectangle(new Point(startFrame/timeZoom,mousePos.Y), new Size(duration/timeZoom, 20)),
                     Color = colorName
                 });
@@ -51,12 +59,16 @@ namespace VVVV.Nodes
             int startFrame = clip.StartFrame;
             int duration = clip.Duration;
             string colorName = clip.Color;
+            int fadeIn = clip.FadeIn;
+            int fadeOut = clip.FadeOut;
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref colorName, "Edit Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Edit Clip", dpi) == DialogResult.OK)
             {
                 clip.Name = input;
                 clip.StartFrame = startFrame;
                 clip.Duration = duration;
+                clip.FadeIn = fadeIn;
+                clip.FadeOut = fadeOut;
                 clip.Color = colorName;
                 clip.Bounds = new Rectangle(new Point(startFrame/timeZoom, clip.Bounds.Location.Y), new Size(duration/timeZoom, 20));
                 lastColorName = colorName;
@@ -102,6 +114,14 @@ namespace VVVV.Nodes
             
         }
 
+        void clipList_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            
+                FLogger.Log(LogType.Debug, "observable");
+                
+          
+        }
+
         private void UpdateClipXML()
         {
             ClipXML[0] = SerializeClipList(clipList); //save config
@@ -110,7 +130,7 @@ namespace VVVV.Nodes
             rememberLastFunction = "updateXML";
         }
 
-        public static string SerializeClipList(List<Clip> myList)
+        public static string SerializeClipList(ObservableCollection<Clip> myList)
         {
             StringWriter sw = new StringWriter();
             XmlSerializer s = new XmlSerializer(myList.GetType());
@@ -118,10 +138,10 @@ namespace VVVV.Nodes
             return sw.ToString();
         }
 
-        public static List<Clip> DeserializeClipList(string data)
+        public static ObservableCollection<Clip> DeserializeClipList(string data)
         {
-            XmlSerializer xs = new XmlSerializer(typeof(List<Clip>));
-            List<Clip> newList = (List<Clip>)xs.Deserialize(new StringReader(data));
+            XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<Clip>));
+            ObservableCollection<Clip> newList = (ObservableCollection<Clip>)xs.Deserialize(new StringReader(data));
             return newList;
         }
 

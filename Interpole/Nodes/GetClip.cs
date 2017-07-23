@@ -90,13 +90,16 @@ namespace VVVV.Nodes
 
         public void UpdateOutputs()
         {
-            
-            myclip = InterpoleIn[0].clipList[EnumClip[0].Index]; // get enum index of selected clip
+            try // fixes missing clip bug, when deleting a choosen clip
+            {
+                myclip = InterpoleIn[0].clipList[EnumClip[0].Index]; // get enum index of selected clip
 
-            int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
-            if (ClipFramePos < 0) ClipFramePos = 0;
-            if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
-            FramePosition[0] = ClipFramePos;
+                int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
+                if (ClipFramePos < 0) ClipFramePos = 0;
+                if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
+                FramePosition[0] = ClipFramePos;
+            }
+            catch {  }
         }
 
 

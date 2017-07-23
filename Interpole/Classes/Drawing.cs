@@ -75,8 +75,8 @@ namespace VVVV.Nodes
 
                 e.Graphics.FillRectangle(grayBrush, clip.Bounds);
 
-                int fadeIn = 50/timeZoom;
-                int fadeOut = 50/timeZoom;
+                int fadeIn = clip.FadeIn/timeZoom;
+                int fadeOut = clip.FadeOut/timeZoom;
 
                 Point[] points = {
                     new Point(clip.Bounds.X, clip.Bounds.Y+20),
