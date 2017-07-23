@@ -7,10 +7,13 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using VVVV.Core.Logging;
+using VVVV.PluginInterfaces.V2;
+
+
 
 namespace VVVV.Nodes
 {
-    partial class Interpole
+    partial class Interpole : IPluginEvaluate
     {
         #region variables
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
@@ -35,20 +38,29 @@ namespace VVVV.Nodes
         TimeCode mytimecode = new TimeCode();
         ZoomBar myzoombar = new ZoomBar();
 
+        
         #endregion
 
         public void MainDraw(object sender, PaintEventArgs e)
         {
           try
             {
-                e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
-                e.Graphics.ScaleTransform(dpi, dpi); //dpi scaling 
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
-                e.Graphics.Clear(MyBackgroundColor);
+                if (IsVisible)
+                {
+                    e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
+                    e.Graphics.ScaleTransform(dpi, dpi); //dpi scaling 
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
+                    e.Graphics.Clear(MyBackgroundColor);
 
-                DrawClips(e);
-                DrawPlayBar(e);
-                DrawSelectionRect(e);
+                    DrawClips(e);
+                    DrawPlayBar(e);
+                    DrawSelectionRect(e);
+                    //FLogger.Log(LogType.Debug, "Busy Drawing");
+
+                }
+
+
+                
 
             }
             catch { FLogger.Log(LogType.Debug, "Something went wrong with drawing !"); }
@@ -130,10 +142,8 @@ namespace VVVV.Nodes
             string Percentage = Convert.ToString(100 / timeZoom) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
-            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 20), new Size(50, 20)); //update playbar bounds
-            //e.Graphics.FillRectangle(grayBrush, myzoombar.Bounds); // background
-
-            e.Graphics.DrawString(Percentage, timeCodefont, textBrush, myzoombar.Bounds, format); //text
+            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15), new Size(50, 20)); //update playbar bounds
+            e.Graphics.DrawString(Percentage, clipFont, textBrush, myzoombar.Bounds, format); //text
         }
 
         public void DrawSelectionRect(PaintEventArgs e)
@@ -141,6 +151,7 @@ namespace VVVV.Nodes
             if(selectionRectangle != Rectangle.Empty)
             {
                 e.Graphics.DrawRectangle(GrayPen, selectionRectangle);
+                Invalidate(); //redraw
             }
         }
 
@@ -154,6 +165,24 @@ namespace VVVV.Nodes
                 myclip.Bounds = new Rectangle(mypoint, mysize);
             }
         }
+
+        public bool IsVisible
+        {
+            get
+            {
+                INode node = (INode)this.FHost; //IPluginHost imported from constructor or as property
+
+                if (node.Window != null)
+                {
+                    return node.Window.IsVisible();
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
 
     }
 }

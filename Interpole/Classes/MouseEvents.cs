@@ -33,10 +33,15 @@ namespace VVVV.Nodes
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+            if (hitObject is Clip && rememberLastFunction == "dragclip")
+            {
+                UpdateClipXML();
+            }
+
             hitObject = null; //clear hitObject in case there is no button pressed
             selectionRectangle = Rectangle.Empty;
             this.Invalidate(); //redraw
-            UpdateClipXML();
+            //UpdateClipXML();
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -76,7 +81,6 @@ namespace VVVV.Nodes
 
             deltaMousePos = mousePos;
 
-            this.Invalidate(); //redraw
         }
 
         private void Form_Keydown(object sender, KeyEventArgs e)
@@ -94,7 +98,8 @@ namespace VVVV.Nodes
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;
                 StagePos.X += deltaX;
-                if (StagePos.X > 0) StagePos.X = 0;         
+                if (StagePos.X > 0) StagePos.X = 0;
+                Invalidate();        
             }
         }
 
@@ -113,6 +118,7 @@ namespace VVVV.Nodes
                 playPosFrames = mousePos.X*timeZoom;
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
+                Invalidate(); //redraw
             }
         }
 

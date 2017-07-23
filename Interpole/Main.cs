@@ -38,6 +38,10 @@ namespace VVVV.Nodes
         [Import()]
         public ILogger FLogger;
 
+        [Import()]
+        IPluginHost FHost;
+
+
         bool initialized = false; // controlling init of plugin
         bool play = false;
         public bool needsUpdate = true;
@@ -74,7 +78,6 @@ namespace VVVV.Nodes
 
 
         #endregion constructor and init
-
 
         public void InitInterpole()
         {

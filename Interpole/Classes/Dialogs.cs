@@ -15,7 +15,7 @@ namespace VVVV.Nodes
          
         public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration, ref string colorName, string DialogName, float dpi)
         {
-            System.Drawing.Size size = new System.Drawing.Size(200, 165);
+            System.Drawing.Size size = new System.Drawing.Size(250, 215);
 
             Form inputBox = new Form();
 
@@ -28,17 +28,18 @@ namespace VVVV.Nodes
             inputBox.Text = DialogName;
 
             System.Windows.Forms.TextBox textBox = new TextBox();
-            textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
-            textBox.Location = new System.Drawing.Point(5, 5);
+            textBox.Size = new System.Drawing.Size(size.Width - 20, 33);
+            textBox.Location = new System.Drawing.Point(10, 10);
+            textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
             textBox.Text = input;
             textBox.TabStop = false;
             inputBox.Controls.Add(textBox);
 
-            #region numerics
+            #region numerics_start_end
             System.Windows.Forms.NumericUpDown timeUpDown = new System.Windows.Forms.NumericUpDown();
             timeUpDown.Name = "Time(f)";
-            timeUpDown.Location = new System.Drawing.Point(5, 39);
-            timeUpDown.Size = new System.Drawing.Size(80, 20);
+            timeUpDown.Location = new System.Drawing.Point(10, 62);
+            timeUpDown.Size = new System.Drawing.Size(109, 20);
             timeUpDown.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             timeUpDown.Maximum = Decimal.MaxValue;
             timeUpDown.Value = startFrame;
@@ -46,37 +47,74 @@ namespace VVVV.Nodes
             inputBox.Controls.Add(timeUpDown);
 
             System.Windows.Forms.Label framesLabel = new System.Windows.Forms.Label();
-            framesLabel.Location = new System.Drawing.Point(88, 42);
-            framesLabel.Size = new System.Drawing.Size(100, 23);
+            framesLabel.Location = new System.Drawing.Point(10, 83);
+            framesLabel.Size = new System.Drawing.Size(100, 15);
             framesLabel.Text = "StartFrame";
-            framesLabel.ForeColor = Color.FromArgb(200, 200,200);
+            framesLabel.ForeColor = Color.FromArgb(110, 110, 110);
             inputBox.Controls.Add(framesLabel);
 
             System.Windows.Forms.NumericUpDown timeUpDownend = new System.Windows.Forms.NumericUpDown();
             timeUpDownend.Name = "Time(f)";
-            timeUpDownend.Location = new System.Drawing.Point(5, 69);
-            timeUpDownend.Size = new System.Drawing.Size(80, 20);
+            timeUpDownend.Location = new System.Drawing.Point(130, 62);
+            timeUpDownend.Size = new System.Drawing.Size(109, 20);
             timeUpDownend.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             timeUpDownend.Maximum = Decimal.MaxValue;
             timeUpDownend.Value = duration;
+            //timeUpDownend.BackColor = Color.FromArgb(50, 50, 50);
             timeUpDownend.TabIndex = 0;
             inputBox.Controls.Add(timeUpDownend);
 
             System.Windows.Forms.Label framesLabelend = new System.Windows.Forms.Label();
-            framesLabelend.Location = new System.Drawing.Point(88, 72);
-            framesLabelend.Size = new System.Drawing.Size(100, 23);
-            framesLabelend.Text = "Duration (f)";
-            framesLabelend.ForeColor = Color.FromArgb(200, 200, 200);
+            framesLabelend.Location = new System.Drawing.Point(130, 83);
+            framesLabelend.Size = new System.Drawing.Size(100, 15);
+            framesLabelend.Text = "Duration in frames";
+            framesLabelend.ForeColor = Color.FromArgb(110, 110, 110);
             inputBox.Controls.Add(framesLabelend);
             #endregion
+
+            #region numerics_fade
+            System.Windows.Forms.NumericUpDown fadeIn = new System.Windows.Forms.NumericUpDown();
+            fadeIn.Location = new System.Drawing.Point(10, 105);
+            fadeIn.Size = new System.Drawing.Size(109, 20);
+            fadeIn.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            fadeIn.Maximum = Decimal.MaxValue;
+            fadeIn.Value = startFrame;
+            fadeIn.TabIndex = 0;
+            inputBox.Controls.Add(fadeIn);
+
+            System.Windows.Forms.Label fadeInLabel = new System.Windows.Forms.Label();
+            fadeInLabel.Location = new System.Drawing.Point(10, 127);
+            fadeInLabel.Size = new System.Drawing.Size(100, 15);
+            fadeInLabel.Text = "FadeIn in frames";
+            fadeInLabel.ForeColor = Color.FromArgb(110, 110, 110);
+            inputBox.Controls.Add(fadeInLabel);
+
+            System.Windows.Forms.NumericUpDown fadeOut = new System.Windows.Forms.NumericUpDown();
+            fadeOut.Location = new System.Drawing.Point(130, 105);
+            fadeOut.Size = new System.Drawing.Size(109, 20);
+            fadeOut.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            fadeOut.Maximum = Decimal.MaxValue;
+            fadeOut.Value = duration;
+            //timeUpDownend.BackColor = Color.FromArgb(50, 50, 50);
+            fadeOut.TabIndex = 0;
+            inputBox.Controls.Add(fadeOut);
+
+            System.Windows.Forms.Label fadeOutLabel = new System.Windows.Forms.Label();
+            fadeOutLabel.Location = new System.Drawing.Point(130, 127);
+            fadeOutLabel.Size = new System.Drawing.Size(100, 15);
+            fadeOutLabel.Text = "FadeOut in frames";
+            fadeOutLabel.ForeColor = Color.FromArgb(110, 110, 110);
+            inputBox.Controls.Add(fadeOutLabel); 
+            #endregion
+
 
             System.Windows.Forms.ComboBox cmbboxClr = new System.Windows.Forms.ComboBox();
             cmbboxClr.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cmbboxClr.DropDownWidth = size.Width - 10;
             cmbboxClr.ItemHeight = 20;
-            cmbboxClr.Location = new System.Drawing.Point(5, 100);
+            cmbboxClr.Location = new System.Drawing.Point(10, 150);
             cmbboxClr.Name = "cmbboxClr";
-            cmbboxClr.Size = new System.Drawing.Size(size.Width - 10, 20); 
+            cmbboxClr.Size = new System.Drawing.Size(size.Width - 20, 20); 
             Type colorType = typeof(System.Drawing.Color);
             
             PropertyInfo[] propInfoList = colorType.GetProperties(BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.Public);
@@ -91,9 +129,9 @@ namespace VVVV.Nodes
             Button okButton = new Button();
             okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             okButton.Name = "okButton";
-            okButton.Size = new System.Drawing.Size(90, 23);
+            okButton.Size = new System.Drawing.Size(120, 23);
             okButton.Text = "&Ok";
-            okButton.Location = new System.Drawing.Point(5, 133);
+            okButton.Location = new System.Drawing.Point(10, 183);
             okButton.FlatStyle = FlatStyle.Flat;
             okButton.ForeColor = Color.FromArgb(200, 200, 200);
             okButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
@@ -104,9 +142,9 @@ namespace VVVV.Nodes
             Button cancelButton = new Button();
             cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             cancelButton.Name = "cancelButton";
-            cancelButton.Size = new System.Drawing.Size(90, 23);
+            cancelButton.Size = new System.Drawing.Size(120, 23);
             cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 133);
+            cancelButton.Location = new System.Drawing.Point(size.Width - 130, 183);
             cancelButton.FlatStyle = FlatStyle.Flat;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
             cancelButton.TabStop = false;
@@ -155,6 +193,13 @@ namespace VVVV.Nodes
             textBox.Text = TimeCode;
             
             timecodeWindow.Controls.Add(textBox);
+
+            System.Windows.Forms.Label timeCodeLabel = new System.Windows.Forms.Label();
+            timeCodeLabel.Location = new System.Drawing.Point(5, 45);
+            timeCodeLabel.Size = new System.Drawing.Size(200, 15);
+            timeCodeLabel.Text = "hh:mm:ss:ff";
+            timeCodeLabel.ForeColor = Color.FromArgb(110, 110, 110);
+            timecodeWindow.Controls.Add(timeCodeLabel);
 
             #region buttons
             Button okButton = new Button();

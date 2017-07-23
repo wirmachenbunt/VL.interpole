@@ -16,6 +16,7 @@ namespace VVVV.Nodes
     {
         public List<Clip> clipList = new List<Clip>();
         public int playPosFrames = 100;
+        public string rememberLastFunction = "";  // keep track of last command
         
         public void AddClip()
         {
@@ -70,12 +71,16 @@ namespace VVVV.Nodes
                 int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
                 clip.Bounds = new Rectangle(new Point(dragHorizontal, clip.Bounds.Location.Y), clip.Bounds.Size);
                 clip.StartFrame = dragHorizontal*timeZoom;
+                rememberLastFunction = "dragclip";
+                Invalidate(); //redraw
             }
 
             if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
             {
                 int dragVertical = clip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
                 clip.Bounds = new Rectangle(new Point(clip.Bounds.Location.X, dragVertical), clip.Bounds.Size);
+                rememberLastFunction = "dragclip";
+                Invalidate(); //redraw
             }
         }
 
@@ -101,6 +106,8 @@ namespace VVVV.Nodes
         {
             ClipXML[0] = SerializeClipList(clipList); //save config
             needsUpdate = true;
+            FLogger.Log(LogType.Debug, "Update XML");
+            rememberLastFunction = "updateXML";
         }
 
         public static string SerializeClipList(List<Clip> myList)
