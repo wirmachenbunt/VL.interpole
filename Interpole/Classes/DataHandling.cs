@@ -15,8 +15,9 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        //public List<Clip> clipList = new List<Clip>();
+        
         public ObservableCollection<Clip> clipList;
+        public List<int> snapPos = new List<int>(); //snap position list
        
 
         public int playPosFrames = 100;
