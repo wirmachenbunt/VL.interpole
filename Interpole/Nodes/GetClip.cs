@@ -33,6 +33,9 @@ namespace VVVV.Nodes
         [Output("FramePosition")]
         public ISpread<int> FramePosition;
 
+        [Output("Normalized")]
+        public ISpread<double> Normalized;
+
         [Output("FadeInOut")]
         public ISpread<double> FadeInOut;
 
@@ -49,6 +52,7 @@ namespace VVVV.Nodes
         IPluginHost FHost;
 
         string EnumName;
+        bool invalidate = false;
 
         //private bool invalidate = true;
 
@@ -75,17 +79,39 @@ namespace VVVV.Nodes
 
         private void Input_Connected(object sender, PinConnectionEventArgs args)
         {
-            //invalidate = true;
+            invalidate = true;
             FLogger.Log(LogType.Debug, "connected");
         }
 
         public void UpdateEnum()
         {
-            if (InterpoleIn[0].clipList.Count > 0 && InterpoleIn[0].needsUpdate)
+            if (invalidate ||  InterpoleIn[0].needsUpdate)
             {
                 EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).ToArray());
+                invalidate = false;
+                InterpoleIn[0].needsUpdate = false;
             }
-            InterpoleIn[0].needsUpdate = false;
+            
+        }
+
+        public static double Clamp(double value, double min, double max)
+        {
+            return (value < min) ? min : (value > max) ? max : value;
+        }
+
+        public double CalcFade(Interpole.Clip myclip,int clipPos)
+        {
+            double value = 0.0;
+            value = ((double)1 / myclip.FadeIn) * clipPos;
+            value = Clamp(value, 0, 1);
+            if(myclip.Duration - clipPos <  myclip.FadeOut)
+            {
+                value = Clamp((((double)myclip.Duration - clipPos) / myclip.FadeOut), 0, 1);
+            }
+            
+          
+            
+            return value;
         }
 
         public void UpdateOutputs()
@@ -93,11 +119,17 @@ namespace VVVV.Nodes
             try // fixes missing clip bug, when deleting a choosen clip
             {
                 myclip = InterpoleIn[0].clipList[EnumClip[0].Index]; // get enum index of selected clip
-
+                
                 int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
                 if (ClipFramePos < 0) ClipFramePos = 0;
                 if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
                 FramePosition[0] = ClipFramePos;
+
+                FadeInOut[0] = CalcFade(myclip, ClipFramePos);
+                if (FadeInOut[0] > 0 ) IsActive[0] = true;
+                else IsActive[0] = false;
+                
+                //FLogger.Log(LogType.Debug, "GetClip");
             }
             catch {  }
         }
@@ -106,12 +138,13 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            UpdateEnum();
+            
 
             if (InterpoleIn.IsConnected)
             {
                 UpdateEnum();
                 UpdateOutputs();
+
 
             }
         }

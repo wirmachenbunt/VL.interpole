@@ -1,15 +1,15 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.7.dtd" >
-   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="420" scrolly="-9">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="60" scrolly="0">
    <BOUNDS type="Window" left="1440" top="9885" width="12465" height="6000">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="2" systemname="IOBox (Value Advanced)">
-   <BOUNDS type="Box" left="6750" top="2550" width="795" height="240">
+   <BOUNDS type="Box" left="9015" top="360" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="6750" top="2550" width="0" height="0">
+   <BOUNDS type="Node" left="9015" top="360" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="120">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="60">
    </PIN>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -21,9 +21,9 @@
    </PIN>
    </NODE>
    <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="3">
-   <BOUNDS type="Node" left="5640" top="3915" width="100" height="100">
+   <BOUNDS type="Node" left="9885" top="795" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="5640" top="3915" width="2400" height="1800">
+   <BOUNDS type="Box" left="9885" top="795" width="2400" height="1800">
    </BOUNDS>
    <BOUNDS type="Window" left="18810" top="9840" width="8715" height="5085">
    </BOUNDS>
@@ -31,9 +31,9 @@
    </PIN>
    </NODE>
    <NODE systemname="GetClip (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetClip (Clip Animation)" componentmode="Hidden" id="8">
-   <BOUNDS type="Node" left="4320" top="2370" width="1170" height="270">
+   <BOUNDS type="Node" left="4305" top="1515" width="1170" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="4320" top="2370" width="3000" height="3000">
+   <BOUNDS type="Box" left="4305" top="1515" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Interpole" visible="1" slicecount="1" values="||">
    </PIN>
@@ -45,11 +45,13 @@
    </PIN>
    <PIN pinname="FramePosition" visible="1">
    </PIN>
+   <PIN pinname="IsActive" visible="1">
+   </PIN>
    </NODE>
    <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="9">
-   <BOUNDS type="Box" left="5430" top="1185" width="1590" height="270">
+   <BOUNDS type="Box" left="5415" top="330" width="1590" height="270">
    </BOUNDS>
-   <BOUNDS type="Node" left="5430" top="1185" width="0" height="0">
+   <BOUNDS type="Node" left="5415" top="330" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Input Enum" slicecount="1" visible="1" values="|Coral Clip|">
    </PIN>
@@ -63,9 +65,9 @@
    <LINK srcnodeid="9" srcpinname="Output Enum" dstnodeid="8" dstpinname="Clip">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="11">
-   <BOUNDS type="Box" left="4890" top="2925" width="795" height="240">
+   <BOUNDS type="Box" left="4860" top="3270" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="4890" top="2925" width="0" height="0">
+   <BOUNDS type="Node" left="4860" top="3270" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -76,70 +78,10 @@
    </NODE>
    <LINK srcnodeid="8" srcpinname="FadeInOut" dstnodeid="11" dstpinname="Y Input Value">
    </LINK>
-   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="12">
-   <BOUNDS type="Node" left="9720" top="615" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="9720" top="615" width="795" height="240">
-   </BOUNDS>
-   <PIN pinname="Value Type" slicecount="1" values="Integer">
-   </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" values="20">
-   </PIN>
-   </NODE>
-   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="13">
-   <BOUNDS type="Node" left="7800" top="210" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="7800" top="210" width="795" height="240">
-   </BOUNDS>
-   <PIN pinname="Value Type" slicecount="1" values="Integer">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" values="42">
-   </PIN>
-   </NODE>
-   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="14">
-   <BOUNDS type="Node" left="8820" top="585" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="8820" top="585" width="795" height="240">
-   </BOUNDS>
-   <PIN pinname="Value Type" slicecount="1" values="Integer">
-   </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" values="40">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   </NODE>
-   <NODE systemname="Subtract (Value)" nodename="Subtract (Value)" componentmode="Hidden" id="15">
-   <BOUNDS type="Node" left="8295" top="1110" width="100" height="100">
-   </BOUNDS>
-   <PIN pinname="Input 1" visible="1" slicecount="1" values="0">
-   </PIN>
-   <PIN pinname="Input 2" visible="1" slicecount="1" values="0">
-   </PIN>
-   <PIN pinname="Output" visible="1">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="13" srcpinname="Y Output Value" dstnodeid="15" dstpinname="Input 1">
-   </LINK>
-   <LINK srcnodeid="14" srcpinname="Y Output Value" dstnodeid="15" dstpinname="Input 2">
-   </LINK>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="16">
-   <BOUNDS type="Box" left="8280" top="1770" width="795" height="240">
-   </BOUNDS>
-   <BOUNDS type="Node" left="8280" top="1770" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="15" srcpinname="Output" dstnodeid="16" dstpinname="Y Input Value">
-   </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="17">
-   <BOUNDS type="Box" left="3180" top="3330" width="795" height="240">
+   <BOUNDS type="Box" left="4305" top="2115" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="3180" top="3330" width="0" height="0">
+   <BOUNDS type="Node" left="4305" top="2115" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -153,33 +95,23 @@
    <LINK srcnodeid="8" srcpinname="FramePosition" dstnodeid="17" dstpinname="Y Input Value">
    </LINK>
    <NODE id="7" systemname="Interpole (GUI)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole (GUI)" componentmode="InAWindow">
-   <BOUNDS type="Window" left="1665" top="3270" width="20220" height="8925">
+   <BOUNDS type="Window" left="6090" top="540" width="20220" height="8925">
    </BOUNDS>
-   <BOUNDS type="Node" left="2340" top="720" width="100" height="100">
+   <BOUNDS type="Node" left="4290" top="135" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="2340" top="720" width="3000" height="3000">
+   <BOUNDS type="Box" left="4290" top="135" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Clips" visible="1">
    </PIN>
    <PIN pinname="Framerate" slicecount="1" values="60">
    </PIN>
-   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;U32jstLZ&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Hallo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;167&lt;/X&gt;&cr;&lf;        &lt;Y&gt;441&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;66&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;167&lt;/X&gt;&cr;&lf;      &lt;Y&gt;441&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;66&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1004&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;400&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;Ptg2a7kz&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Coral Clip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;52&lt;/X&gt;&cr;&lf;        &lt;Y&gt;210&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;52&lt;/X&gt;&cr;&lf;      &lt;Y&gt;210&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;312&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;100&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;7w3sOHuz&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Hallo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;319&lt;/X&gt;&cr;&lf;        &lt;Y&gt;173&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;319&lt;/X&gt;&cr;&lf;      &lt;Y&gt;173&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1916&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1001&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;50&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;100&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Gold&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;kL6hlGjR&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Insert&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;468&lt;/X&gt;&cr;&lf;        &lt;Y&gt;91&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;30&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;468&lt;/X&gt;&cr;&lf;      &lt;Y&gt;91&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;30&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2808&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;182&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;50&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Gold&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;pRRpojt4&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Second Coral2&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;170&lt;/X&gt;&cr;&lf;        &lt;Y&gt;271&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;83&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;170&lt;/X&gt;&cr;&lf;      &lt;Y&gt;271&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;83&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1020&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;500&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;IWCMMJq1&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Ballo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;130&lt;/X&gt;&cr;&lf;        &lt;Y&gt;474&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;130&lt;/X&gt;&cr;&lf;      &lt;Y&gt;474&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;784&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;33E8Insa&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Main Scene&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;416&lt;/X&gt;&cr;&lf;        &lt;Y&gt;392&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;416&lt;/X&gt;&cr;&lf;      &lt;Y&gt;392&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2500&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;SlOHYvhx&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Outro&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;658&lt;/X&gt;&cr;&lf;        &lt;Y&gt;450&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;666&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;658&lt;/X&gt;&cr;&lf;      &lt;Y&gt;450&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;666&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3952&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;4000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;lourdRJN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;80&lt;/X&gt;&cr;&lf;        &lt;Y&gt;515&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;80&lt;/X&gt;&cr;&lf;      &lt;Y&gt;515&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;484&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;20&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;VsOmOg7m&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Bärbel&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;176&lt;/X&gt;&cr;&lf;        &lt;Y&gt;322&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;176&lt;/X&gt;&cr;&lf;      &lt;Y&gt;322&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;166&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1059&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;SpringGreen&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;y6mLfSLN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Green Day&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;597&lt;/X&gt;&cr;&lf;        &lt;Y&gt;275&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;597&lt;/X&gt;&cr;&lf;      &lt;Y&gt;275&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3584&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;3000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;1000&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;GreenYellow&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;A1K9aSsN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Wiese&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;666&lt;/X&gt;&cr;&lf;        &lt;Y&gt;233&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;666&lt;/X&gt;&cr;&lf;      &lt;Y&gt;233&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;333&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3996&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;GreenYellow&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;bkwFJLd7&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Logo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;588&lt;/X&gt;&cr;&lf;        &lt;Y&gt;147&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;26&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;588&lt;/X&gt;&cr;&lf;      &lt;Y&gt;147&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;26&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3528&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;50&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Gold&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
+   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;U32jstLZ&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Hallo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;251&lt;/X&gt;&cr;&lf;        &lt;Y&gt;441&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;100&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;251&lt;/X&gt;&cr;&lf;      &lt;Y&gt;441&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;100&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1004&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;400&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;Ptg2a7kz&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Coral Clip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;78&lt;/X&gt;&cr;&lf;        &lt;Y&gt;210&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;125&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;78&lt;/X&gt;&cr;&lf;      &lt;Y&gt;210&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;125&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;312&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;500&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;100&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;pRRpojt4&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Second Coral2&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;255&lt;/X&gt;&cr;&lf;        &lt;Y&gt;271&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;125&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;255&lt;/X&gt;&cr;&lf;      &lt;Y&gt;271&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;125&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1020&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;500&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;200&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;IWCMMJq1&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Ballo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;196&lt;/X&gt;&cr;&lf;        &lt;Y&gt;474&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;250&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;196&lt;/X&gt;&cr;&lf;      &lt;Y&gt;474&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;250&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;784&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;33E8Insa&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Main Scene&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;625&lt;/X&gt;&cr;&lf;        &lt;Y&gt;392&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;625&lt;/X&gt;&cr;&lf;      &lt;Y&gt;392&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2500&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;SlOHYvhx&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Outro&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;988&lt;/X&gt;&cr;&lf;        &lt;Y&gt;450&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;1000&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;988&lt;/X&gt;&cr;&lf;      &lt;Y&gt;450&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;1000&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3952&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;4000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;lourdRJN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;121&lt;/X&gt;&cr;&lf;        &lt;Y&gt;515&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;121&lt;/X&gt;&cr;&lf;      &lt;Y&gt;515&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;484&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;20&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;VsOmOg7m&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Bärbel&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;264&lt;/X&gt;&cr;&lf;        &lt;Y&gt;322&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;250&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;264&lt;/X&gt;&cr;&lf;      &lt;Y&gt;322&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;250&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1059&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;SpringGreen&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;y6mLfSLN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Green Day&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;896&lt;/X&gt;&cr;&lf;        &lt;Y&gt;275&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;896&lt;/X&gt;&cr;&lf;      &lt;Y&gt;275&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3584&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;3000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;100&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;1000&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;GreenYellow&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;A1K9aSsN&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Wiese&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;999&lt;/X&gt;&cr;&lf;        &lt;Y&gt;233&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;999&lt;/X&gt;&cr;&lf;      &lt;Y&gt;233&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;500&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3996&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;2000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;GreenYellow&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;bkwFJLd7&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Logo&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;882&lt;/X&gt;&cr;&lf;        &lt;Y&gt;147&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;882&lt;/X&gt;&cr;&lf;      &lt;Y&gt;147&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;3528&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;50&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Gold&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
    </PIN>
    </NODE>
    <LINK srcnodeid="7" srcpinname="Clips" dstnodeid="8" dstpinname="Interpole">
    </LINK>
-   <NODE nodename="IOBox (Node)" componentmode="InABox" id="20">
-   <BOUNDS type="Box" left="1995" top="1920" width="795" height="240">
-   </BOUNDS>
-   <BOUNDS type="Node" left="1995" top="1920" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Descriptive Name" slicecount="1" values="Clips">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="7" srcpinname="Clips" dstnodeid="20" dstpinname="Input Node">
-   </LINK>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
-   <BOUNDS type="Node" left="6645" top="3000" width="100" height="100">
+   <BOUNDS type="Node" left="8910" top="810" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Time Mode" slicecount="1" values="Raw">
    </PIN>
@@ -189,9 +121,9 @@
    <LINK srcnodeid="2" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Background FPS">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="21">
-   <BOUNDS type="Box" left="5880" top="3255" width="480" height="480">
+   <BOUNDS type="Box" left="10125" top="135" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="5880" top="3255" width="0" height="0">
+   <BOUNDS type="Node" left="10125" top="135" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -209,37 +141,69 @@
    <LINK srcnodeid="21" srcpinname="Y Output Value" dstnodeid="3" dstpinname="Clear">
    </LINK>
    <NODE systemname="Renderer (EX9)" nodename="Renderer (EX9)" componentmode="InAWindow" id="22">
-   <BOUNDS type="Node" left="9810" top="2775" width="100" height="100">
+   <BOUNDS type="Node" left="9900" top="4695" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="9810" top="2775" width="2400" height="1800">
+   <BOUNDS type="Box" left="9900" top="4695" width="2400" height="1800">
    </BOUNDS>
-   <BOUNDS type="Window" left="22200" top="1710" width="6240" height="5085">
+   <BOUNDS type="Window" left="13980" top="9795" width="5880" height="4965">
    </BOUNDS>
    <PIN pinname="Layers" visible="1">
    </PIN>
    <PIN pinname="View" visible="1" slicecount="1" values="||">
    </PIN>
    </NODE>
-   <NODE systemname="PerfMeter (Debug)" filename="%VVVV%\lib\nodes\modules\Debug\PerfMeter (Debug).v4p" nodename="PerfMeter (Debug)" componentmode="Hidden" id="23">
-   <BOUNDS type="Node" left="10425" top="1230" width="100" height="100">
+   <NODE systemname="Group (EX9)" nodename="Group (EX9)" componentmode="Hidden" id="37">
+   <BOUNDS type="Node" left="9930" top="4125" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Layer" visible="1">
    </PIN>
-   </NODE>
-   <LINK srcnodeid="23" srcpinname="Layer" dstnodeid="22" dstpinname="Layers">
-   </LINK>
-   <NODE nodename="IOBox (Node)" componentmode="InABox" id="24">
-   <BOUNDS type="Box" left="11325" top="1860" width="795" height="240">
-   </BOUNDS>
-   <BOUNDS type="Node" left="11325" top="1860" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Input Node" slicecount="1" visible="1" values="||">
+   <PIN pinname="Layer 1" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="24" srcpinname="Output Node" dstnodeid="22" dstpinname="View">
-   <LINKPOINT x="11325" y="2100">
+   <LINK srcnodeid="37" srcpinname="Layer" dstnodeid="22" dstpinname="Layers">
+   </LINK>
+   <NODE systemname="Quad (DX9)" nodename="Quad (DX9)" componentmode="Hidden" id="38">
+   <BOUNDS type="Node" left="9900" top="3420" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   <PIN pinname="Color" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="38" srcpinname="Layer" dstnodeid="37" dstpinname="Layer 1">
+   </LINK>
+   <NODE systemname="HSL (Color Join)" nodename="HSL (Color Join)" componentmode="Hidden" id="39">
+   <BOUNDS type="Node" left="10860" top="2895" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Alpha" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="39" srcpinname="Output" dstnodeid="38" dstpinname="Color">
+   </LINK>
+   <LINK srcnodeid="8" srcpinname="FadeInOut" dstnodeid="39" dstpinname="Alpha" linkstyle="Bezier">
+   <LINKPOINT x="4920" y="2325">
    </LINKPOINT>
-   <LINKPOINT x="11280" y="1500">
+   <LINKPOINT x="11400" y="2325">
    </LINKPOINT>
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="40">
+   <BOUNDS type="Box" left="5400" top="2280" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5400" top="2280" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="IsActive">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="8" srcpinname="IsActive" dstnodeid="40" dstpinname="Y Input Value">
    </LINK>
    </PATCH>
