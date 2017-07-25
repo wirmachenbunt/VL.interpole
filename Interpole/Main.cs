@@ -29,6 +29,9 @@ namespace VVVV.Nodes
         [Config("Framerate",DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
+        [Input("Hide Window")]
+        public IDiffSpread<bool> FHideWindow;
+
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
 
@@ -40,6 +43,12 @@ namespace VVVV.Nodes
 
         [Import()]
         IPluginHost FHost;
+
+        [Import]
+        IHDEHost FHdeHost;
+
+        [Import]
+        IPluginHost2 FPluginHost;
 
 
         bool initialized = false; // controlling init of plugin
@@ -82,7 +91,10 @@ namespace VVVV.Nodes
 
         public void InitInterpole()
         {
-            if(!initialized)
+            //hide window programatically
+            if ( FHideWindow[0]) HideWindow();
+
+            if (!initialized)
             {
                 try
                 {
@@ -115,13 +127,13 @@ namespace VVVV.Nodes
             InitInterpole();
             Play();
 
-            //FLogger.Log(LogType.Debug, Convert.ToString(this.Width));
+           
 
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
             //if(needsUpdate) FLogger.Log(LogType.Debug, "update");
-            //needsUpdate = false;
+            
         }
     }
 }

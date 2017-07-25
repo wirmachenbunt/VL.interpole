@@ -183,6 +183,18 @@ namespace VVVV.Nodes
             }
         }
 
+        public void HideWindow()
+        {
+           
+            if(IsVisible)
+            {
+                var myPath = FPluginHost.GetNodePath(false);
+                var selfAsNode = FHdeHost.GetNodeFromPath(myPath);
+                FHdeHost.SetComponentMode(selfAsNode, ComponentMode.Hidden);
+            }
+            
+
+        }
 
     }
 }

@@ -15,6 +15,7 @@ namespace VVVV.Nodes
         public Point prevMousePos; //previous Mouse Pos
         public Point holdMousePos; // hold mouse for selection rectangle
         public Point deltaMousePos; // better delta variable, get rid of prevMouse
+        
 
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
