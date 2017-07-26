@@ -168,7 +168,7 @@ namespace VVVV.Nodes
         {
             
 
-            if (InterpoleIn.IsConnected)
+            if (InterpoleIn.IsConnected && InterpoleIn[0].clipList.Count > 0)
             {
                 UpdateEnum();
                 UpdateOutputs();

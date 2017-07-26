@@ -40,7 +40,7 @@ namespace VVVV.Nodes
             }
 
             hitObject = null; //clear hitObject in case there is no button pressed
-            selectionRectangle = Rectangle.Empty;
+            selectionRectangle.Size = new Size(0, 0);
             this.Invalidate(); //redraw
             //UpdateClipXML();
         }
@@ -81,6 +81,8 @@ namespace VVVV.Nodes
             if (hitObject is Clip) DragClip(hitObject,e);
 
             deltaMousePos = mousePos;
+
+            Invalidate();
 
         }
 
@@ -125,10 +127,11 @@ namespace VVVV.Nodes
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)
         {
-            if(hitObject == null && e.Button == MouseButtons.Left)
+            if(e.Button == MouseButtons.Left)
             {
                 Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
                 selectionRectangle = new Rectangle(holdMousePos, targetSize);
+                
             }
         }
  

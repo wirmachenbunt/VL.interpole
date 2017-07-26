@@ -148,11 +148,10 @@ namespace VVVV.Nodes
 
         public void DrawSelectionRect(PaintEventArgs e)
         {
-            if(selectionRectangle != Rectangle.Empty)
-            {
+          
                 e.Graphics.DrawRectangle(GrayPen, selectionRectangle);
-                Invalidate(); //redraw
-            }
+               
+           
         }
 
         public void ApplyTimeZoom()
