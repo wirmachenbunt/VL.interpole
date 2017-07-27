@@ -16,7 +16,9 @@ namespace VVVV.Nodes
     partial class Interpole
     {
         
-        public ObservableCollection<Clip> clipList;
+        //public ObservableCollection<Clip> clipList;
+        public List<Clip> clipList;
+
         public List<int> snapPos = new List<int>(); //snap position list
 
         public int playPosFrames = 100;
@@ -114,14 +116,6 @@ namespace VVVV.Nodes
             
         }
 
-        void clipList_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            
-                FLogger.Log(LogType.Debug, "observable");
-                
-          
-        }
-
         private void UpdateClipXML()
         {
             ClipXML[0] = SerializeClipList(clipList); //save config
@@ -130,7 +124,7 @@ namespace VVVV.Nodes
             rememberLastFunction = "updateXML";
         }
 
-        public static string SerializeClipList(ObservableCollection<Clip> myList)
+        public static string SerializeClipList(List<Clip> myList)
         {
             StringWriter sw = new StringWriter();
             XmlSerializer s = new XmlSerializer(myList.GetType());
@@ -138,10 +132,10 @@ namespace VVVV.Nodes
             return sw.ToString();
         }
 
-        public static ObservableCollection<Clip> DeserializeClipList(string data)
+        public static List<Clip> DeserializeClipList(string data)
         {
-            XmlSerializer xs = new XmlSerializer(typeof(ObservableCollection<Clip>));
-            ObservableCollection<Clip> newList = (ObservableCollection<Clip>)xs.Deserialize(new StringReader(data));
+            XmlSerializer xs = new XmlSerializer(typeof(List<Clip>));
+            List<Clip> newList = (List<Clip>)xs.Deserialize(new StringReader(data));
             return newList;
         }
 

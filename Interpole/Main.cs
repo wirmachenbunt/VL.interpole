@@ -101,7 +101,6 @@ namespace VVVV.Nodes
                     clipList = DeserializeClipList(ClipXML[0]);
                     FLogger.Log(LogType.Debug, "Interpole successful initialized");
                     ApplyTimeZoom();
-                    clipList.CollectionChanged += clipList_CollectionChanged;
                     Invalidate();
                 }
                 catch { FLogger.Log(LogType.Debug, "Loading clip list failed :("); }
