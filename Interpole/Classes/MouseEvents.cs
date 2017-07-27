@@ -28,6 +28,7 @@ namespace VVVV.Nodes
             SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
+            if (e.Button == MouseButtons.Left && hitObject is WorkSpace) selectionList.Clear(); // clear selection obviously
 
             this.Invalidate(); //redraw
         }
@@ -78,7 +79,10 @@ namespace VVVV.Nodes
 
             SetSelectionRectangle(e); // selection rectangle
 
+            //dragging
             if (hitObject is Clip) DragClip(hitObject,e);
+            if (selectionList.Count > 0 && e.Button == MouseButtons.Left && hitObject is Clip) DragSelection();
+
 
             deltaMousePos = mousePos;
 
@@ -130,14 +134,12 @@ namespace VVVV.Nodes
             if(e.Button == MouseButtons.Left && hitObject is WorkSpace)
             {
                 Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
-                selectionRectangle = new Rectangle(holdMousePos, targetSize);           
+                selectionRectangle = new Rectangle(holdMousePos, targetSize);
+                MultiSelectionClips();
             }
         }
 
-        public void MultiSelectionClips()
-        {
-            //hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X, mousePos.Y)));
-        }
+        
  
     }
 }

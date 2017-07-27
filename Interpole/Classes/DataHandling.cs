@@ -19,8 +19,6 @@ namespace VVVV.Nodes
         //public ObservableCollection<Clip> clipList;
         public List<Clip> clipList;
 
-        public List<int> snapPos = new List<int>(); //snap position list
-
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
         
@@ -96,6 +94,21 @@ namespace VVVV.Nodes
                 rememberLastFunction = "dragclip";
                 Invalidate(); //redraw
             }
+        }
+
+        public void DragSelection()
+        {
+            foreach (Clip myclip in selectionList)
+            {
+                int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
+                myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
+                myclip.StartFrame = dragHorizontal * timeZoom;
+                rememberLastFunction = "dragclip";
+                //FLogger.Log(LogType.Debug, "dragselection");
+                //Invalidate(); //redraw
+            }
+                
+            
         }
 
         public void DeleteClip(Clip clip)
@@ -182,6 +195,6 @@ namespace VVVV.Nodes
             return result.ToString();
         }
 
-       
+        
     }
 }
