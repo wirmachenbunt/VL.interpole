@@ -37,6 +37,7 @@ namespace VVVV.Nodes
         Playbar myplaybar = new Playbar();  // playbar
         TimeCode mytimecode = new TimeCode();
         ZoomBar myzoombar = new ZoomBar();
+        WorkSpace myworkspace = new WorkSpace();
 
         
         #endregion
@@ -107,6 +108,9 @@ namespace VVVV.Nodes
         {
             myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); //update playbar bounds
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+
+            // for workspace hittest
+            myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, this.Height));
 
             DrawZoomValue(e);
 

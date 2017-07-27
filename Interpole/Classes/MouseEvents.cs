@@ -47,7 +47,7 @@ namespace VVVV.Nodes
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (hitObject == null && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
+            if (hitObject is WorkSpace && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
             if (hitObject is TimeCode && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
             Invalidate(); //redraw
@@ -127,12 +127,16 @@ namespace VVVV.Nodes
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)
         {
-            if(e.Button == MouseButtons.Left)
+            if(e.Button == MouseButtons.Left && hitObject is WorkSpace)
             {
                 Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
-                selectionRectangle = new Rectangle(holdMousePos, targetSize);
-                
+                selectionRectangle = new Rectangle(holdMousePos, targetSize);           
             }
+        }
+
+        public void MultiSelectionClips()
+        {
+            //hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X, mousePos.Y)));
         }
  
     }

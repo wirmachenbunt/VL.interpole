@@ -74,5 +74,9 @@ namespace VVVV.Nodes
         {
 
         }
+        public class WorkSpace : UIelement
+        {
+
+        }
     }
 }

@@ -20,16 +20,20 @@ namespace VVVV.Nodes
             hitTestList.Clear();
             hitTestList.Add(myplaybar); //add playbar
             hitTestList.Add(mytimecode); //add timecode
-
             
-
             foreach(Clip myclip in clipList)
             {
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
-            } 
-            hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); // the actual hitTest
+            }
 
-            //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
+            // the actual hitTest
+
+            hitTestList.Add(myworkspace);
+
+
+            hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
+
+            FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
         }
 
     }
