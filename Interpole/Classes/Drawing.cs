@@ -166,13 +166,13 @@ namespace VVVV.Nodes
             {
                 SelectPen.Width = 3;
                 //SelectPen.DashStyle = DashStyle.Dash;
-               
+                Brush brush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
                 foreach (Clip clip in selectionList)
                 {
                     Color ClipColor = Color.FromName(clip.Color);
                     SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
-                    e.Graphics.DrawRectangle(SelectPen, clip.Bounds);
+                    e.Graphics.FillRectangle(brush, clip.Bounds);
                 }
             }
             
