@@ -22,9 +22,7 @@ namespace VVVV.Nodes
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
-        Pen SelectPen = new Pen(Color.FromArgb(150, 150, 150));
-        
-
+  
         public Point StagePos; //StagePosition
         public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
@@ -164,8 +162,7 @@ namespace VVVV.Nodes
 
             if (selectionList.Count > 0)
             {
-                SelectPen.Width = 3;
-                //SelectPen.DashStyle = DashStyle.Dash;
+               
                 Brush brush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
                 foreach (Clip clip in selectionList)
                 {
