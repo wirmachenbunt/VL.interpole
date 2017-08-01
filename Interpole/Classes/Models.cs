@@ -66,7 +66,7 @@ namespace VVVV.Nodes
         {
 
         }
-        public class TimeCode : UIelement
+        public class TimeCodeDisplay : UIelement
         {
             
         }
@@ -76,6 +76,34 @@ namespace VVVV.Nodes
         }
         public class WorkSpace : UIelement
         {
+
+        }
+
+        public class TimeCode
+        {
+            public int Hours
+            {
+                get;
+                set;
+            }
+
+            public int Minutes
+            {
+                get;
+                set;
+            }
+
+            public int Seconds
+            {
+                get;
+                set;
+            }
+
+            public int Frames
+            {
+                get;
+                set;
+            }
 
         }
     }

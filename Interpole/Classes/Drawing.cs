@@ -33,7 +33,7 @@ namespace VVVV.Nodes
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
         Playbar myplaybar = new Playbar();  // playbar
-        TimeCode mytimecode = new TimeCode();
+        TimeCodeDisplay mytimecode = new TimeCodeDisplay();
         ZoomBar myzoombar = new ZoomBar();
         WorkSpace myworkspace = new WorkSpace();
 

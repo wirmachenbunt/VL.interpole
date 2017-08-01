@@ -32,6 +32,12 @@ namespace VVVV.Nodes
         [Input("Hide Window")]
         public IDiffSpread<bool> FHideWindow;
 
+        [Input("Timecode")]
+        public IDiffSpread<TimeCode> FTimecode;
+
+        [Input("Set Timecode")]
+        public IDiffSpread<bool> FSetTimecode;
+
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
 
@@ -118,6 +124,16 @@ namespace VVVV.Nodes
                 Invalidate();
             }
             
+        }
+
+        public void ExternalTimecode()
+        {
+            if (FSetTimecode[0])
+            {
+                TimeCode mytimecode = FTimecode[0];
+
+
+            }
         }
 
 
