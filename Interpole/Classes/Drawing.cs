@@ -163,13 +163,13 @@ namespace VVVV.Nodes
             if (selectionList.Count > 0)
             {
                
-                Brush brush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
+                Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
                 foreach (Clip clip in selectionList)
                 {
                     Color ClipColor = Color.FromName(clip.Color);
                     SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
-                    e.Graphics.FillRectangle(brush, clip.Bounds);
+                    e.Graphics.FillRectangle(selectbrush, clip.Bounds);
                 }
             }
             
