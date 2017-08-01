@@ -114,6 +114,7 @@ namespace VVVV.Nodes
             if (play)
             {
                 playPosFrames += 1;
+                PlaybackMoveStage();
                 Invalidate();
             }
             
