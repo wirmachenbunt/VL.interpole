@@ -16,18 +16,15 @@ using VVVV.Core.Logging;
 namespace VVVV.Nodes
 {
     #region PluginInfo
-    [PluginInfo(Name = "Join Timecode",
+    [PluginInfo(Name = "Join",
                 Category = "Clip Animation",
-                Help = "get a clip information",
+                Help = "join timecode values",
                 Tags = "",
-                AutoEvaluate = true)]
+                AutoEvaluate = false)]
     #endregion PluginInfo
     public class Join : IPluginEvaluate
     {
-        #region fields & pins
-
-
-        
+        #region fields & pins    
 
         [Input("Hours")]
         public IDiffSpread<int> FHours;
@@ -44,29 +41,29 @@ namespace VVVV.Nodes
         [Output("Timecode")]
         public ISpread<Interpole.TimeCode> FTimeCode;
 
-        Interpole.Clip myclip = new Interpole.Clip();
-
         [Import()]
         public ILogger FLogger;
-       
 
-       
+        Interpole.TimeCode mytimecode = new Interpole.TimeCode();
 
         #endregion fields & pins
 
 
-     
-
-   
-
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
+            if(FHours.IsChanged ||
+                FMinutes.IsChanged ||
+                FSeconds.IsChanged ||
+                FFrames.IsChanged)
+            {
+                mytimecode.Hours = FHours[0];
+                mytimecode.Minutes = FMinutes[0];
+                mytimecode.Seconds = FSeconds[0];
+                mytimecode.Frames = FFrames[0];
 
-
+                FTimeCode[0] = mytimecode;
+            }
         }
-
-
-
     }
 }

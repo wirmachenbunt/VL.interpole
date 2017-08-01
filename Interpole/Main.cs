@@ -117,23 +117,17 @@ namespace VVVV.Nodes
 
         public void Play()
         {
-            if (play)
+            if (play && !FSetTimecode[0])
             {
                 playPosFrames += 1;
                 PlaybackMoveStage();
                 Invalidate();
+            } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode
+            {
+                play = false;
+                FLogger.Log(LogType.Debug, FTimecode[0].Frames.ToString());
             }
             
-        }
-
-        public void ExternalTimecode()
-        {
-            if (FSetTimecode[0])
-            {
-                TimeCode mytimecode = FTimecode[0];
-
-
-            }
         }
 
 
@@ -142,7 +136,7 @@ namespace VVVV.Nodes
         {
             InitInterpole();
             Play();
-
+            
            
 
             ClipsOut.SliceCount = 1; // set output for additional nodes
