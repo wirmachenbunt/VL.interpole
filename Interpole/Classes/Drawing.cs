@@ -188,8 +188,13 @@ namespace VVVV.Nodes
 
         public void PlaybackMoveStage()
         {
-            int pos = playPosFrames / timeZoom;   
-            if (pos > (this.Width / 2) && IsVisible) StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);         
+            int pos = playPosFrames / timeZoom;
+            if (pos > (this.Width / 2) && IsVisible)
+            {
+
+                StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
+            }
+
         }
 
         public bool IsVisible
