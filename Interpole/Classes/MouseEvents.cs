@@ -140,15 +140,16 @@ namespace VVVV.Nodes
         public void UpdateSnapList()
         {
             snapPosList.Clear();
-            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
-
-            FLogger.Log(LogType.Debug, snapClipList.Count.ToString());
+            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();       
 
             foreach (Clip myclip in snapClipList)
             {
                 snapPosList.Add(myclip.Bounds.X);
+                snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width);
+                if(myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn/timeZoom));
+                if (myclip.FadeOut > 0) snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width - (myclip.FadeOut / timeZoom));
             }
-
+            FLogger.Log(LogType.Debug, snapPosList.Count.ToString());
         }
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)
