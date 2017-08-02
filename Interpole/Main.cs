@@ -115,17 +115,21 @@ namespace VVVV.Nodes
             }
         }
 
+        // PLAYBACK METHODE
         public void Play()
         {
             if (play && !FSetTimecode[0])
             {
                 playPosFrames += 1;
-                PlaybackMoveStage();
+                PlaybackMoveStage(); // scroll stage when playback
                 Invalidate();
+
             } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode
             {
                 play = false;
-                FLogger.Log(LogType.Debug, FTimecode[0].Frames.ToString());
+                playPosFrames = FTimecode[0].Frames + (FTimecode[0].Seconds * Framerate[0]) + (FTimecode[0].Minutes * 60 * Framerate[0]) + (FTimecode[0].Hours * 60 * 60 * Framerate[0]);
+                PlaybackMoveStage(); // scroll stage when playback
+                Invalidate();
             }
             
         }

@@ -86,7 +86,7 @@ namespace VVVV.Nodes
 
             deltaMousePos = mousePos;
 
-            Invalidate();
+            //Invalidate();
 
         }
 
@@ -136,6 +136,7 @@ namespace VVVV.Nodes
                 Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
                 selectionRectangle = new Rectangle(holdMousePos, targetSize);
                 MultiSelectionClips();
+                Invalidate();
             }
         }
 

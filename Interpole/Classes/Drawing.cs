@@ -37,7 +37,8 @@ namespace VVVV.Nodes
         ZoomBar myzoombar = new ZoomBar();
         WorkSpace myworkspace = new WorkSpace();
 
-        
+
+
         #endregion
 
         public void MainDraw(object sender, PaintEventArgs e)
