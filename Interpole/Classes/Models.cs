@@ -78,7 +78,6 @@ namespace VVVV.Nodes
         {
 
         }
-
         public class TimeCode
         {
             public int Hours

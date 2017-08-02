@@ -18,6 +18,7 @@ namespace VVVV.Nodes
         
         //public ObservableCollection<Clip> clipList;
         public List<Clip> clipList;
+        public List<int> snapPosList = new List<int>();
 
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command

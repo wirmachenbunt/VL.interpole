@@ -25,6 +25,8 @@ namespace VVVV.Nodes
 
             hittest(); //global hittest for everything
 
+            UpdateSnapList(); // update snap positions
+
             SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
@@ -133,6 +135,20 @@ namespace VVVV.Nodes
                 play = false;
                 Invalidate(); //redraw
             }
+        }
+
+        public void UpdateSnapList()
+        {
+            snapPosList.Clear();
+            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
+
+            FLogger.Log(LogType.Debug, snapClipList.Count.ToString());
+
+            foreach (Clip myclip in snapClipList)
+            {
+                snapPosList.Add(myclip.Bounds.X);
+            }
+
         }
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)

@@ -57,6 +57,8 @@ namespace VVVV.Nodes
                     DrawPlayBar(e);
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
+
+                    DrawSnapPositions(e);
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
 
                 }
@@ -173,6 +175,19 @@ namespace VVVV.Nodes
                 }
             }
             
+        }
+        
+        //debug draw for snap positions
+        public void DrawSnapPositions(PaintEventArgs e)
+        {
+            if(snapPosList.Count > 0)
+            {
+                Pen DebugPen = new Pen(Color.BlueViolet);
+                foreach (int pos in snapPosList)
+                {
+                    e.Graphics.DrawLine(DebugPen, new Point(pos, 30), new Point(pos, 3000));
+                }
+            } 
         }
 
         public void ApplyTimeZoom()
