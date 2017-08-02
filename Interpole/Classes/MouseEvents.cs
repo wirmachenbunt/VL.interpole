@@ -96,6 +96,12 @@ namespace VVVV.Nodes
             {
                 play = !play; // invert bool play
             }
+
+            if (e.KeyCode == Keys.R)
+            {
+                StagePos.X = 0;
+                Invalidate();
+            }
         }
 
         public void CalcStagePosition(Point mousePos, bool click)
@@ -140,7 +146,5 @@ namespace VVVV.Nodes
             }
         }
 
-        
- 
     }
 }

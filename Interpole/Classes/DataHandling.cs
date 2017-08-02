@@ -105,7 +105,7 @@ namespace VVVV.Nodes
                 myclip.StartFrame = dragHorizontal * timeZoom;
                 rememberLastFunction = "dragclip";
                 //FLogger.Log(LogType.Debug, "dragselection");
-                //Invalidate(); //redraw
+                Invalidate(); //redraw
             }
                 
             
@@ -194,6 +194,7 @@ namespace VVVV.Nodes
             { result.Append(chars[b % (chars.Length - 1)]); }
             return result.ToString();
         }
+
 
         
     }

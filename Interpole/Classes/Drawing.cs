@@ -20,6 +20,7 @@ namespace VVVV.Nodes
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
+        Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
   
@@ -152,8 +153,9 @@ namespace VVVV.Nodes
 
         public void DrawSelectionRect(PaintEventArgs e)
         {
-          
-                e.Graphics.DrawRectangle(GrayPen, selectionRectangle);
+
+            Brush selectbrush = new SolidBrush(Color.FromArgb(50, 255, 255, 255));
+            e.Graphics.FillRectangle(selectbrush, selectionRectangle);
                
            
         }
@@ -164,12 +166,9 @@ namespace VVVV.Nodes
             if (selectionList.Count > 0)
             {
                
-                Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
+                
                 foreach (Clip clip in selectionList)
                 {
-                    Color ClipColor = Color.FromName(clip.Color);
-                    SolidBrush ClipBrush = new SolidBrush(ClipColor);
-
                     e.Graphics.FillRectangle(selectbrush, clip.Bounds);
                 }
             }
@@ -195,6 +194,12 @@ namespace VVVV.Nodes
 
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
             }
+
+        }
+
+        public void SnapToClip()
+        {
+            //float closest = MyStuff.OrderBy(n => Math.Abs(n - 21)).First(); //find closest value
 
         }
 
