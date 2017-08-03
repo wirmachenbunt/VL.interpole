@@ -58,7 +58,7 @@ namespace VVVV.Nodes
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
-                    DrawSnapPositions(e);
+                    //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
 
                 }
@@ -209,12 +209,6 @@ namespace VVVV.Nodes
 
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
             }
-
-        }
-
-        public void SnapToClip()
-        {
-            //float closest = MyStuff.OrderBy(n => Math.Abs(n - 21)).First(); //find closest value
 
         }
 

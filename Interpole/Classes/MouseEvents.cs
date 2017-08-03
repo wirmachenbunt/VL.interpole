@@ -27,7 +27,7 @@ namespace VVVV.Nodes
 
             UpdateSnapList(); // update snap positions
 
-            SetPlayPosition();// set playhead
+            SetPlayPosition(e);// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
             if (e.Button == MouseButtons.Left && hitObject is WorkSpace) selectionList.Clear(); // clear selection obviously
@@ -77,7 +77,7 @@ namespace VVVV.Nodes
 
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
 
-            SetPlayPosition(); // set playhead
+            SetPlayPosition(e); // set playhead
 
             SetSelectionRectangle(e); // selection rectangle
 
@@ -124,7 +124,7 @@ namespace VVVV.Nodes
             mousePos.Y = Convert.ToInt32((e.Y - StagePos.Y) / dpi);
         }
 
-        public void SetPlayPosition()
+        public void SetPlayPosition(MouseEventArgs e)
         {
            
 
@@ -133,10 +133,27 @@ namespace VVVV.Nodes
                 playPosFrames = mousePos.X*timeZoom;
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
+
+                // snap playhead to clip in out
+                if(Form.ModifierKeys == Keys.Shift)
+                {
+                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames/timeZoom))).First();
+
+                    int distance = Math.Abs(playPosFrames / timeZoom - closest);
+
+                    if (distance < 12) playPosFrames = closest * timeZoom;
+
+                    //FLogger.Log(LogType.Debug, distance.ToString());
+                }
                 Invalidate(); //redraw
             }
         }
 
+        public void SnapToClip()
+        {
+            //float closest = MyStuff.OrderBy(n => Math.Abs(n - 21)).First(); //find closest value
+
+        }
         public void UpdateSnapList()
         {
             snapPosList.Clear();
@@ -149,7 +166,7 @@ namespace VVVV.Nodes
                 if(myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn/timeZoom));
                 if (myclip.FadeOut > 0) snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width - (myclip.FadeOut / timeZoom));
             }
-            FLogger.Log(LogType.Debug, snapPosList.Count.ToString());
+            //FLogger.Log(LogType.Debug, snapPosList.Count.ToString());
         }
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)

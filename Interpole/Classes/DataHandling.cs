@@ -79,6 +79,8 @@ namespace VVVV.Nodes
 
         public void DragClip(Clip clip, System.Windows.Forms.MouseEventArgs e)
         {
+
+            /*
             if (e.Button == MouseButtons.Left && Form.ModifierKeys == Keys.Control)
             {
                 int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
@@ -87,6 +89,7 @@ namespace VVVV.Nodes
                 rememberLastFunction = "dragclip";
                 Invalidate(); //redraw
             }
+            */
 
             if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
             {
