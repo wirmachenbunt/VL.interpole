@@ -111,10 +111,23 @@ namespace VVVV.Nodes
                 rememberLastFunction = "dragclip";
                 Invalidate(); //redraw
             }
+
+            // snap first clip to playhead function
             if (Form.ModifierKeys == Keys.Shift)
             {
                 Clip firstClip = selectionList.OrderBy(n => n.StartFrame).First();
-                FLogger.Log(LogType.Debug, firstClip.Name);
+                int distance = firstClip.StartFrame - playPosFrames;
+                if (Math.Abs(distance) < 20)
+                {
+                    FLogger.Log(LogType.Debug, "within distance");
+                    //int previousStartFrame = firstClip.StartFrame;
+                    foreach (Clip myclip in selectionList)
+                    {
+                        myclip.StartFrame = myclip.StartFrame - distance;
+                        myclip.Bounds = new Rectangle(new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Location.Y), myclip.Bounds.Size);
+                    }
+
+                }
             }
                 
         }
