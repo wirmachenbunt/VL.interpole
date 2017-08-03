@@ -37,7 +37,7 @@ namespace VVVV.Nodes
 
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
 
-            FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
+            //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
         }
 
         public void MultiSelectionClips()

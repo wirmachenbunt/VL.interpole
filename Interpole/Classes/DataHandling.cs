@@ -119,14 +119,13 @@ namespace VVVV.Nodes
                 int distance = firstClip.StartFrame - playPosFrames;
                 if (Math.Abs(distance) < 20)
                 {
-                    FLogger.Log(LogType.Debug, "within distance");
-                    //int previousStartFrame = firstClip.StartFrame;
+                    //FLogger.Log(LogType.Debug, "within distance");
                     foreach (Clip myclip in selectionList)
                     {
                         myclip.StartFrame = myclip.StartFrame - distance;
                         myclip.Bounds = new Rectangle(new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                     }
-
+                    rememberLastFunction = "dragclip";
                 }
             }
                 

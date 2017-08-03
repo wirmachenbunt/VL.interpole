@@ -52,7 +52,7 @@ namespace VVVV.Nodes
         {
             if (hitObject is WorkSpace && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
-            if (hitObject is TimeCode && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
+            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
             Invalidate(); //redraw
         }
 
