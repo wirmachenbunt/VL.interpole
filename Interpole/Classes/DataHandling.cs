@@ -102,17 +102,21 @@ namespace VVVV.Nodes
 
         public void DragSelection()
         {
+            // standard drag
             foreach (Clip myclip in selectionList)
             {
                 int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
                 myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                 myclip.StartFrame = dragHorizontal * timeZoom;
                 rememberLastFunction = "dragclip";
-                //FLogger.Log(LogType.Debug, "dragselection");
                 Invalidate(); //redraw
             }
+            if (Form.ModifierKeys == Keys.Shift)
+            {
+                Clip firstClip = selectionList.OrderBy(n => n.StartFrame).First();
+                FLogger.Log(LogType.Debug, firstClip.Name);
+            }
                 
-            
         }
 
         public void DeleteClip(Clip clip)

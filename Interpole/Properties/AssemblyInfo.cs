@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Clips")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Interpole")]
+[assembly: AssemblyDescription("a clip based timeline")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Clips")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCompany("wirmachenbunt")]
+[assembly: AssemblyProduct("Interpole")]
+[assembly: AssemblyCopyright("Copyright ©  2017 Christian Engler")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

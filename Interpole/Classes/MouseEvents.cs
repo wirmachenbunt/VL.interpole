@@ -27,7 +27,7 @@ namespace VVVV.Nodes
 
             UpdateSnapList(); // update snap positions
 
-            SetPlayPosition(e);// set playhead
+            SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
             if (e.Button == MouseButtons.Left && hitObject is WorkSpace) selectionList.Clear(); // clear selection obviously
@@ -77,7 +77,7 @@ namespace VVVV.Nodes
 
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
 
-            SetPlayPosition(e); // set playhead
+            SetPlayPosition(); // set playhead
 
             SetSelectionRectangle(e); // selection rectangle
 
@@ -124,7 +124,7 @@ namespace VVVV.Nodes
             mousePos.Y = Convert.ToInt32((e.Y - StagePos.Y) / dpi);
         }
 
-        public void SetPlayPosition(MouseEventArgs e)
+        public void SetPlayPosition()
         {
            
 
@@ -149,11 +149,6 @@ namespace VVVV.Nodes
             }
         }
 
-        public void SnapToClip()
-        {
-            //float closest = MyStuff.OrderBy(n => Math.Abs(n - 21)).First(); //find closest value
-
-        }
         public void UpdateSnapList()
         {
             snapPosList.Clear();
