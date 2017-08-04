@@ -110,7 +110,12 @@ namespace VVVV.Nodes
         public void DrawPlayBar(PaintEventArgs e)
         {
             myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); //update playbar bounds
-            e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+
+            // show pre-roll
+            if(playPosFrames > 400000) e.Graphics.FillRectangle(new SolidBrush(Color.OrangeRed), myplaybar.Bounds); // background
+            else e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+
+            FLogger.Log(LogType.Debug, playPosFrames.ToString());
 
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, this.Height));
@@ -209,7 +214,7 @@ namespace VVVV.Nodes
 
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
             }
-
+            if (StagePos.X < 0) StagePos.X = 0;
         }
 
         public bool IsVisible

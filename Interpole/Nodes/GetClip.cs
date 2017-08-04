@@ -144,7 +144,7 @@ namespace VVVV.Nodes
 
 
                     //is clip active ?
-                    if (fadeInOut > 0) IsActive.Add(true);
+                    if (fadeInOut > 0 ) IsActive.Add(true);
                     else IsActive.Add(false);
 
                     //get relative pointer position normalized
