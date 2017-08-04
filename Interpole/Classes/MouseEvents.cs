@@ -15,11 +15,11 @@ namespace VVVV.Nodes
         public Point prevMousePos; //previous Mouse Pos
         public Point holdMousePos; // hold mouse for selection rectangle
         public Point deltaMousePos; // better delta variable, get rid of prevMouse
-        
+
 
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            
+
             prevMousePos = MousePosition; // for delta calculation below
             holdMousePos = mousePos; //keep last Mouseposition for rectangle selection
 
@@ -80,10 +80,10 @@ namespace VVVV.Nodes
             SetPlayPosition(); // set playhead
 
             SetSelectionRectangle(e); // selection rectangle
-            
+
 
             //dragging single clip
-            if (hitObject is Clip) DragClip(hitObject,e);
+            if (hitObject is Clip) DragClip(hitObject, e);
 
             //dragging multiselection
             if (selectionList.Count > 0 && e.Button == MouseButtons.Left && selectionList.Any(cus => cus == hitObject)) DragSelection();
@@ -114,7 +114,7 @@ namespace VVVV.Nodes
                 prevMousePos = mousePos;
                 StagePos.X += deltaX;
                 if (StagePos.X > 0) StagePos.X = 0;
-                Invalidate();        
+                Invalidate();
             }
         }
 
@@ -126,18 +126,18 @@ namespace VVVV.Nodes
 
         public void SetPlayPosition()
         {
-           
+
 
             if (hitObject is Playbar)
             {
-                playPosFrames = mousePos.X*timeZoom;
+                playPosFrames = mousePos.X * timeZoom;
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
 
                 // snap playhead to clip in out
-                if(Form.ModifierKeys == Keys.Shift)
+                if (Form.ModifierKeys == Keys.Shift)
                 {
-                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames/timeZoom))).First();
+                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames / timeZoom))).First();
 
                     int distance = Math.Abs(playPosFrames / timeZoom - closest);
 
@@ -152,13 +152,13 @@ namespace VVVV.Nodes
         public void UpdateSnapList()
         {
             snapPosList.Clear();
-            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();       
+            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
 
             foreach (Clip myclip in snapClipList)
             {
                 snapPosList.Add(myclip.Bounds.X);
                 snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width);
-                if(myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn/timeZoom));
+                if (myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn / timeZoom));
                 if (myclip.FadeOut > 0) snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width - (myclip.FadeOut / timeZoom));
             }
             //FLogger.Log(LogType.Debug, snapPosList.Count.ToString());
@@ -166,10 +166,18 @@ namespace VVVV.Nodes
 
         public void SetSelectionRectangle(System.Windows.Forms.MouseEventArgs e)
         {
-            if(e.Button == MouseButtons.Left && hitObject is WorkSpace)
+            if (e.Button == MouseButtons.Left && hitObject is WorkSpace)
             {
-                Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
-                selectionRectangle = new Rectangle(holdMousePos, targetSize);
+                //Size targetSize = new Size(mousePos.X - holdMousePos.X, mousePos.Y - holdMousePos.Y);
+
+                //negative and positive rectangle since drawing doesnt work with negative values
+                var rc = new Rectangle(
+                                        Math.Min(holdMousePos.X, mousePos.X),
+                                        Math.Min(holdMousePos.Y, mousePos.Y),
+                                        Math.Abs(mousePos.X - holdMousePos.X),
+                                        Math.Abs(mousePos.Y - holdMousePos.Y));
+
+                selectionRectangle = rc;        //new Rectangle(holdMousePos, targetSize);
                 MultiSelectionClips();
                 Invalidate();
             }
