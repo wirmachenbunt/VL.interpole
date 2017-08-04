@@ -20,21 +20,21 @@ namespace VVVV.Nodes
         public void hittest()
         {
             hitTestList.Clear();
-            
+
+            #region addingHitobjects
             hitTestList.Add(myplaybar); //add playbar
             hitTestList.Add(mytimecode); //add timecode
-            
+
 
             foreach (Clip myclip in clipList)
             {
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
             }
 
+            hitTestList.Add(myworkspace); // workspace 
+            #endregion
+
             // the actual hitTest
-
-
-            hitTestList.Add(myworkspace); // workspace
-
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
 
             //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());

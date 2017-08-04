@@ -30,7 +30,7 @@ namespace VVVV.Nodes
             SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
-            if (e.Button == MouseButtons.Left && hitObject is WorkSpace) selectionList.Clear(); // clear selection obviously
+            if (e.Button == MouseButtons.Left && hitObject is WorkSpace || hitObject is Playbar) selectionList.Clear(); // clear selection obviously
 
             this.Invalidate(); //redraw
         }
@@ -80,15 +80,15 @@ namespace VVVV.Nodes
             SetPlayPosition(); // set playhead
 
             SetSelectionRectangle(e); // selection rectangle
+            
 
-            //dragging
+            //dragging single clip
             if (hitObject is Clip) DragClip(hitObject,e);
-            if (selectionList.Count > 0 && e.Button == MouseButtons.Left && hitObject is Clip) DragSelection();
 
+            //dragging multiselection
+            if (selectionList.Count > 0 && e.Button == MouseButtons.Left && selectionList.Any(cus => cus == hitObject)) DragSelection();
 
             deltaMousePos = mousePos;
-
-            //Invalidate();
 
         }
 
