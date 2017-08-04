@@ -115,7 +115,7 @@ namespace VVVV.Nodes
             if(playPosFrames > 400000) e.Graphics.FillRectangle(new SolidBrush(Color.OrangeRed), myplaybar.Bounds); // background
             else e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
-            FLogger.Log(LogType.Debug, playPosFrames.ToString());
+            //FLogger.Log(LogType.Debug, playPosFrames.ToString());
 
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, this.Height));
