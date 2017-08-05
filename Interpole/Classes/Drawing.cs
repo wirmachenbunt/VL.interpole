@@ -238,7 +238,7 @@ namespace VVVV.Nodes
             {
                 
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
-                FLogger.Log(LogType.Debug, StagePos.X.ToString());
+                //FLogger.Log(LogType.Debug, StagePos.X.ToString());
             }
         }
 
