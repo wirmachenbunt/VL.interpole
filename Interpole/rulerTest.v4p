@@ -1,5 +1,5 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\INTERPOLE\rulerTest.v4p" systemname="rulerTest" filename="C:\INTERPOLE\rulerTest.v4p" scrollx="0" scrolly="0">
+   <PATCH nodename="C:\INTERPOLE\Interpole\rulerTest.v4p" systemname="rulerTest" filename="C:\INTERPOLE\rulerTest.v4p" scrollx="0" scrolly="0">
    <BOUNDS type="Window" left="7290" top="5310" width="12525" height="11085">
    </BOUNDS>
    <NODE systemname="Renderer (EX9)" nodename="Renderer (EX9)" componentmode="InAWindow" id="0">
@@ -85,7 +85,7 @@
    </BOUNDS>
    <PIN pinname="Input" visible="1">
    </PIN>
-   <PIN pinname="Select" slicecount="1" values="7" visible="1">
+   <PIN pinname="Select" slicecount="1" visible="1" values="7">
    </PIN>
    <PIN pinname="Output" visible="1">
    </PIN>
@@ -131,7 +131,7 @@
    </PIN>
    <PIN pinname="Y Output Value" visible="1">
    </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" values="9">
+   <PIN pinname="Y Input Value" slicecount="1" values="5">
    </PIN>
    <PIN pinname="Minimum" slicecount="1" values="1">
    </PIN>

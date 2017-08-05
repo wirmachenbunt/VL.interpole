@@ -58,6 +58,8 @@ namespace VVVV.Nodes
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
+                    //DrawRuler(e);
+
                     //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
 
@@ -126,6 +128,29 @@ namespace VVVV.Nodes
 
             DrawTimeCode(e);
 
+
+        }
+
+        public void DrawRuler(PaintEventArgs e)
+        {
+            int rulerSteps = 5; //in seconds
+            int startRulerSecond = (((Math.Abs(StagePos.X) / Framerate[0]) / rulerSteps)*Framerate[0]);
+            int countBars = 0;
+
+            //FLogger.Log(LogType.Debug, "start" + startRulerSecond.ToString());
+
+            //FLogger.Log(LogType.Debug, "end" + (this.Width + Math.Abs(StagePos.X)).ToString());
+
+            
+
+            
+            for (int i = startRulerSecond; i < this.Width + Math.Abs(StagePos.X); i += 5 * 60 / timeZoom)
+            {
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(i, 20), new Size(2, 10)));
+                countBars += 1;
+            }
+            
+            //FLogger.Log(LogType.Debug, countBars.ToString());
 
         }
 
@@ -211,10 +236,10 @@ namespace VVVV.Nodes
             int pos = playPosFrames / timeZoom;
             if (pos > (this.Width / 2) && IsVisible)
             {
-
+                
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
+                FLogger.Log(LogType.Debug, StagePos.X.ToString());
             }
-            if (StagePos.X < 0) StagePos.X = 0;
         }
 
         public bool IsVisible
