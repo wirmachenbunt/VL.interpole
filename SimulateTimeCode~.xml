@@ -1,6 +1,6 @@
-<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.7.dtd" >
    <PATCH nodename="C:\INTERPOLE\SimulateTimeCode.v4p" systemname="SimulateTimeCode" filename="C:\INTERPOLE\SimulateTimeCode.v4p" scrollx="0" scrolly="0">
-   <BOUNDS type="Window" left="1395" top="9240" width="12465" height="6000">
+   <BOUNDS type="Window" left="1395" top="3285" width="12465" height="11955">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -263,7 +263,7 @@
    </PIN>
    <PIN pinname="Enable" visible="1">
    </PIN>
-   <PIN pinname="Reset" slicecount="1" values="0" visible="1">
+   <PIN pinname="Reset" slicecount="1" visible="1" values="0">
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="19">
