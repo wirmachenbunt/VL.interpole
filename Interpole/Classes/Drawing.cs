@@ -58,12 +58,12 @@ namespace VVVV.Nodes
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
                     e.Graphics.Clear(MyBackgroundColor);
 
+                    DrawMarker(e);
                     DrawClips(e);
                     DrawPlayBar(e);
+                    
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
-
-                   
 
                     //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
@@ -155,10 +155,6 @@ namespace VVVV.Nodes
 
             double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / Framerate[0];
 
-            
-
-
-
             for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
                 int pos = (i * Framerate[0]) / timeZoom;
@@ -180,11 +176,24 @@ namespace VVVV.Nodes
 
 
                 e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5), new Size(size, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos,y), new Size(thickness, height)));
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y), new Size(thickness, height)));
             }
             
             //FLogger.Log(LogType.Debug, countBars.ToString());
 
+        }
+
+        public void DrawMarker(PaintEventArgs e)
+        {
+            for(int i = 0; i <= FMarker.SliceCount;i++)
+            {
+                
+                    Int32 pos = FMarker[i] / timeZoom;
+                    Point[] mypoints = { new Point(-3 + pos, 30), new Point(3 + pos, 30), new Point(0 + pos, 34) }; //play head triangle
+                    e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                    e.Graphics.DrawLine(GrayPen, new Point(pos, 34), new Point(pos, 3000));
+                         
+            }
         }
 
         public void DrawPlayHead(PaintEventArgs e)

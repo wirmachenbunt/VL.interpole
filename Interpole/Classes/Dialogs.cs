@@ -163,10 +163,10 @@ namespace VVVV.Nodes
             DialogResult result = inputBox.ShowDialog();
             if (textBox.Text.Length > 0) input = textBox.Text;
             else input = "empty";
-            startFrame = Convert.ToInt16(timeUpDown.Value);
-            duration = Convert.ToInt16(timeUpDownend.Value);
-            fadeIn = Convert.ToInt16(fadeInNum.Value);
-            fadeOut = Convert.ToInt16(fadeOutNum.Value);
+            startFrame = Convert.ToInt32(timeUpDown.Value);
+            duration = Convert.ToInt32(timeUpDownend.Value);
+            fadeIn = Convert.ToInt32(fadeInNum.Value);
+            fadeOut = Convert.ToInt32(fadeOutNum.Value);
 
             colorName = cmbboxClr.SelectedItem.ToString();
             return result;

@@ -99,11 +99,26 @@ namespace VVVV.Nodes
                 play = !play; // invert bool play
             }
 
-            if (e.KeyCode == Keys.R)
+            if (e.KeyCode == Keys.NumPad0)
             {
                 StagePos.X = 0;
                 Invalidate();
             }
+
+            if (e.KeyCode == Keys.NumPad1)
+            {
+                StagePos.X = 0- (FMarker[0] /timeZoom);
+                playPosFrames = FMarker[0];
+                Invalidate();
+            }
+
+            if (e.KeyCode == Keys.NumPad2)
+            {
+                StagePos.X = 0 - (FMarker[1] / timeZoom);
+                playPosFrames = FMarker[1];
+                Invalidate();
+            }
+
         }
 
         public void CalcStagePosition(Point mousePos, bool click)

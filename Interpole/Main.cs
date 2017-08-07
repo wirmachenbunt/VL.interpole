@@ -38,6 +38,9 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
+        [Input("Marker")]
+        public IDiffSpread<Int32> FMarker;
+
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
 
