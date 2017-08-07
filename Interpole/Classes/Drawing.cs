@@ -20,6 +20,7 @@ namespace VVVV.Nodes
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
+        SolidBrush brightGrayBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
@@ -28,7 +29,8 @@ namespace VVVV.Nodes
         public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
 
-        Font clipFont = new Font("Serif", 8, FontStyle.Regular);
+        Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
+        Font rulerFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font timeCodefont = new Font("Consolas", 20, FontStyle.Regular);
 
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
@@ -37,6 +39,8 @@ namespace VVVV.Nodes
         TimeCodeDisplay mytimecode = new TimeCodeDisplay();
         ZoomBar myzoombar = new ZoomBar();
         WorkSpace myworkspace = new WorkSpace();
+        SizeF stringSize = new SizeF();
+
 
 
 
@@ -58,7 +62,7 @@ namespace VVVV.Nodes
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
-                    //DrawRuler(e);
+                   
 
                     //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
@@ -124,6 +128,8 @@ namespace VVVV.Nodes
 
             DrawZoomValue(e);
 
+            DrawRuler(e);
+
             DrawPlayHead(e);
 
             DrawTimeCode(e);
@@ -133,21 +139,33 @@ namespace VVVV.Nodes
 
         public void DrawRuler(PaintEventArgs e)
         {
-            int rulerSteps = 5; //in seconds
-            int startRulerSecond = (((Math.Abs(StagePos.X) / Framerate[0]) / rulerSteps)*Framerate[0]);
-            int countBars = 0;
+            int rulerSteps = 1; //in seconds
+            if (timeZoom > 1) rulerSteps = 5;
+            if (timeZoom > 4) rulerSteps = 10;
+            if (timeZoom > 10) rulerSteps = 20;
 
-            //FLogger.Log(LogType.Debug, "start" + startRulerSecond.ToString());
+            double startRulerPos = Math.Abs(StagePos.X) * timeZoom;
+            startRulerPos = (startRulerPos / Framerate[0]) / rulerSteps;
+            startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
 
-            //FLogger.Log(LogType.Debug, "end" + (this.Width + Math.Abs(StagePos.X)).ToString());
+            //startRulerPos = startRulerPos * Framerate[0];
+            //startRulerPos = startRulerPos / timeZoom;
+
+
+            double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / Framerate[0];
 
             
 
-            
-            for (int i = startRulerSecond; i < this.Width + Math.Abs(StagePos.X); i += 5 * 60 / timeZoom)
+
+
+            for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
-                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(i, 20), new Size(2, 10)));
-                countBars += 1;
+                int pos = (i * Framerate[0]) / timeZoom;
+                string time = (i%60).ToString();
+                stringSize = e.Graphics.MeasureString(time, rulerFont, 100);
+
+                e.Graphics.DrawString(time, rulerFont, brightGrayBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 6), new Size(20, 50)), format); //draw seconds
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos, 20), new Size(1, 10)));
             }
             
             //FLogger.Log(LogType.Debug, countBars.ToString());
