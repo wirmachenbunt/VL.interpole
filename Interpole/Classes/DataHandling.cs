@@ -139,7 +139,7 @@ namespace VVVV.Nodes
 
         public void EditTimeCode()
         {
-            string input = Frames2Timecode(playPosFrames, Framerate[0]);
+            string input = Frames2Timecode(playPosFrames, Framerate[0],false);
             
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
@@ -172,13 +172,15 @@ namespace VVVV.Nodes
             return newList;
         }
 
-        public string Frames2Timecode(int frameCount, int frameRate)
+        public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
         {       
             int Frames = frameCount % frameRate;
             int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
             int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
-            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;     
-            return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
+            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;
+            if(isruler) return $"{Minutes:D2}:{Seconds:D2}";
+            else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
+
         }
 
         public int TimeCode2Frames(string TimeCode, int frameRate)

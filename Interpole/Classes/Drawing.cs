@@ -21,6 +21,7 @@ namespace VVVV.Nodes
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
         SolidBrush brightGrayBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
+        SolidBrush whiteBrush = new SolidBrush(Color.FromArgb(200, 200, 200));
         Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
@@ -161,11 +162,25 @@ namespace VVVV.Nodes
             for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
                 int pos = (i * Framerate[0]) / timeZoom;
-                string time = (i%60).ToString();
-                stringSize = e.Graphics.MeasureString(time, rulerFont, 100);
+                int size = 30;
+                int height = 5;
+                int y = 25;
+                int thickness = 1;
+                string timecode = Frames2Timecode(i* Framerate[0], Framerate[0],true);
+                string time = (i%60).ToString() + "s";
+                if (time == "0s")
+                {
+                    time = timecode + "s";
+                    size = 200;
+                    height = 12;
+                    thickness = 3;
+                    y = 17;
+                }
+                stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
-                e.Graphics.DrawString(time, rulerFont, brightGrayBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 6), new Size(20, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos, 20), new Size(1, 10)));
+
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5), new Size(size, 50)), format); //draw seconds
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos,y), new Size(thickness, height)));
             }
             
             //FLogger.Log(LogType.Debug, countBars.ToString());
@@ -189,7 +204,7 @@ namespace VVVV.Nodes
 
             //e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //draw frameCount
             
-            e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0]), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
         public void DrawZoomValue(PaintEventArgs e)
