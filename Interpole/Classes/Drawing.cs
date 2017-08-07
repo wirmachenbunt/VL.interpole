@@ -261,12 +261,17 @@ namespace VVVV.Nodes
                 Size mysize = new Size(myclip.Duration / timeZoom, myclip.Bounds.Size.Height);
 
                 myclip.Bounds = new Rectangle(mypoint, mysize);
+
+                StagePos.X = (0 -(playPosFrames / timeZoom)) ;
+                //if (StagePos.X < 0) StagePos.X = 0;
             }
         }
 
         public void PlaybackMoveStage()
         {
             int pos = playPosFrames / timeZoom;
+            if (pos < Math.Abs(StagePos.X)) StagePos.X = 0- pos;
+
             if (pos > (this.Width / 2) && IsVisible)
             {
                 
