@@ -29,14 +29,17 @@ namespace VVVV.Nodes
         [Config("Framerate",DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
-        [Input("Hide Window")]
-        public IDiffSpread<bool> FHideWindow;
+        [Input("Play")]
+        public IDiffSpread<bool> FPlay;
 
         [Input("Timecode")]
         public IDiffSpread<TimeCode> FTimecode;
 
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
+
+        [Input("Hide Window")]
+        public IDiffSpread<bool> FHideWindow;
 
         [Config("Marker")]
         public IDiffSpread<Int32> FMarker;
@@ -123,6 +126,13 @@ namespace VVVV.Nodes
         // PLAYBACK METHODE
         public void Play()
         {
+
+            if(FPlay.IsChanged)
+            {
+                play = FPlay[0];
+            }
+
+
             if (play && !FSetTimecode[0])
             {
                 playPosFrames += 1;
