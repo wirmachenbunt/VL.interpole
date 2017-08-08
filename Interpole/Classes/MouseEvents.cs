@@ -107,16 +107,31 @@ namespace VVVV.Nodes
             }
 
             HandleMarker(sender, e);
+            HandleLoopRegion(sender, e);
 
-            
+        }
 
+        public void HandleLoopRegion(object sender, KeyEventArgs e)
+        {
+
+            switch (e.KeyCode)
+            {
+                case Keys.B:
+                    FLoopRegion[0] = playPosFrames;
+                    Invalidate();
+                    break;
+                case Keys.N:
+                    FLoopRegion[1] = playPosFrames;
+                    Invalidate();
+                    break;
+            }
+                    
         }
 
         public void HandleMarker(object sender, KeyEventArgs e)
         {
 
-
-            #region jump to marker
+           
             switch (e.KeyCode)
             {
                 case Keys.NumPad1:
@@ -219,10 +234,6 @@ namespace VVVV.Nodes
                     Invalidate();
                     break;
             }
-            #endregion
-
-
-            
             
 
             }
@@ -274,6 +285,15 @@ namespace VVVV.Nodes
         {
             snapPosList.Clear();
             List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
+
+            snapPosList.Add(FLoopRegion[0] / timeZoom);
+            snapPosList.Add(FLoopRegion[1] / timeZoom);
+
+            foreach (int pos in FMarker)
+            {
+                snapPosList.Add(pos/timeZoom);
+            }
+
 
             foreach (Clip myclip in snapClipList)
             {

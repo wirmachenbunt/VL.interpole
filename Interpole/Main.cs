@@ -44,6 +44,9 @@ namespace VVVV.Nodes
         [Config("Marker")]
         public IDiffSpread<Int32> FMarker;
 
+        [Config("LoopRegion")]
+        public IDiffSpread<Int32> FLoopRegion;
+
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
 
@@ -106,7 +109,9 @@ namespace VVVV.Nodes
             //hide window programatically
             if ( FHideWindow[0]) HideWindow();
 
-            if (FMarker.SliceCount < 9) FMarker.SliceCount = 9;
+            if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
+
+            if (FLoopRegion.SliceCount != 2) FLoopRegion.SliceCount = 2;
 
             if (!initialized)
             {

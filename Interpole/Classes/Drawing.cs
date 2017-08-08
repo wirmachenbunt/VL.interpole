@@ -129,6 +129,8 @@ namespace VVVV.Nodes
 
             DrawZoomValue(e);
 
+            DrawLoopRegion(e);
+
             DrawRuler(e);
 
             DrawPlayHead(e);
@@ -205,6 +207,11 @@ namespace VVVV.Nodes
             Point[] points = { new Point(-7 + pos, 20), new Point(7 + pos, 20), new Point(0 + pos, 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
             e.Graphics.DrawLine(GrayPen,new Point(pos,30),new Point(pos,3000));
+        }
+
+        public void DrawLoopRegion(PaintEventArgs e)
+        {
+            e.Graphics.FillRectangle(new SolidBrush(Color.Azure), new Rectangle(new Point(FLoopRegion[0]/timeZoom, 27), new Size((FLoopRegion[1]- FLoopRegion[0]) / timeZoom, 3)));
         }
 
         public void DrawTimeCode(PaintEventArgs e)

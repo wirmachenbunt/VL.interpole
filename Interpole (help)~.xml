@@ -39,9 +39,11 @@
    </PIN>
    <PIN pinname="Timecode" visible="1" slicecount="1" values="||">
    </PIN>
-   <PIN pinname="Marker" visible="1" slicecount="9" values="2376,0,0,0,0,0,0,0,0">
+   <PIN pinname="Marker" visible="1" slicecount="9" values="1148,0,0,0,0,0,0,0,0">
    </PIN>
    <PIN pinname="Play" visible="1">
+   </PIN>
+   <PIN pinname="LoopRegion" slicecount="2" values="1476,2576">
    </PIN>
    </NODE>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
@@ -349,9 +351,9 @@
    <LINK srcnodeid="67" srcpinname="Render State" dstnodeid="66" dstpinname="Render State">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="68">
-   <BOUNDS type="Box" left="5700" top="1875" width="480" height="480">
+   <BOUNDS type="Box" left="6090" top="1860" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="5700" top="1875" width="0" height="0">
+   <BOUNDS type="Node" left="6090" top="1860" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -379,11 +381,11 @@
    </BOUNDS>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="70">
-   <BOUNDS type="Box" left="3330" top="975" width="480" height="480">
+   <BOUNDS type="Box" left="3585" top="1725" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="3330" top="975" width="0" height="0">
+   <BOUNDS type="Node" left="3585" top="1725" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
    </PIN>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -393,7 +395,9 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="0">
+   <PIN pinname="X Input Value" slicecount="1" values="1">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="Play">
    </PIN>
    </NODE>
    <LINK srcnodeid="70" srcpinname="Y Output Value" dstnodeid="7" dstpinname="Play">
