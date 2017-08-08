@@ -32,6 +32,9 @@ namespace VVVV.Nodes
         [Input("Play")]
         public IDiffSpread<bool> FPlay;
 
+        [Config("IsLoop")]
+        public IDiffSpread<bool> FIsLoop;
+
         [Input("Timecode")]
         public IDiffSpread<TimeCode> FTimecode;
 
@@ -137,6 +140,7 @@ namespace VVVV.Nodes
                 play = FPlay[0];
             }
 
+            
 
             if (play && !FSetTimecode[0])
             {
@@ -151,7 +155,10 @@ namespace VVVV.Nodes
                 PlaybackMoveStage(); // scroll stage when playback
                 Invalidate();
             }
-            
+
+            //activate loop region
+            if (!FSetTimecode[0] && FIsLoop[0] && playPosFrames >= FLoopRegion[1] && play) playPosFrames = FLoopRegion[0];
+
         }
 
 

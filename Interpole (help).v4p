@@ -5,9 +5,9 @@
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="2" systemname="IOBox (Value Advanced)">
-   <BOUNDS type="Box" left="1035" top="1815" width="795" height="240">
+   <BOUNDS type="Box" left="1155" top="3150" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="1035" top="1815" width="0" height="0">
+   <BOUNDS type="Node" left="1155" top="3150" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="120">
    </PIN>
@@ -21,7 +21,7 @@
    </PIN>
    </NODE>
    <NODE id="7" systemname="Interpole (GUI)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole (GUI)" componentmode="InAWindow">
-   <BOUNDS type="Window" left="-27855" top="2550" width="26925" height="13635">
+   <BOUNDS type="Window" left="600" top="0" width="18585" height="9285">
    </BOUNDS>
    <BOUNDS type="Node" left="4245" top="2610" width="100" height="100">
    </BOUNDS>
@@ -39,15 +39,19 @@
    </PIN>
    <PIN pinname="Timecode" visible="1" slicecount="1" values="||">
    </PIN>
-   <PIN pinname="Marker" visible="1" slicecount="9" values="1148,0,0,0,0,0,0,0,0">
+   <PIN pinname="Marker" visible="1" slicecount="9" values="1424,4256,0,0,0,0,0,0,0">
    </PIN>
    <PIN pinname="Play" visible="1">
    </PIN>
-   <PIN pinname="LoopRegion" slicecount="2" values="1756,4576">
+   <PIN pinname="LoopRegion" slicecount="2" values="2036,4036">
+   </PIN>
+   <PIN pinname="Loop" visible="1">
+   </PIN>
+   <PIN pinname="IsLoop" slicecount="1" values="1">
    </PIN>
    </NODE>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
-   <BOUNDS type="Node" left="930" top="2265" width="100" height="100">
+   <BOUNDS type="Node" left="1050" top="3600" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Time Mode" slicecount="1" values="Filtered">
    </PIN>
@@ -189,7 +193,7 @@
    </BOUNDS>
    <BOUNDS type="Node" left="7365" top="2085" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Input Enum" slicecount="1" visible="1" values="ShowStart">
+   <PIN pinname="Input Enum" slicecount="1" visible="1" values="TurboClip">
    </PIN>
    <PIN pinname="Default" slicecount="1" values="Hallo">
    </PIN>
@@ -227,9 +231,9 @@
    <LINK srcnodeid="56" srcpinname="frames per second" dstnodeid="57" dstpinname="Y Input Value">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="59">
-   <BOUNDS type="Box" left="5070" top="1815" width="450" height="420">
+   <BOUNDS type="Box" left="4800" top="1365" width="450" height="420">
    </BOUNDS>
-   <BOUNDS type="Node" left="5070" top="1815" width="0" height="0">
+   <BOUNDS type="Node" left="4800" top="1365" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -249,9 +253,9 @@
    <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="7" dstpinname="Set Timecode">
    </LINK>
    <NODE systemname="SimulateTimeCode" filename="SimulateTimeCode.v4p" componentmode="InAWindow" id="61" nodename="SimulateTimeCode.v4p">
-   <BOUNDS type="Node" left="4635" top="1095" width="100" height="100">
+   <BOUNDS type="Node" left="4500" top="855" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4635" top="1095" width="4800" height="3600">
+   <BOUNDS type="Box" left="4500" top="855" width="4800" height="3600">
    </BOUNDS>
    <BOUNDS type="Window" left="1395" top="10185" width="12465" height="5055">
    </BOUNDS>
@@ -261,11 +265,11 @@
    <LINK srcnodeid="61" srcpinname="Timecode" dstnodeid="7" dstpinname="Timecode">
    </LINK>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="62">
-   <BOUNDS type="Node" left="10335" top="345" width="1230" height="270">
+   <BOUNDS type="Node" left="135" top="375" width="1230" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="10335" top="345" width="1230" height="270">
+   <BOUNDS type="Box" left="135" top="375" width="2505" height="1815">
    </BOUNDS>
-   <PIN pinname="Input String" visible="0" slicecount="1" values="|R = Reset Stage|">
+   <PIN pinname="Input String" visible="0" slicecount="1" values="|R = Reset Stage&cr;&lf;B = Loop Start&cr;&lf;N = Loop End&cr;&lf;CTRL + L = Loop&cr;&lf;NumPad0 = Reset to 0s&cr;&lf;NumPad1-9 = Reset to Marker&cr;&lf;CTRL + NumPad1-9 = Set Marker&cr;&lf;|">
    </PIN>
    <PIN pinname="Output String" visible="0">
    </PIN>
@@ -351,9 +355,9 @@
    <LINK srcnodeid="67" srcpinname="Render State" dstnodeid="66" dstpinname="Render State">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="68">
-   <BOUNDS type="Box" left="6090" top="1860" width="480" height="480">
+   <BOUNDS type="Box" left="5070" top="1950" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="6090" top="1860" width="0" height="0">
+   <BOUNDS type="Node" left="5070" top="1950" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -381,11 +385,11 @@
    </BOUNDS>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="70">
-   <BOUNDS type="Box" left="3585" top="1725" width="480" height="480">
+   <BOUNDS type="Box" left="2940" top="1635" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="3585" top="1725" width="0" height="0">
+   <BOUNDS type="Node" left="2940" top="1635" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -395,7 +399,7 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="1">
+   <PIN pinname="X Input Value" slicecount="1" values="0">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="Play">
    </PIN>

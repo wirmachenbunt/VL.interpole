@@ -20,11 +20,15 @@ namespace VVVV.Nodes
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush grayBrush = new SolidBrush(Color.FromArgb(50, 50, 50));
+        SolidBrush darkgrayBrush = new SolidBrush(Color.FromArgb(30, 30, 30));
         SolidBrush brightGrayBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush whiteBrush = new SolidBrush(Color.FromArgb(200, 200, 200));
         Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
+        Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
+
+        
   
         public Point StagePos; //StagePosition
         public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
@@ -54,14 +58,19 @@ namespace VVVV.Nodes
                 if (IsVisible)
                 {
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
-                    e.Graphics.ScaleTransform(dpi, dpi); //dpi scaling 
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
+                    e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+                    //e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+
+
                     e.Graphics.Clear(MyBackgroundColor);
 
                     DrawMarker(e);
-                    DrawClips(e);
-                    DrawPlayBar(e);
                     
+                    DrawPlayBar(e);
+
+                    
+                    DrawClips(e);
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
@@ -191,11 +200,12 @@ namespace VVVV.Nodes
             {
                if(FMarker[i] != 0)
                 {
+                    DarkPen.DashStyle = DashStyle.Dash;
                     Int32 pos = FMarker[i] / timeZoom;
                     Point[] mypoints = { new Point(-3 + pos, 30), new Point(3 + pos, 30), new Point(0 + pos, 34) }; //play head triangle
                     e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
                     e.Graphics.DrawString((i+1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50), new Size(20, 50)), format); //draw seconds
-                    e.Graphics.DrawLine(GrayPen, new Point(pos, 34), new Point(pos, 3000));
+                    e.Graphics.DrawLine(DarkPen, new Point(pos, 34), new Point(pos, 3000));
                 }                         
             }
         }
@@ -211,7 +221,13 @@ namespace VVVV.Nodes
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
-            e.Graphics.FillRectangle(new SolidBrush(Color.Azure), new Rectangle(new Point(FLoopRegion[0]/timeZoom, 27), new Size((FLoopRegion[1]- FLoopRegion[0]) / timeZoom, 3)));
+            if(FIsLoop[0])
+            {
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 28), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2)));
+                e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 30), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2000)));
+            }
+            
+
         }
 
         public void DrawTimeCode(PaintEventArgs e)
@@ -290,7 +306,7 @@ namespace VVVV.Nodes
             int pos = playPosFrames / timeZoom;
             if (pos < Math.Abs(StagePos.X)) StagePos.X = 0- pos;
 
-            if (pos > (this.Width / 2) && IsVisible)
+            if (pos > (this.Width / 2) && !FIsLoop[0])
             {
                 
                 StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);

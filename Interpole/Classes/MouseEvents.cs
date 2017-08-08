@@ -94,9 +94,12 @@ namespace VVVV.Nodes
 
         private void Form_Keydown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Space)
+            if (e.KeyCode == Keys.Space) play = !play; // invert bool play
+
+            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
             {
-                play = !play; // invert bool play
+                FIsLoop[0] = !FIsLoop[0]; // invert loop activate
+                Invalidate();
             }
 
             if (e.KeyCode == Keys.NumPad0)
