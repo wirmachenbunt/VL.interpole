@@ -144,6 +144,7 @@ namespace VVVV.Nodes
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
                 playPosFrames = TimeCode2Frames(input, Framerate[0]);
+                StagePos.X = 0 - playPosFrames / timeZoom;
                 Invalidate();
             }
             

@@ -185,14 +185,16 @@ namespace VVVV.Nodes
 
         public void DrawMarker(PaintEventArgs e)
         {
-            for(int i = 0; i <= FMarker.SliceCount;i++)
+            for(int i = 0; i < FMarker.SliceCount;i++)
             {
-                
+               if(FMarker[i] != 0)
+                {
                     Int32 pos = FMarker[i] / timeZoom;
                     Point[] mypoints = { new Point(-3 + pos, 30), new Point(3 + pos, 30), new Point(0 + pos, 34) }; //play head triangle
                     e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                    e.Graphics.DrawString((i+1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50), new Size(20, 50)), format); //draw seconds
                     e.Graphics.DrawLine(GrayPen, new Point(pos, 34), new Point(pos, 3000));
-                         
+                }                         
             }
         }
 

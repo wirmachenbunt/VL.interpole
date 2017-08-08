@@ -38,7 +38,7 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Marker")]
+        [Config("Marker")]
         public IDiffSpread<Int32> FMarker;
 
         [Config("ClipXML")]
@@ -102,6 +102,8 @@ namespace VVVV.Nodes
         {
             //hide window programatically
             if ( FHideWindow[0]) HideWindow();
+
+            if (FMarker.SliceCount < 9) FMarker.SliceCount = 9;
 
             if (!initialized)
             {

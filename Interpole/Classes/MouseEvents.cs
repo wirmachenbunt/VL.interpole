@@ -102,24 +102,130 @@ namespace VVVV.Nodes
             if (e.KeyCode == Keys.NumPad0)
             {
                 StagePos.X = 0;
+                playPosFrames = 0;
                 Invalidate();
             }
 
-            if (e.KeyCode == Keys.NumPad1)
-            {
-                StagePos.X = 0- (FMarker[0] /timeZoom);
-                playPosFrames = FMarker[0];
-                Invalidate();
-            }
+            HandleMarker(sender, e);
 
-            if (e.KeyCode == Keys.NumPad2)
-            {
-                StagePos.X = 0 - (FMarker[1] / timeZoom);
-                playPosFrames = FMarker[1];
-                Invalidate();
-            }
+            
 
         }
+
+        public void HandleMarker(object sender, KeyEventArgs e)
+        {
+
+
+            #region jump to marker
+            switch (e.KeyCode)
+            {
+                case Keys.NumPad1:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[0] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[0] / timeZoom);
+                    playPosFrames = FMarker[0];
+                    Invalidate();
+                    break;
+                case Keys.NumPad2:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[1] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[1] / timeZoom);
+                    playPosFrames = FMarker[1];
+                    Invalidate();
+                    break;
+                case Keys.NumPad3:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[2] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[2] / timeZoom);
+                    playPosFrames = FMarker[2];
+                    Invalidate();
+                    break;
+                case Keys.NumPad4:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[3] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[3] / timeZoom);
+                    playPosFrames = FMarker[3];
+                    Invalidate();
+                    break;
+                case Keys.NumPad5:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[4] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[4] / timeZoom);
+                    playPosFrames = FMarker[4];
+                    Invalidate();
+                    break;
+                case Keys.NumPad6:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[5] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[5] / timeZoom);
+                    playPosFrames = FMarker[5];
+                    Invalidate();
+                    break;
+                case Keys.NumPad7:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[6] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[6] / timeZoom);
+                    playPosFrames = FMarker[6];
+                    Invalidate();
+                    break;
+                case Keys.NumPad8:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[7] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[7] / timeZoom);
+                    playPosFrames = FMarker[7];
+                    Invalidate();
+                    break;
+                case Keys.NumPad9:
+                    if (e.Modifiers == Keys.Control)
+                    {
+                        FMarker[8] = playPosFrames;
+                        Invalidate();
+                        break;
+                    }
+                    StagePos.X = 0 - (FMarker[8] / timeZoom);
+                    playPosFrames = FMarker[8];
+                    Invalidate();
+                    break;
+            }
+            #endregion
+
+
+            
+            
+
+            }
 
         public void CalcStagePosition(Point mousePos, bool click)
         {
