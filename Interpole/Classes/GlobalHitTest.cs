@@ -36,7 +36,6 @@ namespace VVVV.Nodes
 
             // the actual hitTest
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
-
             //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
         }
 

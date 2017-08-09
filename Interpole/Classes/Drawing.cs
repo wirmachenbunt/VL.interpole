@@ -55,7 +55,7 @@ namespace VVVV.Nodes
         {
           try
             {
-                if (IsVisible)
+                if (IsVisible && !FHideWindow[0] && clipList != null)
                 {
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
@@ -68,9 +68,11 @@ namespace VVVV.Nodes
                     DrawMarker(e);
                     
                     DrawPlayBar(e);
+              
+                    if(clipList.Count > 0) DrawClips(e);
 
-                    
-                    DrawClips(e);
+                    DrawPlayHead(e);
+
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
@@ -78,12 +80,11 @@ namespace VVVV.Nodes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
 
                 }
-
-
-                
-
             }
-            catch { FLogger.Log(LogType.Debug, "Something went wrong with drawing !"); }
+            catch(Exception ex)
+            {
+                FLogger.Log(LogType.Debug, ex.Message);
+            }
         }
 
         public void DrawClips(PaintEventArgs e)
@@ -142,7 +143,7 @@ namespace VVVV.Nodes
 
             DrawRuler(e);
 
-            DrawPlayHead(e);
+           // DrawPlayHead(e);
 
             DrawTimeCode(e);
 

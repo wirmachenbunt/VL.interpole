@@ -68,7 +68,6 @@ namespace VVVV.Nodes
         [Import]
         IPluginHost2 FPluginHost;
 
-
         bool initialized = false; // controlling init of plugin
         bool play = false;
         public bool needsUpdate = true;
@@ -104,7 +103,6 @@ namespace VVVV.Nodes
             
         }
 
-
         #endregion constructor and init
 
         public void InitInterpole()
@@ -115,7 +113,7 @@ namespace VVVV.Nodes
             if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
 
             if (FLoopRegion.SliceCount != 2) FLoopRegion.SliceCount = 2;
-
+            
             if (!initialized)
             {
                 try
@@ -123,9 +121,14 @@ namespace VVVV.Nodes
                     clipList = DeserializeClipList(ClipXML[0]);
                     FLogger.Log(LogType.Debug, "Interpole successful initialized");
                     ApplyTimeZoom();
+                    this.DoubleBuffered = true; //not sure if this is actually nessecary
                     Invalidate();
                 }
-                catch { FLogger.Log(LogType.Debug, "Loading clip list failed :("); }
+                catch
+                {
+                    FLogger.Log(LogType.Debug, "Loading clip list failed :(");
+                    clipList = new List<Clip>(); // fixes many bugs when interpole is fresh and empty
+                }
 
                 initialized = true;
             }
@@ -139,8 +142,6 @@ namespace VVVV.Nodes
             {
                 play = FPlay[0];
             }
-
-            
 
             if (play && !FSetTimecode[0])
             {
@@ -158,9 +159,7 @@ namespace VVVV.Nodes
 
             //activate loop region
             if (!FSetTimecode[0] && FIsLoop[0] && playPosFrames >= FLoopRegion[1] && play) playPosFrames = FLoopRegion[0];
-
         }
-
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
@@ -168,13 +167,10 @@ namespace VVVV.Nodes
             InitInterpole();
             Play();
             
-           
-
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
-            //if(needsUpdate) FLogger.Log(LogType.Debug, "update");
-            
+            //if(needsUpdate) FLogger.Log(LogType.Debug, "update");          
         }
     }
 }

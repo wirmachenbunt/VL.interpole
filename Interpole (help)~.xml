@@ -43,7 +43,7 @@
    </PIN>
    <PIN pinname="Play" visible="1">
    </PIN>
-   <PIN pinname="LoopRegion" slicecount="2" values="2012,2536">
+   <PIN pinname="LoopRegion" slicecount="2" values="2036,4036">
    </PIN>
    <PIN pinname="Loop" visible="1">
    </PIN>
