@@ -55,10 +55,12 @@ namespace VVVV.Nodes
         {
           try
             {
+                
+
                 if (IsVisible && !FHideWindow[0] && clipList != null)
                 {
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
-                    //e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
                     e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
                    
                     e.Graphics.Clear(MyBackgroundColor);
@@ -76,10 +78,11 @@ namespace VVVV.Nodes
 
                     //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
-
+                    
                 }
+                
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 FLogger.Log(LogType.Debug, ex.Message);
             }
