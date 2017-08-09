@@ -72,6 +72,8 @@ namespace VVVV.Nodes
         bool play = false;
         public bool needsUpdate = true;
 
+        Rectangle playHeadInvalidate;
+
         #endregion fields & pins
 
         #region constructor and init
@@ -146,8 +148,14 @@ namespace VVVV.Nodes
             if (play && !FSetTimecode[0])
             {
                 playPosFrames += 1;
-                PlaybackMoveStage(); // scroll stage when playback
-                Invalidate();
+
+                //PlaybackMoveStage(); // scroll stage when playback
+
+                int pos = playPosFrames/timeZoom;
+
+                playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
+                Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y),mytimecode.Bounds.Size)); // invalidate timecode display
+                Invalidate(playHeadInvalidate); // invalidate playhead
 
             } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode
             {

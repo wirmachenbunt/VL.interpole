@@ -47,7 +47,7 @@
    </PIN>
    <PIN pinname="Loop" visible="1">
    </PIN>
-   <PIN pinname="IsLoop" slicecount="1" values="1">
+   <PIN pinname="IsLoop" slicecount="1" values="0">
    </PIN>
    </NODE>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">

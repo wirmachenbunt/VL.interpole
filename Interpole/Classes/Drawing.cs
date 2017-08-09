@@ -58,11 +58,9 @@ namespace VVVV.Nodes
                 if (IsVisible && !FHideWindow[0] && clipList != null)
                 {
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
-                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
+                    //e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
                     e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-                    //e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-
-
+                   
                     e.Graphics.Clear(MyBackgroundColor);
 
                     DrawMarker(e);
@@ -132,8 +130,6 @@ namespace VVVV.Nodes
             if(playPosFrames > 400000) e.Graphics.FillRectangle(new SolidBrush(Color.OrangeRed), myplaybar.Bounds); // background
             else e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
-            //FLogger.Log(LogType.Debug, playPosFrames.ToString());
-
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, this.Height));
 
@@ -143,11 +139,7 @@ namespace VVVV.Nodes
 
             DrawRuler(e);
 
-           // DrawPlayHead(e);
-
             DrawTimeCode(e);
-
-
         }
 
         public void DrawRuler(PaintEventArgs e)
@@ -214,10 +206,11 @@ namespace VVVV.Nodes
         public void DrawPlayHead(PaintEventArgs e)
         {
             int pos = playPosFrames / timeZoom;
+            
 
             Point[] points = { new Point(-7 + pos, 20), new Point(7 + pos, 20), new Point(0 + pos, 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen,new Point(pos,30),new Point(pos,3000));
+            e.Graphics.DrawLine(GrayPen,new Point(pos,30),new Point(pos,this.Height));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
