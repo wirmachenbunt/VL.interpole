@@ -86,6 +86,7 @@ namespace VVVV.Nodes
                 foreach (Clip myclip in selectionList)
                 {
                     int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
+                    if (dragHorizontal < 0) dragHorizontal = 0;
                     myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                     myclip.StartFrame = dragHorizontal * timeZoom;
                     rememberLastFunction = "dragclip";
@@ -101,6 +102,7 @@ namespace VVVV.Nodes
                 foreach (Clip myclip in selectionList)
                 {
                     int dragVertical = myclip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
+                    if (dragVertical < 0) dragVertical = 0;
                     myclip.Bounds = new Rectangle(new Point(myclip.Bounds.Location.X, dragVertical), myclip.Bounds.Size);
                     rememberLastFunction = "dragclip";
                     Invalidate(); //redraw
