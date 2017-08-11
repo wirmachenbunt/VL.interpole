@@ -30,7 +30,13 @@ namespace VVVV.Nodes
             SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
-            if (e.Button == MouseButtons.Left && hitObject is WorkSpace || hitObject is Playbar || !selectionList.Any(cus => cus == hitObject)) selectionList.Clear(); // clear selection obviously
+            if (e.Button == MouseButtons.Left && hitObject is WorkSpace || hitObject is Playbar) selectionList.Clear();
+
+
+            if (hitObject is Clip) // is hitobject a clip and not part of the selection, clear selection
+            {
+                if (!selectionList.Any(cus => cus == hitObject)) selectionList.Clear();
+            }
 
             this.Invalidate(); //redraw
         }
@@ -128,13 +134,13 @@ namespace VVVV.Nodes
                     Invalidate();
                     break;
             }
-                    
+
         }
 
         public void HandleMarker(object sender, KeyEventArgs e)
         {
 
-           
+
             switch (e.KeyCode)
             {
                 case Keys.NumPad1:
@@ -237,9 +243,9 @@ namespace VVVV.Nodes
                     Invalidate();
                     break;
             }
-            
 
-            }
+
+        }
 
         public void CalcStagePosition(Point mousePos, bool click)
         {
@@ -294,7 +300,7 @@ namespace VVVV.Nodes
 
             foreach (int pos in FMarker)
             {
-                snapPosList.Add(pos/timeZoom);
+                snapPosList.Add(pos / timeZoom);
             }
 
 
