@@ -87,12 +87,8 @@ namespace VVVV.Nodes
 
             SetSelectionRectangle(e); // selection rectangle
 
-
-            //dragging single clip
-            if (hitObject is Clip) DragClip(hitObject, e);
-
             //dragging multiselection
-            if (selectionList.Count > 0 && e.Button == MouseButtons.Left && hitObject is Clip) DragSelection();
+            if (selectionList.Count > 0 && hitObject is Clip) DragSelection(e);
 
             deltaMousePos = mousePos;
 

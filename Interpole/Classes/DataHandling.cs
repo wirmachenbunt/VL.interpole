@@ -15,18 +15,18 @@ namespace VVVV.Nodes
 {
     partial class Interpole
     {
-        
+
         //public ObservableCollection<Clip> clipList;
         public List<Clip> clipList;
         public List<int> snapPosList = new List<int>();
 
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
-        
+
         public void AddClip()
         {
             string input = "MyClip";
-            int startFrame = mousePos.X*timeZoom;
+            int startFrame = mousePos.X * timeZoom;
             int duration = 160;
             int fadeIn = 0;
             int fadeOut = 0;
@@ -35,7 +35,7 @@ namespace VVVV.Nodes
             if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Add Clip", dpi) == DialogResult.OK)
             {
                 //int duration = duration;
-                
+
                 //add state to state list
                 clipList.Add(new Clip()
                 {
@@ -45,7 +45,7 @@ namespace VVVV.Nodes
                     Duration = duration,
                     FadeIn = fadeIn,
                     FadeOut = fadeOut,
-                    Bounds = new Rectangle(new Point(startFrame/timeZoom,mousePos.Y), new Size(duration/timeZoom, 20)),
+                    Bounds = new Rectangle(new Point(startFrame / timeZoom, mousePos.Y), new Size(duration / timeZoom, 20)),
                     Color = colorName
                 });
 
@@ -71,45 +71,40 @@ namespace VVVV.Nodes
                 clip.FadeIn = fadeIn;
                 clip.FadeOut = fadeOut;
                 clip.Color = colorName;
-                clip.Bounds = new Rectangle(new Point(startFrame/timeZoom, clip.Bounds.Location.Y), new Size(duration/timeZoom, 20));
+                clip.Bounds = new Rectangle(new Point(startFrame / timeZoom, clip.Bounds.Location.Y), new Size(duration / timeZoom, 20));
                 lastColorName = colorName;
                 UpdateClipXML();
             }
         }
 
-        public void DragClip(Clip clip, System.Windows.Forms.MouseEventArgs e)
+        public void DragSelection(System.Windows.Forms.MouseEventArgs e)
         {
-
-            /*
-            if (e.Button == MouseButtons.Left && Form.ModifierKeys == Keys.Control)
+            // standard horizontal drag
+            if (e.Button == MouseButtons.Left)
             {
-                int dragHorizontal = clip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
-                clip.Bounds = new Rectangle(new Point(dragHorizontal, clip.Bounds.Location.Y), clip.Bounds.Size);
-                clip.StartFrame = dragHorizontal*timeZoom;
-                rememberLastFunction = "dragclip";
-                Invalidate(); //redraw
+
+                foreach (Clip myclip in selectionList)
+                {
+                    int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
+                    myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
+                    myclip.StartFrame = dragHorizontal * timeZoom;
+                    rememberLastFunction = "dragclip";
+                    Invalidate(); //redraw
+                }
             }
-            */
 
-            if (e.Button == MouseButtons.Right && Form.ModifierKeys == Keys.Control)
-            {
-                int dragVertical = clip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
-                clip.Bounds = new Rectangle(new Point(clip.Bounds.Location.X, dragVertical), clip.Bounds.Size);
-                rememberLastFunction = "dragclip";
-                Invalidate(); //redraw
-            }
-        }
 
-        public void DragSelection()
-        {
-            // standard drag
-            foreach (Clip myclip in selectionList)
+            // standard vertical drag
+            if (e.Button == MouseButtons.Right)
             {
-                int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
-                myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
-                myclip.StartFrame = dragHorizontal * timeZoom;
-                rememberLastFunction = "dragclip";
-                Invalidate(); //redraw
+                // standard drag
+                foreach (Clip myclip in selectionList)
+                {
+                    int dragVertical = myclip.Bounds.Location.Y + (mousePos.Y - deltaMousePos.Y);
+                    myclip.Bounds = new Rectangle(new Point(myclip.Bounds.Location.X, dragVertical), myclip.Bounds.Size);
+                    rememberLastFunction = "dragclip";
+                    Invalidate(); //redraw
+                }
             }
 
             // snap first clip to playhead function
@@ -128,7 +123,7 @@ namespace VVVV.Nodes
                     rememberLastFunction = "dragclip";
                 }
             }
-                
+
         }
 
         public void DeleteClip(Clip clip)
@@ -139,15 +134,15 @@ namespace VVVV.Nodes
 
         public void EditTimeCode()
         {
-            string input = Frames2Timecode(playPosFrames, Framerate[0],false);
-            
+            string input = Frames2Timecode(playPosFrames, Framerate[0], false);
+
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
                 playPosFrames = TimeCode2Frames(input, Framerate[0]);
                 StagePos.X = 0 - playPosFrames / timeZoom;
                 Invalidate();
             }
-            
+
         }
 
         private void UpdateClipXML()
@@ -174,12 +169,12 @@ namespace VVVV.Nodes
         }
 
         public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
-        {       
+        {
             int Frames = frameCount % frameRate;
             int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
             int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
             int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;
-            if(isruler) return $"{Minutes:D2}:{Seconds:D2}";
+            if (isruler) return $"{Minutes:D2}:{Seconds:D2}";
             else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
 
         }
@@ -189,11 +184,11 @@ namespace VVVV.Nodes
             int frameCount = 0;
             var numbers = TimeCode.Split(':').Select(Int32.Parse).ToList();
 
-            if(numbers.Count == 4)
+            if (numbers.Count == 4)
             {
                 frameCount = numbers[3] + (numbers[2] * Framerate[0]) + (numbers[1] * 60 * Framerate[0]) + (numbers[0] * 60 * 60 * Framerate[0]);
             }
-            
+
             return frameCount;
         }
 
@@ -219,6 +214,6 @@ namespace VVVV.Nodes
         }
 
 
-        
+
     }
 }
