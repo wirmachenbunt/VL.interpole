@@ -166,7 +166,10 @@ namespace VVVV.Nodes
             }
 
             //activate loop region
-            if (!FSetTimecode[0] && FIsLoop[0] && playPosFrames >= FLoopRegion[1] && play) playPosFrames = FLoopRegion[0];
+            if (!FSetTimecode[0] && FIsLoop[0] && 
+                playPosFrames >= FLoopRegion[1] && 
+                play && FLoopRegion[1] > 0 &&
+                FLoopRegion[1] > FLoopRegion[0]) playPosFrames = FLoopRegion[0];
         }
 
         //called when data for any output pin is requested

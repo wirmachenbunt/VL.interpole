@@ -215,7 +215,5 @@ namespace VVVV.Nodes
             return result.ToString();
         }
 
-
-
     }
 }

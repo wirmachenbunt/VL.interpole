@@ -61,6 +61,12 @@ namespace VVVV.Nodes
                 get;
                 set;
             }
+
+            public List<int>ReferenceClipPos
+            {
+                get;
+                set;
+            }
         }
         public class Playbar : UIelement
         {

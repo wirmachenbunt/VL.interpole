@@ -90,6 +90,7 @@ namespace VVVV.Nodes
 
         public void DrawClips(PaintEventArgs e)
         {
+
             foreach (Clip clip in clipList)
             {
                 Color ClipColor = Color.FromName(clip.Color);
@@ -106,7 +107,7 @@ namespace VVVV.Nodes
                     new Point(clip.Bounds.Width - fadeOut + clip.Bounds.X, clip.Bounds.Y),
                     new Point(clip.Bounds.Width + clip.Bounds.X, clip.Bounds.Y+20) };
 
-
+                
             e.Graphics.FillPolygon(ClipBrush, points);
 
 

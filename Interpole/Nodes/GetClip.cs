@@ -1,7 +1,7 @@
 ﻿#region usings
 using System;
 using System.ComponentModel.Composition;
-
+using System.Collections.Generic;
 using VVVV.PluginInterfaces.V1;
 using VVVV.PluginInterfaces.V2;
 using VVVV.Utils.VColor;
@@ -60,7 +60,7 @@ namespace VVVV.Nodes
         string EnumName;
         bool invalidate = false;
 
-        
+        List<Interpole.Clip> getClipList = new List<Interpole.Clip>();
 
         #endregion fields & pins
 
@@ -93,7 +93,7 @@ namespace VVVV.Nodes
         {
             if (invalidate ||InterpoleIn[0].needsUpdate)
             {
-                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).ToArray());
+                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray());
                 invalidate = false;
                 InterpoleIn[0].needsUpdate = false;
             }
@@ -124,14 +124,36 @@ namespace VVVV.Nodes
         {
             try // fixes missing clip bug, when deleting a choosen clip
             {
+
+
+                //getClipList = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i]).ToList();
+                
+                
+
                 //set all sliceCounts to zero
                 FramePosition.SliceCount = FadeInOut.SliceCount = Normalized.SliceCount = Duration.SliceCount = IsActive.SliceCount = FColor.SliceCount = 0;
                 
                 for (int i = 0; i < EnumClip.SliceCount;i++)
                 {
-                    myclip = InterpoleIn[0].clipList[EnumClip[i].Index]; // get enum index of selected clip
 
-                    // get relative pointer position in frames
+                    try
+                    {
+                        myclip = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i] &&
+                                                                     x.StartFrame <= InterpoleIn[0].playPosFrames &&
+                                                                     (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).First();
+                    }
+                    catch
+                    {
+                        myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Name == EnumClip[i]);
+
+                    }
+
+
+                    //if (myclip == null) FLogger.Log(LogType.Debug, "is null");
+
+                    //myclip = InterpoleIn[0].clipList[EnumClip[i].Index]; // get enum index of selected clip
+
+                        // get relative pointer position in frames
                     int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
                     if (ClipFramePos < 0) ClipFramePos = 0;
                     if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
