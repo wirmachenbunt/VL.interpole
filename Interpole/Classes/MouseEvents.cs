@@ -96,8 +96,17 @@ namespace VVVV.Nodes
 
         private void Form_Keydown(object sender, KeyEventArgs e)
         {
-            //PLAYBACK
-            if (e.KeyCode == Keys.Space) play = !play; // invert bool play
+            if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control)
+            {
+                FLogger.Log(LogType.Debug, "Looser, who needs undo ?");
+                
+               
+                Invalidate();
+            }
+
+
+                //PLAYBACK
+                if (e.KeyCode == Keys.Space) play = !play; // invert bool play
 
             //COPY
             if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)

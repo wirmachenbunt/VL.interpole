@@ -20,6 +20,7 @@ namespace VVVV.Nodes
         public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
         public List<int> snapPosList = new List<int>(); // snap position list
+        
 
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
@@ -150,10 +151,13 @@ namespace VVVV.Nodes
 
         private void UpdateClipXML()
         {
+            
             ClipXML[0] = SerializeClipList(clipList); //save config
+            
             needsUpdate = true;
             FLogger.Log(LogType.Debug, "Update XML");
             rememberLastFunction = "updateXML";
+            
         }
 
         public static string SerializeClipList(List<Clip> myList)
