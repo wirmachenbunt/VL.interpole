@@ -17,8 +17,9 @@ namespace VVVV.Nodes
     {
 
         //public ObservableCollection<Clip> clipList;
-        public List<Clip> clipList;
-        public List<int> snapPosList = new List<int>();
+        public List<Clip> clipList; //master clip list
+        public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
+        public List<int> snapPosList = new List<int>(); // snap position list
 
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
@@ -213,6 +214,48 @@ namespace VVVV.Nodes
             foreach (byte b in data)
             { result.Append(chars[b % (chars.Length - 1)]); }
             return result.ToString();
+        }
+
+        public void PasteClips()
+        {
+            Clip firstClip = clipBoard.OrderBy(n => n.StartFrame).First();
+            int distance = firstClip.StartFrame - playPosFrames;
+
+
+            foreach (Clip myclip in clipBoard)
+            {
+                //add state to state list
+                clipList.Add(new Clip()
+                {
+                    ID = RNGCharacterMask(),
+                    Name = myclip.Name,
+                    StartFrame = myclip.StartFrame - distance,
+                    Duration = myclip.Duration,
+                    FadeIn = myclip.FadeIn,
+                    FadeOut = myclip.FadeOut,
+                    Bounds = new Rectangle(new Point(((myclip.StartFrame - distance)  / timeZoom), myclip.Bounds.Y),myclip.Bounds.Size),
+                    Color = myclip.Color
+                });
+            }
+            UpdateClipXML();
+        }
+
+        public void CopyClips()
+        {
+            foreach(Clip myclip in selectionList)
+            {
+                clipBoard.Add(myclip);
+            }
+
+        }
+
+        public void DeleteClipSelection()
+        {
+            foreach(Clip myclip in selectionList)
+            {
+                clipList.Remove(myclip);          
+            }
+            UpdateClipXML();
         }
 
     }

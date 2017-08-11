@@ -30,7 +30,7 @@ namespace VVVV.Nodes
             SetPlayPosition();// set playhead
 
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
-            if (e.Button == MouseButtons.Left && hitObject is WorkSpace || hitObject is Playbar) selectionList.Clear();
+            if (e.Button == MouseButtons.Left && hitObject is WorkSpace || e.Button == MouseButtons.Middle) selectionList.Clear();
 
 
             if (hitObject is Clip) // is hitobject a clip and not part of the selection, clear selection
@@ -96,14 +96,31 @@ namespace VVVV.Nodes
 
         private void Form_Keydown(object sender, KeyEventArgs e)
         {
+            //PLAYBACK
             if (e.KeyCode == Keys.Space) play = !play; // invert bool play
 
-            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
+            //COPY
+            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
+            {
+                clipBoard.Clear();
+                CopyClips();
+            }
+
+            //Paste
+            if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control)
+            {
+                PasteClips();
+                Invalidate();
+            }
+
+            //LOOP
+                if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
             {
                 FIsLoop[0] = !FIsLoop[0]; // invert loop activate
                 Invalidate();
             }
 
+            //SET TO ZERO
             if (e.KeyCode == Keys.NumPad0)
             {
                 StagePos.X = 0;
@@ -111,6 +128,15 @@ namespace VVVV.Nodes
                 Invalidate();
             }
 
+            //DELETE CLIPS OF SELECTION
+            if(e.KeyCode == Keys.Delete && selectionList.Count > 0)
+            {
+                DeleteClipSelection();
+                selectionList.Clear();
+                Invalidate();
+            }
+
+            //MARKER & LOOPING
             HandleMarker(sender, e);
             HandleLoopRegion(sender, e);
 

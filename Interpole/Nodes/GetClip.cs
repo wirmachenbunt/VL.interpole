@@ -148,9 +148,6 @@ namespace VVVV.Nodes
 
                     }
 
-
-                    //if (myclip == null) FLogger.Log(LogType.Debug, "is null");
-
                     //myclip = InterpoleIn[0].clipList[EnumClip[i].Index]; // get enum index of selected clip
 
                         // get relative pointer position in frames
