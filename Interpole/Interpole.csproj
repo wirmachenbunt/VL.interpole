@@ -80,6 +80,7 @@
     </Compile>
     <Compile Include="Nodes\GetClip.cs" />
     <Compile Include="Nodes\JoinTC.cs" />
+    <Compile Include="Nodes\PlaybackInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

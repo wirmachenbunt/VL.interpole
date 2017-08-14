@@ -69,7 +69,7 @@ namespace VVVV.Nodes
         IPluginHost2 FPluginHost;
 
         bool initialized = false; // controlling init of plugin
-        bool play = false;
+        public bool play = false;
         public bool needsUpdate = true;
 
         Rectangle playHeadInvalidate;
