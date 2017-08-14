@@ -36,6 +36,11 @@ namespace VVVV.Nodes
         [Output("Seconds")]
         public ISpread<double> FSeconds;
 
+        [Output("TimeJump")]
+        public ISpread<bool> FTimeJump;
+
+        int tempPlayPosFrames = 0;
+        bool wasPlaying = false;
 
         [Import()]
         public ILogger FLogger;
@@ -74,11 +79,19 @@ namespace VVVV.Nodes
         {
             try // fixes missing clip bug, when deleting a choosen clip
             {
-
                 FPlay[0] = InterpoleIn[0].play;
                 FSeconds[0] = (double)InterpoleIn[0].playPosFrames / InterpoleIn[0].Framerate[0];
 
+                // Timejump when looping
+                
+                if(!wasPlaying && FPlay[0] ||
+                    !InterpoleIn[0].FSetTimecode[0] && InterpoleIn[0].FIsLoop[0] &&
+                InterpoleIn[0].playPosFrames == InterpoleIn[0].FLoopRegion[0] ||
+                (Math.Abs(tempPlayPosFrames - InterpoleIn[0].playPosFrames) > 1)) FTimeJump[0] = true;
+                else FTimeJump[0] = false;
 
+                wasPlaying = FPlay[0];
+                tempPlayPosFrames = InterpoleIn[0].playPosFrames;
                 //FLogger.Log(LogType.Debug, "GetClip");
             }
             catch { }
@@ -93,8 +106,7 @@ namespace VVVV.Nodes
             if (InterpoleIn.IsConnected && InterpoleIn[0].clipList != null)
             {
                 if (InterpoleIn[0].clipList.Count > 0)
-                {
-                    
+                {            
                     UpdateOutputs();
                 }
             }
