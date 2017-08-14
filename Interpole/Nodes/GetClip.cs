@@ -91,13 +91,13 @@ namespace VVVV.Nodes
 
         public void UpdateEnum()
         {
-            if (invalidate ||InterpoleIn[0].needsUpdate)
+            if (invalidate || InterpoleIn[0].needsUpdate)
             {
                 EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray());
                 invalidate = false;
                 InterpoleIn[0].needsUpdate = false;
             }
-            
+
         }
 
         public static double Clamp(double value, double min, double max)
@@ -105,18 +105,18 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        public double CalcFade(Interpole.Clip myclip,int clipPos)
+        public double CalcFade(Interpole.Clip myclip, int clipPos)
         {
             double value = 0.0;
             value = ((double)1 / myclip.FadeIn) * clipPos;
             value = Clamp(value, 0, 1);
-            if(myclip.Duration - clipPos <  myclip.FadeOut)
+            if (myclip.Duration - clipPos < myclip.FadeOut)
             {
                 value = Clamp((((double)myclip.Duration - clipPos) / myclip.FadeOut), 0, 1);
             }
-            
-          
-            
+
+
+
             return value;
         }
 
@@ -125,32 +125,29 @@ namespace VVVV.Nodes
             try // fixes missing clip bug, when deleting a choosen clip
             {
 
-
-                //getClipList = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i]).ToList();
-                
-                
-
                 //set all sliceCounts to zero
                 FramePosition.SliceCount = FadeInOut.SliceCount = Normalized.SliceCount = Duration.SliceCount = IsActive.SliceCount = FColor.SliceCount = 0;
-                
-                for (int i = 0; i < EnumClip.SliceCount;i++)
+
+                for (int i = 0; i < EnumClip.SliceCount; i++)
                 {
 
-                    try
-                    {
-                        myclip = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i] &&
-                                                                     x.StartFrame <= InterpoleIn[0].playPosFrames &&
-                                                                     (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).First();
-                    }
-                    catch
-                    {
-                        myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Name == EnumClip[i]);
+                    myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Name == EnumClip[i]);
 
+
+                    var tempCLip = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i] &&
+                                                                x.StartFrame <= InterpoleIn[0].playPosFrames &&
+                                                                (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).FirstOrDefault();
+                    if (tempCLip != null)
+                    {
+                        myclip = tempCLip;
                     }
+                    
+                    // FLogger.Log(LogType.Debug, "something went wrong");
+                    
 
                     //myclip = InterpoleIn[0].clipList[EnumClip[i].Index]; // get enum index of selected clip
 
-                        // get relative pointer position in frames
+                    // get relative pointer position in frames
                     int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
                     if (ClipFramePos < 0) ClipFramePos = 0;
                     if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
@@ -163,7 +160,7 @@ namespace VVVV.Nodes
 
 
                     //is clip active ?
-                    if (fadeInOut > 0  && ClipFramePos <= (myclip.Duration-1)) IsActive.Add(true);
+                    if (fadeInOut > 0 && ClipFramePos <= (myclip.Duration - 1)) IsActive.Add(true);
                     else IsActive.Add(false);
 
                     //get relative pointer position normalized
@@ -175,21 +172,21 @@ namespace VVVV.Nodes
                     //Color
                     FColor.Add(myclip.Color);
                 }
-                
+
                 //FLogger.Log(LogType.Debug, "GetClip");
             }
-            catch {  }
+            catch { }
         }
 
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            
 
-            if (InterpoleIn.IsConnected && InterpoleIn[0].clipList != null )
+
+            if (InterpoleIn.IsConnected && InterpoleIn[0].clipList != null)
             {
-                if(InterpoleIn[0].clipList.Count > 0)
+                if (InterpoleIn[0].clipList.Count > 0)
                 {
                     UpdateEnum();
                     UpdateOutputs();
