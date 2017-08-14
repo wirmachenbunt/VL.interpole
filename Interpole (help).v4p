@@ -1,5 +1,5 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="1410">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="870">
    <BOUNDS type="Window" left="1395" top="10185" width="12465" height="5055">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
@@ -68,7 +68,7 @@
    <PIN pinname="Alpha" visible="1" slicecount="1" values="0">
    </PIN>
    </NODE>
-   <NODE systemname="GetClip (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetClip (Clip Animation)" componentmode="Hidden" id="41">
+   <NODE systemname="GetClip (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetClip (Clip Animation)" componentmode="Hidden" id="41" debug="0">
    <BOUNDS type="Node" left="4260" top="3435" width="3195" height="270">
    </BOUNDS>
    <BOUNDS type="Box" left="4260" top="3435" width="3000" height="3000">
@@ -425,6 +425,8 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
+   <PIN pinname="Y Input Value" visible="1">
+   </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="73">
    <BOUNDS type="Box" left="3105" top="4065" width="795" height="240">
@@ -435,5 +437,25 @@
    </PIN>
    <PIN pinname="Precision" slicecount="1" values="4">
    </PIN>
+   <PIN pinname="Y Input Value" visible="1">
+   </PIN>
    </NODE>
+   <NODE systemname="PlaybackInfo (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="PlaybackInfo (Clip Animation)" componentmode="Hidden" id="74">
+   <BOUNDS type="Node" left="2220" top="3375" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2220" top="3375" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Interpole" visible="1">
+   </PIN>
+   <PIN pinname="Play" visible="1">
+   </PIN>
+   <PIN pinname="Seconds" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="7" srcpinname="Clips" dstnodeid="74" dstpinname="Interpole">
+   </LINK>
+   <LINK srcnodeid="74" srcpinname="Play" dstnodeid="72" dstpinname="Y Input Value">
+   </LINK>
+   <LINK srcnodeid="74" srcpinname="Seconds" dstnodeid="73" dstpinname="Y Input Value">
+   </LINK>
    </PATCH>

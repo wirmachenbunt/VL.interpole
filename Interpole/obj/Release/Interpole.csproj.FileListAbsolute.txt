@@ -2,3 +2,4 @@ C:\INTERPOLE\Interpole\bin\Release\Interpole.dll
 C:\INTERPOLE\Interpole\bin\Release\Interpole.pdb
 C:\INTERPOLE\Interpole\obj\Release\Interpole.dll
 C:\INTERPOLE\Interpole\obj\Release\Interpole.pdb
+C:\INTERPOLE\Interpole\obj\Release\Interpole.csprojResolveAssemblyReference.cache
