@@ -73,7 +73,6 @@ namespace VVVV.Nodes
             EnumName += "Interpole"; // add unique name to path
             InputAttribute attr = new InputAttribute("Clip"); //name of pin
             attr.EnumName = EnumName;
-            //attr.DefaultEnumEntry = "Init"; //default state
             EnumClip = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
         }
 
