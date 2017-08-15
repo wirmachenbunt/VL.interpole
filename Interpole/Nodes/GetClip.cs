@@ -165,6 +165,13 @@ namespace VVVV.Nodes
                     //get relative pointer position normalized
                     Normalized.Add((double)1 / myclip.Duration * ClipFramePos);
 
+                    //weirdo bugfix
+                    if(!IsActive[i])
+                    {
+                        FadeInOut[i] = 0;
+                        Normalized[i] = 0;
+                    }
+
                     //duration
                     Duration.Add(myclip.Duration);
 
