@@ -160,13 +160,33 @@ namespace VVVV.Nodes
             {
                 this.Cursor = Cursors.SizeWE;
                 int dragHorizontal = myclip.Bounds.Width + (mousePos.X - deltaMousePos.X);
-                dragDurationClip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
+                myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
 
 
-                dragDurationClip.Duration = dragHorizontal * timeZoom;
+                myclip.Duration = dragHorizontal * timeZoom;
                 rememberLastFunction = "dragclip";
                 Invalidate(); //redraw
 
+            }
+
+
+            // snap first clip to playhead function
+            if (Form.ModifierKeys == Keys.Shift && dragDurationClip != null)
+            {
+                
+                int distance = (myclip.StartFrame + myclip.Duration) - playPosFrames;
+                if (Math.Abs(distance) < 20)
+                {
+
+                    myclip.Duration = playPosFrames - myclip.StartFrame;
+
+
+                    myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(myclip.Duration/timeZoom, myclip.Bounds.Height));
+
+
+                    
+                    rememberLastFunction = "dragclip";
+                }
             }
 
 

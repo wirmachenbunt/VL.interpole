@@ -96,7 +96,7 @@ namespace VVVV.Nodes
                 EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray());
 
                 counter += 1;
-                if(counter > 2)
+                if(counter > 5)
                 {
                     invalidate = false;
                     InterpoleIn[0].needsUpdate = false;
