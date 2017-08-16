@@ -23,20 +23,26 @@ namespace VVVV.Nodes
             prevMousePos = MousePosition; // for delta calculation below
             holdMousePos = mousePos; //keep last Mouseposition for rectangle selection
 
-            hittest(); //global hittest for everything
+            //global hittest for everything
+            hittest(); 
 
-            UpdateSnapList(); // update snap positions
+            // update snap positions
+            UpdateSnapList(); 
 
-            SetPlayPosition();// set playhead
+            // set playhead
+            SetPlayPosition();
 
+            //delete clip
             if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
+
+            //selection aufheben
             if (e.Button == MouseButtons.Left && hitObject is WorkSpace || e.Button == MouseButtons.Middle) selectionList.Clear();
 
+            // is hitobject a clip and not part of the selection, clear selection
+            if (hitObject is Clip) if (!selectionList.Any(cus => cus == hitObject)) selectionList.Clear();
 
-            if (hitObject is Clip) // is hitobject a clip and not part of the selection, clear selection
-            {
-                if (!selectionList.Any(cus => cus == hitObject)) selectionList.Clear();
-            }
+            //DragDuration
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0) DragDuration(hitObject);
 
             this.Invalidate(); //redraw
         }
@@ -47,8 +53,9 @@ namespace VVVV.Nodes
             {
                 UpdateClipXML();
             }
-
+            this.Cursor = Cursors.Default;
             hitObject = null; //clear hitObject in case there is no button pressed
+            dragDurationClip = null;
             selectionRectangle.Size = new Size(0, 0);
             this.Invalidate(); //redraw
             //UpdateClipXML();
@@ -89,6 +96,9 @@ namespace VVVV.Nodes
 
             //dragging multiselection
             if (selectionList.Count > 0 && hitObject is Clip) DragSelection(e);
+
+            //DragDuration
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0) DragDuration(hitObject);
 
             deltaMousePos = mousePos;
 

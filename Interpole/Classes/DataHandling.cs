@@ -20,7 +20,7 @@ namespace VVVV.Nodes
         public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
         public List<int> snapPosList = new List<int>(); // snap position list
-        
+        public Clip dragDurationClip = new Clip();
 
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
@@ -149,15 +149,38 @@ namespace VVVV.Nodes
 
         }
 
+        public void DragDuration(Clip myclip)
+        {
+            int start = (myclip.Bounds.X + myclip.Bounds.Width) - (5);
+            int end = myclip.Bounds.X + myclip.Bounds.Width;
+
+            if (mousePos.X > start && mousePos.X < end) dragDurationClip = myclip;
+
+            if (dragDurationClip != null)
+            {
+                this.Cursor = Cursors.SizeWE;
+                int dragHorizontal = myclip.Bounds.Width + (mousePos.X - deltaMousePos.X);
+                dragDurationClip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
+
+
+                dragDurationClip.Duration = dragHorizontal * timeZoom;
+                rememberLastFunction = "dragclip";
+                Invalidate(); //redraw
+
+            }
+
+
+        }
+
         private void UpdateClipXML()
         {
-            
+
             ClipXML[0] = SerializeClipList(clipList); //save config
-            
+
             needsUpdate = true;
             FLogger.Log(LogType.Debug, "Update XML");
             rememberLastFunction = "updateXML";
-            
+
         }
 
         public static string SerializeClipList(List<Clip> myList)
@@ -237,7 +260,7 @@ namespace VVVV.Nodes
                     Duration = myclip.Duration,
                     FadeIn = myclip.FadeIn,
                     FadeOut = myclip.FadeOut,
-                    Bounds = new Rectangle(new Point(((myclip.StartFrame - distance)  / timeZoom), myclip.Bounds.Y),myclip.Bounds.Size),
+                    Bounds = new Rectangle(new Point(((myclip.StartFrame - distance) / timeZoom), myclip.Bounds.Y), myclip.Bounds.Size),
                     Color = myclip.Color
                 });
             }
@@ -246,7 +269,7 @@ namespace VVVV.Nodes
 
         public void CopyClips()
         {
-            foreach(Clip myclip in selectionList)
+            foreach (Clip myclip in selectionList)
             {
                 clipBoard.Add(myclip);
             }
@@ -255,9 +278,9 @@ namespace VVVV.Nodes
 
         public void DeleteClipSelection()
         {
-            foreach(Clip myclip in selectionList)
+            foreach (Clip myclip in selectionList)
             {
-                clipList.Remove(myclip);          
+                clipList.Remove(myclip);
             }
             UpdateClipXML();
         }
