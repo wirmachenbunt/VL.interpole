@@ -106,12 +106,21 @@ namespace VVVV.Nodes
 
         private void Form_Keydown(object sender, KeyEventArgs e)
         {
+            //undo function
             if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control)
             {
-                FLogger.Log(LogType.Debug, "Looser, who needs undo ?");
-                
-               
-                Invalidate();
+                if(undoXML.Count > 0)
+                {
+                    FLogger.Log(LogType.Debug, "Do Undo!");
+                    string tempXML = undoXML.Pop();
+                    clipList.Clear();
+                    selectionList.Clear();
+                    clipList = DeserializeClipList(tempXML);
+                    ApplyTimeZoom(); // scale to zoom
+                    needsUpdate = true; //inform getclip about change
+                    rememberLastFunction = "updateXML"; //remember action
+                    Invalidate();
+                }  
             }
 
 

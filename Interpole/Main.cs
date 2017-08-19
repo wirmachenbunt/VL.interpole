@@ -120,11 +120,17 @@ namespace VVVV.Nodes
             {
                 try
                 {
-                    clipList = DeserializeClipList(ClipXML[0]);
+                    clipList = DeserializeClipList(ClipXML[0]); // load xml from config pin
+
+                    undoXML.Push(ClipXML[0]); //add first undo step
+
+                    ApplyTimeZoom(); // scale to zoom
+
                     FLogger.Log(LogType.Debug, "Interpole successful initialized");
-                    ApplyTimeZoom();
+
                     this.DoubleBuffered = true; //not sure if this is actually nessecary
-                    Invalidate();
+
+                    Invalidate(); // redraw all
                 }
                 catch
                 {

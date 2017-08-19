@@ -22,6 +22,8 @@ namespace VVVV.Nodes
         public List<int> snapPosList = new List<int>(); // snap position list
         public Clip dragDurationClip = new Clip();
 
+        Stack<string> undoXML = new Stack<string>();
+
         public int playPosFrames = 100;
         public string rememberLastFunction = "";  // keep track of last command
 
@@ -194,12 +196,19 @@ namespace VVVV.Nodes
 
         private void UpdateClipXML()
         {
+            string tempXML = SerializeClipList(clipList); //convert list of objects to string
 
-            ClipXML[0] = SerializeClipList(clipList); //save config
+            ClipXML[0] = tempXML; //save config
 
-            needsUpdate = true;
+            undoXML.Push(tempXML); //add undo save point to stack
+
+            needsUpdate = true; //inform getclip about change
+            
+            rememberLastFunction = "updateXML"; //remember action
+
+            //tty messages
             FLogger.Log(LogType.Debug, "Update XML");
-            rememberLastFunction = "updateXML";
+            FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
 
         }
 
