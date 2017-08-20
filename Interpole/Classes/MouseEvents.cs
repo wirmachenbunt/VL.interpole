@@ -44,6 +44,7 @@ namespace VVVV.Nodes
             //DragDuration
             if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0) DragDuration(hitObject);
 
+
             this.Invalidate(); //redraw
         }
 
@@ -53,12 +54,18 @@ namespace VVVV.Nodes
             {
                 UpdateClipXML();
             }
+
+            rememberLastFunction = "idle";
+
             this.Cursor = Cursors.Default;
+
             hitObject = null; //clear hitObject in case there is no button pressed
+
             dragDurationClip = null;
+
             selectionRectangle.Size = new Size(0, 0);
+
             this.Invalidate(); //redraw
-            //UpdateClipXML();
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -86,6 +93,8 @@ namespace VVVV.Nodes
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+            
+
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
@@ -95,10 +104,17 @@ namespace VVVV.Nodes
             SetSelectionRectangle(e); // selection rectangle
 
             //dragging multiselection
-            if (selectionList.Count > 0 && hitObject is Clip) DragSelection(e);
+            if (selectionList.Count > 0 && hitObject is Clip)
+            {
+                if (rememberLastFunction != "dragclip") PushUndoStep();
+                DragSelection(e);
+            }
 
             //DragDuration
-            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0) DragDuration(hitObject);
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0)
+            {
+                DragDuration(hitObject);
+            }
 
             deltaMousePos = mousePos;
 
@@ -112,11 +128,19 @@ namespace VVVV.Nodes
                 if(undoXML.Count > 0)
                 {
                     FLogger.Log(LogType.Debug, "Do Undo!");
+
                     string tempXML = undoXML.Pop();
+
                     clipList.Clear();
+
                     selectionList.Clear();
+
                     clipList = DeserializeClipList(tempXML);
+
                     ApplyTimeZoom(); // scale to zoom
+
+                    ClipXML[0] = tempXML;
+
                     needsUpdate = true; //inform getclip about change
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();

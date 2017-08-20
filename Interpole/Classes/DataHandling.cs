@@ -25,7 +25,7 @@ namespace VVVV.Nodes
         Stack<string> undoXML = new Stack<string>();
 
         public int playPosFrames = 100;
-        public string rememberLastFunction = "";  // keep track of last command
+        public string rememberLastFunction = "idle";  // keep track of last command
 
         public void AddClip()
         {
@@ -35,6 +35,8 @@ namespace VVVV.Nodes
             int fadeIn = 0;
             int fadeOut = 0;
             string colorName = lastColorName;
+
+            PushUndoStep();
 
             if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Add Clip", dpi) == DialogResult.OK)
             {
@@ -66,6 +68,8 @@ namespace VVVV.Nodes
             string colorName = clip.Color;
             int fadeIn = clip.FadeIn;
             int fadeOut = clip.FadeOut;
+
+            PushUndoStep();
 
             if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Edit Clip", dpi) == DialogResult.OK)
             {
@@ -134,6 +138,7 @@ namespace VVVV.Nodes
 
         public void DeleteClip(Clip clip)
         {
+            PushUndoStep();
             clipList.Remove(clip);
             UpdateClipXML();
         }
@@ -156,7 +161,13 @@ namespace VVVV.Nodes
             int start = (myclip.Bounds.X + myclip.Bounds.Width) - (5);
             int end = myclip.Bounds.X + myclip.Bounds.Width;
 
-            if (mousePos.X > start && mousePos.X < end) dragDurationClip = myclip;
+            
+
+            if (mousePos.X > start && mousePos.X < end)
+            {
+                if (rememberLastFunction == "idle") PushUndoStep();
+                dragDurationClip = myclip;
+            }
 
             if (dragDurationClip != null)
             {
@@ -179,19 +190,24 @@ namespace VVVV.Nodes
                 int distance = (myclip.StartFrame + myclip.Duration) - playPosFrames;
                 if (Math.Abs(distance) < 20)
                 {
-
                     myclip.Duration = playPosFrames - myclip.StartFrame;
 
-
                     myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(myclip.Duration/timeZoom, myclip.Bounds.Height));
-
-
-                    
+              
                     rememberLastFunction = "dragclip";
                 }
             }
 
 
+        }
+
+        public void PushUndoStep()
+        {
+            string tempXML = SerializeClipList(clipList); //convert list of objects to string
+
+            undoXML.Push(tempXML); //add undo save point to stack
+
+            FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
         }
 
         private void UpdateClipXML()
@@ -200,16 +216,12 @@ namespace VVVV.Nodes
 
             ClipXML[0] = tempXML; //save config
 
-            undoXML.Push(tempXML); //add undo save point to stack
-
             needsUpdate = true; //inform getclip about change
             
             rememberLastFunction = "updateXML"; //remember action
 
             //tty messages
             FLogger.Log(LogType.Debug, "Update XML");
-            FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
-
         }
 
         public static string SerializeClipList(List<Clip> myList)
@@ -277,6 +289,7 @@ namespace VVVV.Nodes
             Clip firstClip = clipBoard.OrderBy(n => n.StartFrame).First();
             int distance = firstClip.StartFrame - playPosFrames;
 
+            PushUndoStep();
 
             foreach (Clip myclip in clipBoard)
             {
@@ -307,6 +320,7 @@ namespace VVVV.Nodes
 
         public void DeleteClipSelection()
         {
+            PushUndoStep();
             foreach (Clip myclip in selectionList)
             {
                 clipList.Remove(myclip);
