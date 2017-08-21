@@ -294,7 +294,7 @@ namespace VVVV.Nodes
 
                 myclip.Bounds = new Rectangle(mypoint, mysize);
 
-                StagePos.X = (0 -(playPosFrames / timeZoom)) ;
+                //StagePos.X = (0 -(playPosFrames / timeZoom)) ;
                 //if (StagePos.X < 0) StagePos.X = 0;
             }
         }
