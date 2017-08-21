@@ -16,6 +16,9 @@ namespace VVVV.Nodes
         List<Clip> selectionList = new List<Clip>();
         Rectangle selectionRectangle = new Rectangle(); //multiselection rectangle
         dynamic hitObject;
+        dynamic rollOverObject;
+
+
 
         public void hittest()
         {
@@ -37,6 +40,30 @@ namespace VVVV.Nodes
             // the actual hitTest
             hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
             //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
+        }
+
+        public void hittestRollover()
+        {
+            List<UIelement> myhitTestList = new List<UIelement>();
+
+            foreach (Clip myclip in clipList)
+            {
+                myhitTestList.Add(myclip); //add all clips, this needs to be culled at some point
+            }
+            // the actual hitTest
+            rollOverObject = myhitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X, mousePos.Y)));
+
+            if(rollOverObject is Clip && hitObject == null)
+            {
+                int start = (rollOverObject.Bounds.X + rollOverObject.Bounds.Width) - (5);
+                int end = rollOverObject.Bounds.X + rollOverObject.Bounds.Width;
+
+                if (mousePos.X > start && mousePos.X < end && selectionList.Count == 0)
+                {
+                    this.Cursor = Cursors.SizeWE;
+                }
+            }
+            
         }
 
         public void MultiSelectionClips()

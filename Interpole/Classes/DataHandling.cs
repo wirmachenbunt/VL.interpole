@@ -158,8 +158,8 @@ namespace VVVV.Nodes
 
         public void DragDuration(Clip myclip)
         {
-            int start = (myclip.Bounds.X + myclip.Bounds.Width) - (5);
-            int end = myclip.Bounds.X + myclip.Bounds.Width;
+            int start = (myclip.Bounds.X + myclip.Bounds.Width) - (10);
+            int end = myclip.Bounds.X + myclip.Bounds.Width + 5;
 
             
 

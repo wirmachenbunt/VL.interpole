@@ -93,7 +93,7 @@ namespace VVVV.Nodes
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            
+            //hittestRollover();
 
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 
