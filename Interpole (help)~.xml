@@ -1,5 +1,5 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="0">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="1470" scrolly="0">
    <BOUNDS type="Window" left="1395" top="2670" width="12705" height="13425">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
@@ -667,9 +667,9 @@
    <LINK srcnodeid="88" srcpinname="TimeCodeString" dstnodeid="78" dstpinname="Input String">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="90">
-   <BOUNDS type="Box" left="8685" top="5655" width="480" height="480">
+   <BOUNDS type="Box" left="8145" top="9345" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="8685" top="5655" width="0" height="0">
+   <BOUNDS type="Node" left="8145" top="9345" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -681,9 +681,11 @@
    </PIN>
    <PIN pinname="Y Output Value" visible="1">
    </PIN>
+   <PIN pinname="Y Input Value" visible="1" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
    </NODE>
-   <LINK srcnodeid="88" srcpinname="Play" dstnodeid="90" dstpinname="Y Input Value">
-   </LINK>
    <LINK srcnodeid="79" srcpinname="Timecode" dstnodeid="82" dstpinname="Timecode">
    </LINK>
    <LINK srcnodeid="90" srcpinname="Y Output Value" dstnodeid="79" dstpinname="IsPlay">
@@ -723,11 +725,13 @@
    <LINK srcnodeid="93" srcpinname="Input Value" dstnodeid="7" dstpinname="Timecode">
    </LINK>
    <NODE systemname="UDP (Network Client)" nodename="UDP (Network Client)" componentmode="Hidden" id="98">
-   <BOUNDS type="Node" left="10605" top="6720" width="100" height="100">
+   <BOUNDS type="Node" left="10605" top="7395" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Input" visible="1">
    </PIN>
    <PIN pinname="Do Send" visible="1">
+   </PIN>
+   <PIN pinname="Remote Host" visible="1">
    </PIN>
    </NODE>
    <NODE systemname="AsRaw (String)" nodename="AsRaw (String)" componentmode="Hidden" id="99">
@@ -745,9 +749,9 @@
    <LINK srcnodeid="99" srcpinname="Output" dstnodeid="98" dstpinname="Input">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="100">
-   <BOUNDS type="Box" left="11685" top="5850" width="480" height="480">
+   <BOUNDS type="Box" left="10815" top="6540" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="11685" top="5850" width="0" height="0">
+   <BOUNDS type="Node" left="10815" top="6540" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
    </PIN>
@@ -813,5 +817,23 @@
    </PIN>
    </NODE>
    <LINK srcnodeid="102" srcpinname="Output" dstnodeid="104" dstpinname="Input String">
+   </LINK>
+   <NODE nodename="IOBox (String)" componentmode="InABox" id="105">
+   <BOUNDS type="Box" left="11310" top="6855" width="1770" height="345">
+   </BOUNDS>
+   <BOUNDS type="Node" left="11310" top="6855" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Input String" slicecount="1" visible="1" values="192.168.2.81">
+   </PIN>
+   <PIN pinname="Default" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="File Mask" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Maximum Characters" slicecount="1" values="-1">
+   </PIN>
+   <PIN pinname="String Type" slicecount="1" values="IP">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="105" srcpinname="Output String" dstnodeid="98" dstpinname="Remote Host">
    </LINK>
    </PATCH>

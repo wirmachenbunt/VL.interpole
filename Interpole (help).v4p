@@ -800,8 +800,6 @@
    </LINK>
    <LINK srcnodeid="103" srcpinname="Output" dstnodeid="102" dstpinname="Input">
    </LINK>
-   <LINK srcnodeid="102" srcpinname="Output" dstnodeid="79" dstpinname="TimeCode H:M:S">
-   </LINK>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="104">
    <BOUNDS type="Box" left="10620" top="9465" width="1800" height="435">
    </BOUNDS>
@@ -835,5 +833,7 @@
    </PIN>
    </NODE>
    <LINK srcnodeid="105" srcpinname="Output String" dstnodeid="98" dstpinname="Remote Host">
+   </LINK>
+   <LINK srcnodeid="78" srcpinname="Output String" dstnodeid="79" dstpinname="TimeCode H:M:S">
    </LINK>
    </PATCH>

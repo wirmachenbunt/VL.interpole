@@ -50,15 +50,19 @@ namespace VVVV.Nodes
         {
             timecodeList = FTCString[0].Split(':');
 
-            if(FPlay.IsChanged) counter = Convert.ToInt32(timecodeList[3]);
+            try
+            {
+                if (FPlay.IsChanged) counter = Convert.ToInt32(timecodeList[3]);
 
-            mytimecode.Hours = Convert.ToInt32(timecodeList[0]);
-            mytimecode.Minutes = Convert.ToInt32(timecodeList[1]);
-            mytimecode.Seconds = Convert.ToInt32(timecodeList[2]);
-            if(FPlay[0]) mytimecode.Frames = counter;
-            else mytimecode.Frames = Convert.ToInt32(timecodeList[3]);
+                mytimecode.Hours = Convert.ToInt32(timecodeList[0]);
+                mytimecode.Minutes = Convert.ToInt32(timecodeList[1]);
+                mytimecode.Seconds = Convert.ToInt32(timecodeList[2]);
+                if (FPlay[0]) mytimecode.Frames = counter;
+                else mytimecode.Frames = Convert.ToInt32(timecodeList[3]);
 
-            if (tempSecond != mytimecode.Seconds || counter >= 49) counter = 0;
+                if (tempSecond != mytimecode.Seconds || counter >= 49) counter = 0;
+            }
+            catch { FLogger.Log(LogType.Debug, "InterpolateTC: no valid timecode!"); }
 
 
             counter += 1;
