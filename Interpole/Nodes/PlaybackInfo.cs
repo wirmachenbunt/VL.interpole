@@ -36,6 +36,9 @@ namespace VVVV.Nodes
         [Output("Seconds")]
         public ISpread<double> FSeconds;
 
+        [Output("TimeCodeString")]
+        public ISpread<string> FTimeCodeString;
+
         [Output("TimeJump")]
         public ISpread<bool> FTimeJump;
 
@@ -71,9 +74,18 @@ namespace VVVV.Nodes
             FLogger.Log(LogType.Debug, "connected");
         }
 
-       
 
-     
+        public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
+        {
+            int Frames = frameCount % frameRate;
+            int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
+            int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
+            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;
+            if (isruler) return $"{Minutes:D2}:{Seconds:D2}";
+            else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
+
+        }
+
 
         public void UpdateOutputs()
         {
@@ -108,6 +120,7 @@ namespace VVVV.Nodes
                 if (InterpoleIn[0].clipList.Count > 0)
                 {            
                     UpdateOutputs();
+                    FTimeCodeString[0] = Frames2Timecode(InterpoleIn[0].playPosFrames, InterpoleIn[0].Framerate[0], false);
                 }
             }
         }

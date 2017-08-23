@@ -16,13 +16,13 @@ using VVVV.Core.Logging;
 namespace VVVV.Nodes
 {
     #region PluginInfo
-    [PluginInfo(Name = "Join",
+    [PluginInfo(Name = "Join TC",
                 Category = "Clip Animation",
                 Help = "join timecode values",
                 Tags = "",
                 AutoEvaluate = false)]
     #endregion PluginInfo
-    public class Join : IPluginEvaluate
+    public class JoinTC : IPluginEvaluate
     {
         #region fields & pins    
 
