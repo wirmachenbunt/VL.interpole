@@ -128,6 +128,8 @@ namespace VVVV.Nodes
                 {
                     clipList = DeserializeClipList(ClipXML[0]); // load xml from config pin
 
+                    ClipXMLOut[0] = ClipXML[0];
+
                     undoXML.Push(ClipXML[0]); //add first undo step
 
                     ApplyTimeZoom(); // scale to zoom
@@ -166,7 +168,7 @@ namespace VVVV.Nodes
                 int pos = playPosFrames/timeZoom;
 
                 playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
-                Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y),mytimecode.Bounds.Size)); // invalidate timecode display
+                Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y + StagePos.Y),mytimecode.Bounds.Size)); // invalidate timecode display
                 Invalidate(playHeadInvalidate); // invalidate playhead
 
             } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode

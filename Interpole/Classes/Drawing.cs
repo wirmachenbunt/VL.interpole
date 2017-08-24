@@ -65,20 +65,24 @@ namespace VVVV.Nodes
                    
                     e.Graphics.Clear(MyBackgroundColor);
 
-                    DrawMarker(e);
-                    
+
                     DrawPlayBar(e);
+                    DrawPlayHead(e);
+
+                    DrawMarker(e);
               
                     if(clipList.Count > 0) DrawClips(e);
 
-                    DrawPlayHead(e);
+
 
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
+                  
+
                     //DrawSnapPositions(e); // only for debugging purposes
                     //FLogger.Log(LogType.Debug, "Busy Drawing");
-                    
+
                 }
                 
             }
@@ -128,14 +132,14 @@ namespace VVVV.Nodes
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); //update playbar bounds
+            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, 30)); //update playbar bounds
 
             // show pre-roll
             if(playPosFrames > 400000) e.Graphics.FillRectangle(new SolidBrush(Color.OrangeRed), myplaybar.Bounds); // background
             else e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, this.Height));
+            myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, this.Height));
 
             DrawZoomValue(e);
 
@@ -156,10 +160,6 @@ namespace VVVV.Nodes
             double startRulerPos = Math.Abs(StagePos.X) * timeZoom;
             startRulerPos = (startRulerPos / Framerate[0]) / rulerSteps;
             startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
-
-            //startRulerPos = startRulerPos * Framerate[0];
-            //startRulerPos = startRulerPos / timeZoom;
-
 
             double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / Framerate[0];
 
@@ -183,8 +183,8 @@ namespace VVVV.Nodes
                 stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
 
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5), new Size(size, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y), new Size(thickness, height)));
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5 - StagePos.Y), new Size(size, 50)), format); //draw seconds
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y - StagePos.Y), new Size(thickness, height)));
             }
             
             //FLogger.Log(LogType.Debug, countBars.ToString());
@@ -199,10 +199,10 @@ namespace VVVV.Nodes
                 {
                     DarkPen.DashStyle = DashStyle.Dash;
                     Int32 pos = FMarker[i] / timeZoom;
-                    Point[] mypoints = { new Point(-3 + pos, 30), new Point(3 + pos, 30), new Point(0 + pos, 34) }; //play head triangle
+                    Point[] mypoints = { new Point(-3 + pos, 30 - StagePos.Y), new Point(3 + pos, 30 - StagePos.Y), new Point(0 + pos, 34 - StagePos.Y) }; //play head triangle
                     e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
-                    e.Graphics.DrawString((i+1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50), new Size(20, 50)), format); //draw seconds
-                    e.Graphics.DrawLine(DarkPen, new Point(pos, 34), new Point(pos, 3000));
+                    e.Graphics.DrawString((i+1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50 - StagePos.Y), new Size(20, 50)), format); //draw seconds
+                    e.Graphics.DrawLine(DarkPen, new Point(pos, 34 - StagePos.Y), new Point(pos, 3000 - StagePos.Y));
                 }                         
             }
         }
@@ -212,17 +212,17 @@ namespace VVVV.Nodes
             int pos = playPosFrames / timeZoom;
             
 
-            Point[] points = { new Point(-7 + pos, 20), new Point(7 + pos, 20), new Point(0 + pos, 30) }; //play head triangle
+            Point[] points = { new Point(-7 + pos, 20 - StagePos.Y), new Point(7 + pos, 20 - StagePos.Y), new Point(0 + pos, 30 - StagePos.Y) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen,new Point(pos,30),new Point(pos,this.Height));
+            e.Graphics.DrawLine(GrayPen,new Point(pos,30 - StagePos.Y),new Point(pos,this.Height - StagePos.Y));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
             if(FIsLoop[0])
             {
-                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 28), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2)));
-                e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 30), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2000)));
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 28 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2)));
+                e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 30 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2000)));
             }
             
 
@@ -231,7 +231,7 @@ namespace VVVV.Nodes
         public void DrawTimeCode(PaintEventArgs e)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(2 - StagePos.X, 30),
+                new Point(2 - StagePos.X, 30 - StagePos.Y),
                 new Size(200, 30));
 
             //e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //draw frameCount
@@ -244,7 +244,7 @@ namespace VVVV.Nodes
             string Percentage = Convert.ToString(100 / timeZoom) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
-            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15), new Size(50, 20)); //update playbar bounds
+            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, myzoombar.Bounds, format); //text
         }
 

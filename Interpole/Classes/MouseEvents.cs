@@ -55,6 +55,8 @@ namespace VVVV.Nodes
                 UpdateClipXML();
             }
 
+            ClipXMLOut[0] = SerializeClipList(clipList);
+
             rememberLastFunction = "idle";
 
             this.Cursor = Cursors.Default;
@@ -97,7 +99,7 @@ namespace VVVV.Nodes
 
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 
-            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right); // calculate delta on rightclick
+            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right,e); // calculate delta on rightclick
 
             SetPlayPosition(); // set playhead
 
@@ -140,6 +142,7 @@ namespace VVVV.Nodes
                     ApplyTimeZoom(); // scale to zoom
 
                     ClipXML[0] = tempXML;
+                    ClipXMLOut[0] = tempXML;
 
                     needsUpdate = true; //inform getclip about change
                     rememberLastFunction = "updateXML"; //remember action
@@ -321,9 +324,9 @@ namespace VVVV.Nodes
 
         }
 
-        public void CalcStagePosition(Point mousePos, bool click)
+        public void CalcStagePosition(Point mousePos, bool click, System.Windows.Forms.MouseEventArgs e)
         {
-            if (click && !(hitObject is Clip))
+            if (click && !(hitObject is Clip) && Form.ModifierKeys != Keys.Control)
             {
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;
@@ -331,6 +334,17 @@ namespace VVVV.Nodes
                 if (StagePos.X > 0) StagePos.X = 0;
                 Invalidate();
             }
+
+            if (click && !(hitObject is Clip) && Form.ModifierKeys == Keys.Control)
+            {
+                int deltaY = mousePos.Y - prevMousePos.Y;
+                prevMousePos = mousePos;
+                StagePos.Y += deltaY;
+                //if (StagePos.Y > 0) StagePos.X = 0;
+                Invalidate();
+            }
+
+
         }
 
         public void SetGlobalMousePos(MouseEventArgs e)

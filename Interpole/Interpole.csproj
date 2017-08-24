@@ -78,8 +78,8 @@
     <Compile Include="Main.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <None Include="Nodes\FramesToTCcs.cs" />
-    <Compile Include="Nodes\InterpolateTC.cs" />
+    <Compile Include="Nodes\Info.cs" />
+    <None Include="Nodes\InterpolateTC.cs" />
     <Compile Include="Nodes\GetClip.cs" />
     <Compile Include="Nodes\JoinTC.cs" />
     <Compile Include="Nodes\PlaybackInfo.cs" />
