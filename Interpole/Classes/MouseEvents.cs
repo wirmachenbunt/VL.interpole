@@ -125,9 +125,10 @@ namespace VVVV.Nodes
         private void Form_Keydown(object sender, KeyEventArgs e)
         {
             //undo function
+            #region undo
             if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control)
             {
-                if(undoXML.Count > 0)
+                if (undoXML.Count > 0)
                 {
                     FLogger.Log(LogType.Debug, "Do Undo!");
 
@@ -147,29 +148,33 @@ namespace VVVV.Nodes
                     needsUpdate = true; //inform getclip about change
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();
-                }  
-            }
+                }
+            } 
+            #endregion
 
-
-                //PLAYBACK
-                if (e.KeyCode == Keys.Space) play = !play; // invert bool play
+            //PLAYBACK
+            if (e.KeyCode == Keys.Space) play = !play; // invert bool play
 
             //COPY
+            #region copy
             if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
             {
                 clipBoard.Clear();
                 CopyClips();
             }
+            #endregion
 
             //Paste
+            #region paste
             if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control)
             {
                 PasteClips();
                 Invalidate();
-            }
+            } 
+            #endregion
 
             //LOOP
-                if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
+            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
             {
                 FIsLoop[0] = !FIsLoop[0]; // invert loop activate
                 Invalidate();
