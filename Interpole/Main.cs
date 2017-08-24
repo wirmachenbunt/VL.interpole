@@ -44,6 +44,9 @@ namespace VVVV.Nodes
         [Input("Hide Window")]
         public IDiffSpread<bool> FHideWindow;
 
+        [Input("ClipXMLIn")]
+        public IDiffSpread<string> ClipXMLIn;
+
         [Config("Marker")]
         public IDiffSpread<Int32> FMarker;
 
@@ -55,6 +58,9 @@ namespace VVVV.Nodes
 
         [Output("Clips")]
         public ISpread<Interpole> ClipsOut;
+
+        [Output("ClipXML")]
+        public ISpread<string> ClipXMLOut;
 
         [Import()]
         public ILogger FLogger;
@@ -186,6 +192,13 @@ namespace VVVV.Nodes
             
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
+
+            //iaa special feature
+            if(ClipXMLIn.IsChanged && ClipXMLIn[0].Length > 0)
+            {
+                clipList = DeserializeClipList(ClipXMLIn[0]);
+                Invalidate();
+            }
 
             //if(needsUpdate) FLogger.Log(LogType.Debug, "update");          
         }

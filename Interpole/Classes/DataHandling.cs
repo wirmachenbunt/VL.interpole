@@ -220,6 +220,8 @@ namespace VVVV.Nodes
             
             rememberLastFunction = "updateXML"; //remember action
 
+            ClipXMLOut[0] = tempXML;
+
             //tty messages
             FLogger.Log(LogType.Debug, "Update XML");
         }
