@@ -163,7 +163,7 @@ namespace VVVV.Nodes
             {
                 playPosFrames += 1;
 
-                //PlaybackMoveStage(); // scroll stage when playback
+                PlaybackMoveStage(); // scroll stage when playback
 
                 int pos = playPosFrames/timeZoom;
 

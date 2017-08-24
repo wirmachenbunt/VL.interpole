@@ -37,6 +37,7 @@ namespace VVVV.Nodes
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font rulerFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font timeCodefont = new Font("Consolas", 20, FontStyle.Regular);
+        Font framesfont = new Font("Consolas", 8, FontStyle.Regular);
 
         StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
 
@@ -231,12 +232,18 @@ namespace VVVV.Nodes
         public void DrawTimeCode(PaintEventArgs e)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(2 - StagePos.X, 30 - StagePos.Y),
+                new Point(5 - StagePos.X, 60 - StagePos.Y),
                 new Size(200, 30));
 
-            //e.Graphics.DrawString(playPosFrames.ToString("D10"), timeCodefont, textBrush, Bounds, format); //draw frameCount
-            
-            e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
+
+
+            mytimecode.Bounds = new Rectangle(
+                new Point(2 - StagePos.X, 30 - StagePos.Y),
+                new Size(200, 60));
+
+            if(FIsLoop[0]) e.Graphics.DrawString(Frames2Timecode(playPosFrames, Framerate[0], false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            else e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
         public void DrawZoomValue(PaintEventArgs e)
@@ -294,22 +301,29 @@ namespace VVVV.Nodes
 
                 myclip.Bounds = new Rectangle(mypoint, mysize);
 
-                //StagePos.X = (0 -(playPosFrames / timeZoom)) ;
-                //if (StagePos.X < 0) StagePos.X = 0;
+                StagePos.X = 0 - ((playPosFrames / timeZoom) - this.Width / 2);
+                if (StagePos.X > 0) StagePos.X = 0;
+
+
             }
         }
 
         public void PlaybackMoveStage()
         {
             int pos = playPosFrames / timeZoom;
-            if (pos < Math.Abs(StagePos.X)) StagePos.X = 0- pos;
-
-            if (pos > (this.Width / 2) && !FIsLoop[0])
+            
+            if (pos > this.Width  - StagePos.X)
             {
-                
-                StagePos.X = this.Width / 2 - (playPosFrames / timeZoom);
-                //FLogger.Log(LogType.Debug, StagePos.X.ToString());
+                StagePos.X = StagePos.X - this.Width / 2;
+                Invalidate();
             }
+
+            if(pos < Math.Abs(StagePos.X))
+            {
+                StagePos.X = 0 - pos;
+                Invalidate();
+            }
+
         }
 
         public bool IsVisible

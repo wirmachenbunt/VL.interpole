@@ -188,8 +188,15 @@ namespace VVVV.Nodes
                 Invalidate();
             }
 
+            //SET TO ZERO
+            if (e.KeyCode == Keys.R)
+            {
+                StagePos.Y = 0;     
+                Invalidate();
+            }
+
             //DELETE CLIPS OF SELECTION
-            if(e.KeyCode == Keys.Delete && selectionList.Count > 0)
+            if (e.KeyCode == Keys.Delete && selectionList.Count > 0)
             {
                 DeleteClipSelection();
                 selectionList.Clear();
