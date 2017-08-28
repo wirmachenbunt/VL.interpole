@@ -99,7 +99,7 @@ namespace VVVV.Nodes
                 if(!wasPlaying && FPlay[0] ||
                     !InterpoleIn[0].FSetTimecode[0] && InterpoleIn[0].FIsLoop[0] &&
                 InterpoleIn[0].playPosFrames == InterpoleIn[0].FLoopRegion[0] ||
-                (Math.Abs(tempPlayPosFrames - InterpoleIn[0].playPosFrames) > 1)) FTimeJump[0] = true;
+                (Math.Abs(tempPlayPosFrames - InterpoleIn[0].playPosFrames) > 10)) FTimeJump[0] = true;
                 else FTimeJump[0] = false;
 
                 wasPlaying = FPlay[0];
