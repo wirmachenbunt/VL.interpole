@@ -77,6 +77,8 @@ namespace VVVV.Nodes
         bool initialized = false; // controlling init of plugin
         public bool play = false;
         public bool needsUpdate = true;
+        int UpdateCounter = 0;
+        bool UI_Lock = false;
 
         Rectangle playHeadInvalidate;
 
@@ -195,14 +197,28 @@ namespace VVVV.Nodes
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
-            //iaa special feature
-            if(ClipXMLIn.IsChanged && ClipXMLIn[0].Length > 0)
+            #region boygrouping
+            //iaa special feature for boygrouping
+            if (ClipXMLIn.IsChanged && ClipXMLIn[0].Length > 0)
             {
                 clipList = DeserializeClipList(ClipXMLIn[0]);
                 Invalidate();
             }
+            #endregion
 
-            //if(needsUpdate) FLogger.Log(LogType.Debug, "update");          
+            #region updateEnumGetClip
+            //inform getClip to update enums a few frames
+            if (needsUpdate)
+            {
+                if (UpdateCounter > 1)
+                {
+                    needsUpdate = false;
+                    UpdateCounter = 0;
+                }
+                UpdateCounter += 1;
+            } 
+            #endregion
+
         }
     }
 }

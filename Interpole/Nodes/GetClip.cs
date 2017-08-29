@@ -59,7 +59,6 @@ namespace VVVV.Nodes
 
         string EnumName;
         bool invalidate = false;
-        int counter = 0;
 
         List<Interpole.Clip> getClipList = new List<Interpole.Clip>();
 
@@ -94,18 +93,9 @@ namespace VVVV.Nodes
             if (invalidate || InterpoleIn[0].needsUpdate)
             {
                 EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray());
-
-                counter += 1;
-                if(counter > 5)
-                {
-                    invalidate = false;
-                    InterpoleIn[0].needsUpdate = false;
-                    counter = 0;
-                }
-                
-                
+                invalidate = false;
+                FLogger.Log(LogType.Debug, "Update GetClip Enum");
             }
-
         }
 
         public static double Clamp(double value, double min, double max)

@@ -16,7 +16,6 @@ namespace VVVV.Nodes
         public Point holdMousePos; // hold mouse for selection rectangle
         public Point deltaMousePos; // better delta variable, get rid of prevMouse
 
-
         private void Form1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
 
@@ -33,7 +32,7 @@ namespace VVVV.Nodes
             SetPlayPosition();
 
             //delete clip
-            if (e.Button == MouseButtons.Middle && hitObject is Clip) DeleteClip(hitObject);
+            if (e.Button == MouseButtons.Middle && hitObject is Clip && !UI_Lock) DeleteClip(hitObject);
 
             //selection aufheben
             if (e.Button == MouseButtons.Left && hitObject is WorkSpace || e.Button == MouseButtons.Middle) selectionList.Clear();
@@ -42,8 +41,7 @@ namespace VVVV.Nodes
             if (hitObject is Clip) if (!selectionList.Any(cus => cus == hitObject)) selectionList.Clear();
 
             //DragDuration
-            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0) DragDuration(hitObject);
-
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock) DragDuration(hitObject);
 
             this.Invalidate(); //redraw
         }
@@ -72,9 +70,9 @@ namespace VVVV.Nodes
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (hitObject is WorkSpace && e.Button == MouseButtons.Left) AddClip(); //ADD CLIP
-            if (hitObject is Clip && e.Button == MouseButtons.Left) EditClip(hitObject); // EDIT CLIP
-            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left) EditTimeCode(); // EDIT TIMECODE
+            if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !UI_Lock) AddClip(); //ADD CLIP
+            if (hitObject is Clip && e.Button == MouseButtons.Left && !UI_Lock) EditClip(hitObject); // EDIT CLIP
+            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !UI_Lock) EditTimeCode(); // EDIT TIMECODE
             Invalidate(); //redraw
         }
 
@@ -103,17 +101,17 @@ namespace VVVV.Nodes
 
             SetPlayPosition(); // set playhead
 
-            SetSelectionRectangle(e); // selection rectangle
+            if(!UI_Lock) SetSelectionRectangle(e); // selection rectangle
 
             //dragging multiselection
-            if (selectionList.Count > 0 && hitObject is Clip)
+            if (selectionList.Count > 0 && hitObject is Clip && !UI_Lock)
             {
                 if (rememberLastFunction != "dragclip") PushUndoStep();
                 DragSelection(e);
             }
 
             //DragDuration
-            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0)
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock)
             {
                 DragDuration(hitObject);
             }
@@ -126,7 +124,7 @@ namespace VVVV.Nodes
         {
             //undo function
             #region undo
-            if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control)
+            if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control && !UI_Lock)
             {
                 if (undoXML.Count > 0)
                 {
@@ -157,7 +155,7 @@ namespace VVVV.Nodes
 
             //COPY
             #region copy
-            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
+            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control && !UI_Lock)
             {
                 clipBoard.Clear();
                 CopyClips();
@@ -166,7 +164,7 @@ namespace VVVV.Nodes
 
             //Paste
             #region paste
-            if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control)
+            if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control && !UI_Lock)
             {
                 PasteClips();
                 Invalidate();
@@ -174,9 +172,16 @@ namespace VVVV.Nodes
             #endregion
 
             //LOOP
-            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
+            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Shift)
             {
                 FIsLoop[0] = !FIsLoop[0]; // invert loop activate
+                Invalidate();
+            }
+
+            //Lock UI
+            if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
+            {
+                UI_Lock = !UI_Lock;
                 Invalidate();
             }
 
@@ -196,7 +201,7 @@ namespace VVVV.Nodes
             }
 
             //DELETE CLIPS OF SELECTION
-            if (e.KeyCode == Keys.Delete && selectionList.Count > 0)
+            if (e.KeyCode == Keys.Delete && selectionList.Count > 0 && !UI_Lock)
             {
                 DeleteClipSelection();
                 selectionList.Clear();

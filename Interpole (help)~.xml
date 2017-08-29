@@ -161,7 +161,7 @@
    </BOUNDS>
    <BOUNDS type="Node" left="7605" top="3540" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Input Enum" slicecount="2" visible="1" values="MyClip,MyClip">
+   <PIN pinname="Input Enum" slicecount="2" visible="1" values="Dierck1,MyClip">
    </PIN>
    <PIN pinname="Default" slicecount="1" values="Hallo">
    </PIN>
@@ -231,7 +231,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="2130" top="9210" width="6000" height="4500">
    </BOUNDS>
-   <BOUNDS type="Window" left="13860" top="11055" width="6240" height="5085">
+   <BOUNDS type="Window" left="19965" top="9615" width="6240" height="5085">
    </BOUNDS>
    <PIN pinname="Layers" visible="1">
    </PIN>
@@ -323,14 +323,6 @@
    </PIN>
    <PIN pinname="Y Output Value" visible="1">
    </PIN>
-   </NODE>
-   <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="69">
-   <BOUNDS type="Node" left="6240" top="870" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="6240" top="870" width="2400" height="1800">
-   </BOUNDS>
-   <BOUNDS type="Window" left="15840" top="9225" width="13320" height="5085">
-   </BOUNDS>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="70">
    <BOUNDS type="Box" left="4470" top="1635" width="480" height="480">
@@ -429,19 +421,119 @@
    </PIN>
    <PIN pinname="LoopRegion" slicecount="2" values="1536,2544">
    </PIN>
-   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;iMXjXYrH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;218&lt;/X&gt;&cr;&lf;        &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;218&lt;/X&gt;&cr;&lf;      &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;872&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;qZlI3ceI&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;288&lt;/X&gt;&cr;&lf;        &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;288&lt;/X&gt;&cr;&lf;      &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1152&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;Oegj6k8n&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;340&lt;/X&gt;&cr;&lf;        &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;340&lt;/X&gt;&cr;&lf;      &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1360&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;2d3fQYfG&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;485&lt;/X&gt;&cr;&lf;        &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;485&lt;/X&gt;&cr;&lf;      &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1940&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;e2W2j4HH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;725&lt;/X&gt;&cr;&lf;        &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;725&lt;/X&gt;&cr;&lf;      &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2900&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;yRwY12l6&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;1187&lt;/X&gt;&cr;&lf;        &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;1187&lt;/X&gt;&cr;&lf;      &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;4748&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1600&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
+   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;iMXjXYrH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;86&lt;/X&gt;&cr;&lf;        &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;86&lt;/X&gt;&cr;&lf;      &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;344&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;qZlI3ceI&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;156&lt;/X&gt;&cr;&lf;        &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;156&lt;/X&gt;&cr;&lf;      &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;624&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;Oegj6k8n&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;208&lt;/X&gt;&cr;&lf;        &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;208&lt;/X&gt;&cr;&lf;      &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;832&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;2d3fQYfG&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;353&lt;/X&gt;&cr;&lf;        &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;353&lt;/X&gt;&cr;&lf;      &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1412&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;e2W2j4HH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;725&lt;/X&gt;&cr;&lf;        &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;725&lt;/X&gt;&cr;&lf;      &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2900&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;yRwY12l6&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;1187&lt;/X&gt;&cr;&lf;        &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;1187&lt;/X&gt;&cr;&lf;      &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;4748&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1600&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;SSQnOXfs&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Dierck1&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;290&lt;/X&gt;&cr;&lf;        &lt;Y&gt;289&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;290&lt;/X&gt;&cr;&lf;      &lt;Y&gt;289&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1160&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;3000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Chartreuse&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
    </PIN>
-   <PIN pinname="IsLoop" slicecount="1" values="1">
+   <PIN pinname="IsLoop" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Set Timecode" visible="1">
    </PIN>
    </NODE>
    <LINK srcnodeid="85" srcpinname="Clips" dstnodeid="41" dstpinname="Interpole" linkstyle="PolyLine">
    </LINK>
    <LINK srcnodeid="70" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Play">
    </LINK>
-   <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Set Timecode">
-   </LINK>
    <LINK srcnodeid="68" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Hide Window">
    </LINK>
    <LINK srcnodeid="85" srcpinname="Clips" dstnodeid="82" dstpinname="Interpole">
    </LINK>
+   <NODE systemname="Join TC (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Join TC (Clip Animation)" componentmode="Hidden" id="86">
+   <BOUNDS type="Node" left="6210" top="1785" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="6210" top="1785" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Hours" visible="1">
+   </PIN>
+   <PIN pinname="Frames" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="86" srcpinname="Timecode" dstnodeid="85" dstpinname="Timecode">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="87">
+   <BOUNDS type="Box" left="5835" top="1290" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5835" top="1290" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="87" srcpinname="Y Output Value" dstnodeid="86" dstpinname="Hours">
+   </LINK>
+   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="88">
+   <BOUNDS type="Node" left="8775" top="450" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="8775" top="450" width="480" height="480">
+   </BOUNDS>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Bang">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Y Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Set Timecode">
+   </LINK>
+   <NODE systemname="FrameCounter (Animation)" nodename="FrameCounter (Animation)" componentmode="Hidden" id="89">
+   <BOUNDS type="Node" left="6975" top="780" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Frame Count" visible="1">
+   </PIN>
+   <PIN pinname="Enable" visible="1">
+   </PIN>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="90">
+   <BOUNDS type="Box" left="6960" top="15" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="6960" top="15" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="90" srcpinname="Y Output Value" dstnodeid="89" dstpinname="Enable">
+   </LINK>
+   <NODE systemname="Mod (Value)" nodename="Mod (Value)" componentmode="Hidden" id="91">
+   <BOUNDS type="Node" left="7140" top="1305" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Input 1" visible="1">
+   </PIN>
+   <PIN pinname="Input 2" slicecount="1" values="50">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="89" srcpinname="Frame Count" dstnodeid="91" dstpinname="Input 1">
+   </LINK>
+   <LINK srcnodeid="91" srcpinname="Output" dstnodeid="86" dstpinname="Frames">
+   </LINK>
+   <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="92">
+   <BOUNDS type="Node" left="9435" top="4995" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="9435" top="4995" width="2400" height="1800">
+   </BOUNDS>
+   <BOUNDS type="Window" left="1290" top="8355" width="6240" height="5085">
+   </BOUNDS>
+   </NODE>
    </PATCH>

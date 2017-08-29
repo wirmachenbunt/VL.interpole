@@ -43,7 +43,7 @@ namespace VVVV.Nodes
 
         Playbar myplaybar = new Playbar();  // playbar
         TimeCodeDisplay mytimecode = new TimeCodeDisplay();
-        ZoomBar myzoombar = new ZoomBar();
+        Rectangle footer = new Rectangle();
         WorkSpace myworkspace = new WorkSpace();
         SizeF stringSize = new SizeF();
 
@@ -69,6 +69,7 @@ namespace VVVV.Nodes
 
                     DrawPlayBar(e);
                     DrawPlayHead(e);
+                    DrawFooter(e);
 
                     DrawMarker(e);
               
@@ -80,9 +81,6 @@ namespace VVVV.Nodes
                     DrawSelectionRect(e);
 
                   
-
-                    //DrawSnapPositions(e); // only for debugging purposes
-                    //FLogger.Log(LogType.Debug, "Busy Drawing");
 
                 }
                 
@@ -136,13 +134,10 @@ namespace VVVV.Nodes
             myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, 30)); //update playbar bounds
 
             // show pre-roll
-            if(playPosFrames > 400000) e.Graphics.FillRectangle(new SolidBrush(Color.OrangeRed), myplaybar.Bounds); // background
-            else e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+            e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, this.Height));
-
-            DrawZoomValue(e);
 
             DrawLoopRegion(e);
 
@@ -246,13 +241,22 @@ namespace VVVV.Nodes
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
-        public void DrawZoomValue(PaintEventArgs e)
+        public void DrawFooter(PaintEventArgs e)
         {
             string Percentage = Convert.ToString(100 / timeZoom) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
-            myzoombar.Bounds = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
-            e.Graphics.DrawString(Percentage, clipFont, textBrush, myzoombar.Bounds, format); //text
+            //zoom display rectangle
+            footer = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
+            e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
+
+            //UI Lock display
+            if(UI_Lock)
+            {
+                format = new StringFormat() { Alignment = StringAlignment.Near };
+                footer = new Rectangle(new Point(0 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
+                e.Graphics.DrawString("Locked", clipFont, OrangeBrush, footer, format); //text
+            }          
         }
 
         public void DrawSelectionRect(PaintEventArgs e)
@@ -314,7 +318,8 @@ namespace VVVV.Nodes
             
             if (pos > this.Width  - StagePos.X)
             {
-                StagePos.X = StagePos.X - this.Width / 2;
+                StagePos.X = (StagePos.X) - this.Width / 2;
+                ApplyTimeZoom();
                 Invalidate();
             }
 
