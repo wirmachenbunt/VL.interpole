@@ -11,6 +11,8 @@ using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 
 using VVVV.Core.Logging;
+using System.Reflection;
+using System.Diagnostics;
 #endregion usings
 
 namespace VVVV.Nodes
@@ -136,7 +138,9 @@ namespace VVVV.Nodes
 
                     ApplyTimeZoom(); // scale to zoom
 
-                    FLogger.Log(LogType.Debug, "Interpole successful initialized");
+                    System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                    FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                    FLogger.Log(LogType.Debug, "Interpole " + fvi.FileVersion + " successful initialized");
 
                     this.DoubleBuffered = true; //not sure if this is actually nessecary
 
