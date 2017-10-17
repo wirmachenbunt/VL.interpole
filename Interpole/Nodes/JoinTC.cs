@@ -17,7 +17,7 @@ namespace VVVV.Nodes
 {
     #region PluginInfo
     [PluginInfo(Name = "Join TC",
-                Category = "Clip Animation",
+                Category = "Interpole",
                 Help = "join timecode values",
                 Tags = "",
                 AutoEvaluate = false)]

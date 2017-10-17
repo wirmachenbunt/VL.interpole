@@ -16,7 +16,7 @@ namespace VVVV.Nodes
 {
     #region PluginInfo
     [PluginInfo(Name = "SplitTC",
-                Category = "Clip Animation",
+                Category = "Interpole",
                 Help = "split timecode values",
                 Tags = "",
                 AutoEvaluate = false)]

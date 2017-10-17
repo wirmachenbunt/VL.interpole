@@ -17,12 +17,12 @@ namespace VVVV.Nodes
 {
     #region PluginInfo
     [PluginInfo(Name = "GetClip",
-                Category = "Clip Animation",
+                Category = "Interpole",
                 Help = "get a clip information",
                 Tags = "",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class GetState : IPluginEvaluate, IPartImportsSatisfiedNotification
+    public class GetClip : IPluginEvaluate, IPartImportsSatisfiedNotification
     {
         #region fields & pins
         protected IDiffSpread<EnumEntry> EnumClip;

@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
    <PATCH nodename="C:\INTERPOLE\SimulateTimeCode.v4p" systemname="SimulateTimeCode" filename="C:\INTERPOLE\SimulateTimeCode.v4p" scrollx="0" scrolly="0">
-   <BOUNDS type="Window" left="1395" top="2670" width="12705" height="13425">
+   <BOUNDS type="Window" left="6810" top="6375" width="12705" height="9420">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -223,13 +223,13 @@
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Node)" componentmode="InABox" id="17">
-   <BOUNDS type="Box" left="2550" top="6435" width="795" height="240">
+   <BOUNDS type="Box" left="2415" top="6540" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="2550" top="6435" width="0" height="0">
+   <BOUNDS type="Node" left="2415" top="6540" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Descriptive Name" slicecount="1" values="Timecode">
    </PIN>
-   <PIN pinname="Input Node" visible="1">
+   <PIN pinname="Input Node" visible="1" slicecount="1" values="||">
    </PIN>
    </NODE>
    <NODE systemname="FrameCounter (Animation)" nodename="FrameCounter (Animation)" componentmode="Hidden" id="18">
@@ -306,10 +306,10 @@
    </NODE>
    <LINK srcnodeid="22" srcpinname="Y Output Value" dstnodeid="18" dstpinname="Reset">
    </LINK>
-   <NODE systemname="Join TC (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Join TC (Clip Animation)" componentmode="Hidden" id="23">
-   <BOUNDS type="Node" left="2565" top="5850" width="100" height="100">
+   <NODE systemname="Join TC (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Join TC (Interpole)" componentmode="Hidden" id="24">
+   <BOUNDS type="Node" left="2430" top="5505" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="2565" top="5850" width="3000" height="3000">
+   <BOUNDS type="Box" left="2430" top="5505" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Hours" visible="1">
    </PIN>
@@ -322,14 +322,14 @@
    <PIN pinname="Timecode" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="15" srcpinname="Y Output Value" dstnodeid="23" dstpinname="Hours">
+   <LINK srcnodeid="15" srcpinname="Y Output Value" dstnodeid="24" dstpinname="Hours">
    </LINK>
-   <LINK srcnodeid="9" srcpinname="Y Output Value" dstnodeid="23" dstpinname="Minutes">
+   <LINK srcnodeid="9" srcpinname="Y Output Value" dstnodeid="24" dstpinname="Minutes">
    </LINK>
-   <LINK srcnodeid="6" srcpinname="Y Output Value" dstnodeid="23" dstpinname="Seconds">
+   <LINK srcnodeid="6" srcpinname="Y Output Value" dstnodeid="24" dstpinname="Seconds">
    </LINK>
-   <LINK srcnodeid="3" srcpinname="Y Output Value" dstnodeid="23" dstpinname="Frames">
+   <LINK srcnodeid="3" srcpinname="Y Output Value" dstnodeid="24" dstpinname="Frames">
    </LINK>
-   <LINK srcnodeid="23" srcpinname="Timecode" dstnodeid="17" dstpinname="Input Node">
+   <LINK srcnodeid="24" srcpinname="Timecode" dstnodeid="17" dstpinname="Input Node">
    </LINK>
    </PATCH>

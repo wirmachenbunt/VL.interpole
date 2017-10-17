@@ -19,7 +19,7 @@ namespace VVVV.Nodes
 {
     #region PluginInfo
     [PluginInfo(Name = "Interpole",
-                Category = "GUI",
+                Category = "Interpole",
                 Help = "Clip Timeline",
                 Tags = "c#",
                 AutoEvaluate = true)]

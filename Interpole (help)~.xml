@@ -38,104 +38,6 @@
    <PIN pinname="Alpha" visible="1" slicecount="1" values="0">
    </PIN>
    </NODE>
-   <NODE systemname="GetClip (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetClip (Clip Animation)" componentmode="Hidden" id="41" debug="0">
-   <BOUNDS type="Node" left="4455" top="4095" width="3195" height="270">
-   </BOUNDS>
-   <BOUNDS type="Box" left="4455" top="4095" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Interpole" visible="1" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Clip" visible="1" slicecount="1" values="Ballo">
-   </PIN>
-   <PIN pinname="ElapsedStateTime" visible="1">
-   </PIN>
-   <PIN pinname="FadeInOut" visible="1">
-   </PIN>
-   <PIN pinname="FramePosition" visible="-1" pintype="Output">
-   </PIN>
-   <PIN pinname="IsActive" visible="1">
-   </PIN>
-   <PIN pinname="ClipColor" visible="1">
-   </PIN>
-   <PIN pinname="Normalized" visible="1">
-   </PIN>
-   </NODE>
-   <NODE nodename="IOBox (String)" componentmode="InABox" id="47">
-   <BOUNDS type="Box" left="7575" top="4575" width="960" height="705">
-   </BOUNDS>
-   <BOUNDS type="Node" left="7575" top="4575" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Default" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="File Mask" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Maximum Characters" slicecount="1" values="-1">
-   </PIN>
-   <PIN pinname="Descriptive Name" slicecount="1" values="ClipColor">
-   </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="41" srcpinname="ClipColor" dstnodeid="47" dstpinname="Input String">
-   </LINK>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="48">
-   <BOUNDS type="Box" left="6555" top="5535" width="525" height="630">
-   </BOUNDS>
-   <BOUNDS type="Node" left="6555" top="5535" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   <PIN pinname="Value Type" slicecount="1" values="Boolean">
-   </PIN>
-   <PIN pinname="Behavior" slicecount="1" values="Toggle">
-   </PIN>
-   <PIN pinname="Descriptive Name" slicecount="1" values="IsActive">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="41" srcpinname="IsActive" dstnodeid="48" dstpinname="Y Input Value">
-   </LINK>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="49">
-   <BOUNDS type="Box" left="5505" top="4665" width="900" height="585">
-   </BOUNDS>
-   <BOUNDS type="Node" left="5505" top="4665" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   <PIN pinname="Descriptive Name" slicecount="1" values="FadeInOut">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="41" srcpinname="FadeInOut" dstnodeid="49" dstpinname="Y Input Value">
-   </LINK>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="50">
-   <BOUNDS type="Box" left="4455" top="4635" width="840" height="615">
-   </BOUNDS>
-   <BOUNDS type="Node" left="4455" top="4635" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   <PIN pinname="Descriptive Name" slicecount="1" values="Normalized">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="41" srcpinname="Normalized" dstnodeid="50" dstpinname="Y Input Value">
-   </LINK>
    <NODE systemname="Transform (Transform 2d)" nodename="Transform (Transform 2d)" componentmode="Hidden" id="52">
    <BOUNDS type="Node" left="4170" top="6375" width="100" height="100">
    </BOUNDS>
@@ -144,44 +46,10 @@
    <PIN pinname="Rotate" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="49" srcpinname="Y Output Value" dstnodeid="39" dstpinname="Alpha" hiddenwhenlocked="1" linkstyle="Bezier">
-   <LINKPOINT x="5330" y="6085">
-   </LINKPOINT>
-   <LINKPOINT x="5590" y="6065">
-   </LINKPOINT>
-   </LINK>
-   <LINK srcnodeid="50" srcpinname="Y Output Value" dstnodeid="52" dstpinname="Rotate" hiddenwhenlocked="1" linkstyle="Bezier">
-   <LINKPOINT x="4345" y="5643">
-   </LINKPOINT>
-   <LINKPOINT x="5150" y="5608">
-   </LINKPOINT>
-   </LINK>
-   <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="55">
-   <BOUNDS type="Box" left="7605" top="3540" width="1740" height="420">
-   </BOUNDS>
-   <BOUNDS type="Node" left="7605" top="3540" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Input Enum" slicecount="2" visible="1" values="Dierck1,MyClip">
-   </PIN>
-   <PIN pinname="Default" slicecount="1" values="Hallo">
-   </PIN>
-   <PIN pinname="File Mask" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Maximum Characters" slicecount="1" values="-1">
-   </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
-   </PIN>
-   <PIN pinname="SliceCount Mode" slicecount="1" values="ColsRowsPages">
-   </PIN>
-   <PIN pinname="Descriptive Name" slicecount="1" values="Clip">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="55" srcpinname="Output Enum" dstnodeid="41" dstpinname="Clip">
-   </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="59">
-   <BOUNDS type="Box" left="7995" top="1575" width="450" height="420">
+   <BOUNDS type="Box" left="6690" top="1905" width="450" height="420">
    </BOUNDS>
-   <BOUNDS type="Node" left="7995" top="1575" width="0" height="0">
+   <BOUNDS type="Node" left="6690" top="1905" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -201,9 +69,9 @@
    </PIN>
    </NODE>
    <NODE systemname="SimulateTimeCode" filename="SimulateTimeCode.v4p" componentmode="InAWindow" id="61" nodename="SimulateTimeCode.v4p">
-   <BOUNDS type="Node" left="4500" top="855" width="100" height="100">
+   <BOUNDS type="Node" left="5355" top="1020" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4500" top="855" width="4800" height="3600">
+   <BOUNDS type="Box" left="5355" top="1020" width="4800" height="3600">
    </BOUNDS>
    <BOUNDS type="Window" left="6810" top="6375" width="12705" height="9420">
    </BOUNDS>
@@ -303,9 +171,9 @@
    <LINK srcnodeid="67" srcpinname="Render State" dstnodeid="66" dstpinname="Render State">
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="68">
-   <BOUNDS type="Box" left="9780" top="1530" width="480" height="480">
+   <BOUNDS type="Box" left="8040" top="1875" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="9780" top="1530" width="0" height="0">
+   <BOUNDS type="Node" left="8040" top="1875" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -325,9 +193,9 @@
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="70">
-   <BOUNDS type="Box" left="4470" top="1635" width="480" height="480">
+   <BOUNDS type="Box" left="4005" top="1755" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="4470" top="1635" width="0" height="0">
+   <BOUNDS type="Node" left="4005" top="1755" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -347,9 +215,9 @@
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="81">
-   <BOUNDS type="Box" left="6015" top="120" width="480" height="480">
+   <BOUNDS type="Box" left="6825" top="285" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="6015" top="120" width="0" height="0">
+   <BOUNDS type="Node" left="6825" top="285" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -366,18 +234,6 @@
    </NODE>
    <LINK srcnodeid="81" srcpinname="Y Output Value" dstnodeid="61" dstpinname="Reset">
    </LINK>
-   <NODE systemname="Info (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Info (Clip Animation)" componentmode="Hidden" id="82">
-   <BOUNDS type="Node" left="465" top="4500" width="2145" height="270">
-   </BOUNDS>
-   <BOUNDS type="Box" left="465" top="4500" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Interpole" visible="1" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="ClipNames" visible="1">
-   </PIN>
-   <PIN pinname="StartFrame" visible="1">
-   </PIN>
-   </NODE>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="83">
    <BOUNDS type="Box" left="450" top="5055" width="1230" height="3150">
    </BOUNDS>
@@ -391,9 +247,9 @@
    </PIN>
    <PIN pinname="Rows" slicecount="1" values="9">
    </PIN>
+   <PIN pinname="Input String" visible="1">
+   </PIN>
    </NODE>
-   <LINK srcnodeid="82" srcpinname="ClipNames" dstnodeid="83" dstpinname="Input String">
-   </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="84">
    <BOUNDS type="Box" left="1860" top="4995" width="735" height="3270">
    </BOUNDS>
@@ -407,127 +263,9 @@
    </PIN>
    <PIN pinname="Rows" slicecount="1" values="10">
    </PIN>
-   </NODE>
-   <LINK srcnodeid="82" srcpinname="StartFrame" dstnodeid="84" dstpinname="Y Input Value">
-   </LINK>
-   <NODE id="85" systemname="Interpole (GUI)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole (GUI)" componentmode="InAWindow">
-   <BOUNDS type="Window" left="10215" top="225" width="18585" height="9570">
-   </BOUNDS>
-   <BOUNDS type="Node" left="4455" top="2310" width="7155" height="270">
-   </BOUNDS>
-   <BOUNDS type="Box" left="4455" top="2310" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Marker" slicecount="9" values="0,0,0,0,0,0,0,0,0">
-   </PIN>
-   <PIN pinname="LoopRegion" slicecount="2" values="1536,2544">
-   </PIN>
-   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;iMXjXYrH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;86&lt;/X&gt;&cr;&lf;        &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;86&lt;/X&gt;&cr;&lf;      &lt;Y&gt;237&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;344&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;qZlI3ceI&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;156&lt;/X&gt;&cr;&lf;        &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;156&lt;/X&gt;&cr;&lf;      &lt;Y&gt;365&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;624&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;Oegj6k8n&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;208&lt;/X&gt;&cr;&lf;        &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;208&lt;/X&gt;&cr;&lf;      &lt;Y&gt;246&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;832&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;2d3fQYfG&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;353&lt;/X&gt;&cr;&lf;        &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;353&lt;/X&gt;&cr;&lf;      &lt;Y&gt;160&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1412&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;e2W2j4HH&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;725&lt;/X&gt;&cr;&lf;        &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;725&lt;/X&gt;&cr;&lf;      &lt;Y&gt;395&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;40&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;2900&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;160&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;yRwY12l6&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;1187&lt;/X&gt;&cr;&lf;        &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;1187&lt;/X&gt;&cr;&lf;      &lt;Y&gt;340&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;400&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;4748&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;1600&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Coral&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;SSQnOXfs&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;Dierck1&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;290&lt;/X&gt;&cr;&lf;        &lt;Y&gt;289&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;290&lt;/X&gt;&cr;&lf;      &lt;Y&gt;289&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;750&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;1160&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;3000&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Chartreuse&lt;/Color&gt;&cr;&lf;    &lt;ReferenceClipPos /&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
-   </PIN>
-   <PIN pinname="IsLoop" slicecount="1" values="0">
-   </PIN>
-   <PIN pinname="Timecode" visible="1">
-   </PIN>
-   <PIN pinname="Set Timecode" visible="1">
+   <PIN pinname="Y Input Value" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="85" srcpinname="Clips" dstnodeid="41" dstpinname="Interpole" linkstyle="PolyLine">
-   </LINK>
-   <LINK srcnodeid="70" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Play">
-   </LINK>
-   <LINK srcnodeid="68" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Hide Window">
-   </LINK>
-   <LINK srcnodeid="85" srcpinname="Clips" dstnodeid="82" dstpinname="Interpole">
-   </LINK>
-   <NODE systemname="Join TC (Clip Animation)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Join TC (Clip Animation)" componentmode="Hidden" id="86">
-   <BOUNDS type="Node" left="6210" top="1785" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="6210" top="1785" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Timecode" visible="1">
-   </PIN>
-   <PIN pinname="Hours" visible="1">
-   </PIN>
-   <PIN pinname="Frames" visible="1">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="86" srcpinname="Timecode" dstnodeid="85" dstpinname="Timecode">
-   </LINK>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="87">
-   <BOUNDS type="Box" left="5835" top="1290" width="795" height="240">
-   </BOUNDS>
-   <BOUNDS type="Node" left="5835" top="1290" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
-   </PIN>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   <PIN pinname="Value Type" slicecount="1" values="Integer">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="87" srcpinname="Y Output Value" dstnodeid="86" dstpinname="Hours">
-   </LINK>
-   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="88">
-   <BOUNDS type="Node" left="8775" top="450" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="8775" top="450" width="480" height="480">
-   </BOUNDS>
-   <PIN pinname="Value Type" slicecount="1" values="Boolean">
-   </PIN>
-   <PIN pinname="Behavior" slicecount="1" values="Bang">
-   </PIN>
-   <PIN pinname="Y Output Value" visible="1">
-   </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="0">
-   </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" values="0">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="85" dstpinname="Set Timecode">
-   </LINK>
-   <NODE systemname="FrameCounter (Animation)" nodename="FrameCounter (Animation)" componentmode="Hidden" id="89">
-   <BOUNDS type="Node" left="6975" top="780" width="100" height="100">
-   </BOUNDS>
-   <PIN pinname="Frame Count" visible="1">
-   </PIN>
-   <PIN pinname="Enable" visible="1">
-   </PIN>
-   </NODE>
-   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="90">
-   <BOUNDS type="Box" left="6960" top="15" width="480" height="480">
-   </BOUNDS>
-   <BOUNDS type="Node" left="6960" top="15" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
-   </PIN>
-   <PIN pinname="Units" slicecount="1" values="||">
-   </PIN>
-   <PIN pinname="Precision" slicecount="1" values="4">
-   </PIN>
-   <PIN pinname="Value Type" slicecount="1" values="Boolean">
-   </PIN>
-   <PIN pinname="Behavior" slicecount="1" values="Toggle">
-   </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="0">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="90" srcpinname="Y Output Value" dstnodeid="89" dstpinname="Enable">
-   </LINK>
-   <NODE systemname="Mod (Value)" nodename="Mod (Value)" componentmode="Hidden" id="91">
-   <BOUNDS type="Node" left="7140" top="1305" width="100" height="100">
-   </BOUNDS>
-   <PIN pinname="Input 1" visible="1">
-   </PIN>
-   <PIN pinname="Input 2" slicecount="1" values="50">
-   </PIN>
-   <PIN pinname="Output" visible="1">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="89" srcpinname="Frame Count" dstnodeid="91" dstpinname="Input 1">
-   </LINK>
-   <LINK srcnodeid="91" srcpinname="Output" dstnodeid="86" dstpinname="Frames">
-   </LINK>
    <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="92">
    <BOUNDS type="Node" left="9435" top="4995" width="100" height="100">
    </BOUNDS>
@@ -536,4 +274,90 @@
    <BOUNDS type="Window" left="1290" top="8355" width="6240" height="5085">
    </BOUNDS>
    </NODE>
+   <NODE systemname="Interpole (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole (Interpole)" componentmode="InAWindow" id="93">
+   <BOUNDS type="Node" left="4005" top="2670" width="5415" height="270">
+   </BOUNDS>
+   <BOUNDS type="Box" left="4005" top="2670" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Marker" slicecount="9" values="0,0,0,0,0,0,0,0,0">
+   </PIN>
+   <PIN pinname="LoopRegion" slicecount="2" values="0,0">
+   </PIN>
+   <PIN pinname="ClipXML" slicecount="1" values="|&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-16&quot;?&gt;&cr;&lf;&lt;ArrayOfClip xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;&cr;&lf;  &lt;Clip&gt;&cr;&lf;    &lt;ID&gt;DuSGYiea&lt;/ID&gt;&cr;&lf;    &lt;Name&gt;MyClip&lt;/Name&gt;&cr;&lf;    &lt;Bounds&gt;&cr;&lf;      &lt;Location&gt;&cr;&lf;        &lt;X&gt;122&lt;/X&gt;&cr;&lf;        &lt;Y&gt;130&lt;/Y&gt;&cr;&lf;      &lt;/Location&gt;&cr;&lf;      &lt;Size&gt;&cr;&lf;        &lt;Width&gt;232&lt;/Width&gt;&cr;&lf;        &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;      &lt;/Size&gt;&cr;&lf;      &lt;X&gt;122&lt;/X&gt;&cr;&lf;      &lt;Y&gt;130&lt;/Y&gt;&cr;&lf;      &lt;Width&gt;232&lt;/Width&gt;&cr;&lf;      &lt;Height&gt;20&lt;/Height&gt;&cr;&lf;    &lt;/Bounds&gt;&cr;&lf;    &lt;StartFrame&gt;488&lt;/StartFrame&gt;&cr;&lf;    &lt;Duration&gt;928&lt;/Duration&gt;&cr;&lf;    &lt;FadeIn&gt;0&lt;/FadeIn&gt;&cr;&lf;    &lt;FadeOut&gt;0&lt;/FadeOut&gt;&cr;&lf;    &lt;Color&gt;Aqua&lt;/Color&gt;&cr;&lf;  &lt;/Clip&gt;&cr;&lf;&lt;/ArrayOfClip&gt;|">
+   </PIN>
+   <PIN pinname="Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Play" visible="1">
+   </PIN>
+   <PIN pinname="Set Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Hide Window" visible="1">
+   </PIN>
+   <PIN pinname="Clips" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="61" srcpinname="Timecode" dstnodeid="93" dstpinname="Timecode">
+   </LINK>
+   <LINK srcnodeid="70" srcpinname="Y Output Value" dstnodeid="93" dstpinname="Play">
+   </LINK>
+   <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="93" dstpinname="Set Timecode">
+   </LINK>
+   <LINK srcnodeid="68" srcpinname="Y Output Value" dstnodeid="93" dstpinname="Hide Window">
+   </LINK>
+   <NODE systemname="GetClip (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetClip (Interpole)" componentmode="Hidden" id="94">
+   <BOUNDS type="Node" left="4965" top="4455" width="1905" height="270">
+   </BOUNDS>
+   <BOUNDS type="Box" left="4965" top="4455" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Interpole" visible="1">
+   </PIN>
+   <PIN pinname="Clip" visible="1">
+   </PIN>
+   <PIN pinname="Normalized" visible="1">
+   </PIN>
+   <PIN pinname="IsActive" visible="1">
+   </PIN>
+   <PIN pinname="FadeInOut" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="93" srcpinname="Clips" dstnodeid="94" dstpinname="Interpole">
+   </LINK>
+   <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="95">
+   <BOUNDS type="Box" left="6780" top="3975" width="1590" height="270">
+   </BOUNDS>
+   <BOUNDS type="Node" left="6780" top="3975" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Input Enum" slicecount="1" visible="1" values="MyClip">
+   </PIN>
+   <PIN pinname="Default" slicecount="1" values="MyClip">
+   </PIN>
+   <PIN pinname="File Mask" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Maximum Characters" slicecount="1" values="-1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="95" srcpinname="Output Enum" dstnodeid="94" dstpinname="Clip">
+   </LINK>
+   <LINK srcnodeid="94" srcpinname="Normalized" dstnodeid="52" dstpinname="Rotate">
+   </LINK>
+   <LINK srcnodeid="94" srcpinname="FadeInOut" dstnodeid="39" dstpinname="Alpha">
+   </LINK>
+   <NODE systemname="Info (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Info (Interpole)" componentmode="Hidden" id="96">
+   <BOUNDS type="Node" left="465" top="4410" width="1965" height="270">
+   </BOUNDS>
+   <BOUNDS type="Box" left="465" top="4410" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Interpole" visible="1">
+   </PIN>
+   <PIN pinname="ClipNames" visible="1">
+   </PIN>
+   <PIN pinname="StartFrame" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="93" srcpinname="Clips" dstnodeid="96" dstpinname="Interpole">
+   </LINK>
+   <LINK srcnodeid="96" srcpinname="ClipNames" dstnodeid="83" dstpinname="Input String">
+   </LINK>
+   <LINK srcnodeid="96" srcpinname="StartFrame" dstnodeid="84" dstpinname="Y Input Value">
+   </LINK>
    </PATCH>

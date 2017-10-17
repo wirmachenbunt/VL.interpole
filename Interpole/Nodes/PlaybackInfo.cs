@@ -17,7 +17,7 @@ namespace VVVV.Nodes
 {
     #region PluginInfo
     [PluginInfo(Name = "PlaybackInfo",
-                Category = "Clip Animation",
+                Category = "Interpole",
                 Help = "get a clip information",
                 Tags = "",
                 AutoEvaluate = true)]
