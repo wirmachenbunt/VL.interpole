@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="10.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="packages\VVVV.SlimDX.1.0.2\build\net40\VVVV.SlimDX.props" Condition="Exists('packages\VVVV.SlimDX.1.0.2\build\net40\VVVV.SlimDX.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -86,9 +86,12 @@
     <Compile Include="Main.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Nodes\GetClipByName.cs" />
+    <Compile Include="Nodes\GetClipByColor.cs" />
+    <Compile Include="Nodes\GetUnifiedClipByName.cs" />
+    <Compile Include="Nodes\GetUnifiedClipByColor.cs" />
     <Compile Include="Nodes\Info.cs" />
     <None Include="Nodes\InterpolateTC.cs" />
-    <Compile Include="Nodes\GetClip.cs" />
     <Compile Include="Nodes\JoinTC.cs" />
     <Compile Include="Nodes\PlaybackInfo.cs" />
     <Compile Include="Nodes\SplitTC.cs" />

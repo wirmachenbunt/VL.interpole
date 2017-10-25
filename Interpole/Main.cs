@@ -28,7 +28,7 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
-        [Config("Framerate",DefaultValue = 50 )]
+        [Config("Framerate", DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
         [Input("Play")]
@@ -43,7 +43,7 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Show Window")]
+        [Input("Show Window", DefaultBoolean = true)]
         public IDiffSpread<bool> FShowWindow;
 
         [Input("ClipXMLIn")]
@@ -82,7 +82,7 @@ namespace VVVV.Nodes
         int UpdateCounter = 0;
         bool UI_Lock = false;
 
-        bool lastShowWindow = false;
+        bool lastShowWindow = true;
 
         Rectangle playHeadInvalidate;
 
