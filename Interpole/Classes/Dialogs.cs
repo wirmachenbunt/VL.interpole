@@ -174,7 +174,7 @@ namespace VVVV.Nodes
             duration = Convert.ToInt32(timeUpDownend.Value);
             fadeIn = Convert.ToInt32(fadeInNum.Value);
             fadeOut = Convert.ToInt32(fadeOutNum.Value);
-            varInput = (varTextBox.Text == "string variable" || varTextBox.Text.Length == 0) ? "empty" : varTextBox.Text;
+            varInput = (varTextBox.Text == "string variable" || varTextBox.Text.Length == 0) ? "" : varTextBox.Text;
 
             colorName = cmbboxClr.SelectedItem.ToString();
             return result;
