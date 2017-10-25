@@ -13,9 +13,9 @@ namespace VVVV.Nodes
     {
         string lastColorName = "Aqua";
          
-        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn,ref int fadeOut, ref string colorName, string DialogName, float dpi)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName, float dpi)
         {
-            System.Drawing.Size size = new System.Drawing.Size(250, 215);
+            System.Drawing.Size size = new System.Drawing.Size(250, 248);
 
             Form inputBox = new Form();
 
@@ -107,12 +107,19 @@ namespace VVVV.Nodes
             inputBox.Controls.Add(fadeOutLabel); 
             #endregion
 
+            System.Windows.Forms.TextBox varTextBox = new System.Windows.Forms.TextBox();
+            varTextBox.Size = new System.Drawing.Size(size.Width - 20, 15);
+            varTextBox.Location = new System.Drawing.Point(10, 150);
+            varTextBox.Font = new Font("Consolas", 11, FontStyle.Regular);
+            varTextBox.Text = varInput;
+            varTextBox.TabStop = false;
+            inputBox.Controls.Add(varTextBox);
 
             System.Windows.Forms.ComboBox cmbboxClr = new System.Windows.Forms.ComboBox();
             cmbboxClr.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cmbboxClr.DropDownWidth = size.Width - 10;
             cmbboxClr.ItemHeight = 20;
-            cmbboxClr.Location = new System.Drawing.Point(10, 150);
+            cmbboxClr.Location = new System.Drawing.Point(10, 183);
             cmbboxClr.Name = "cmbboxClr";
             cmbboxClr.Size = new System.Drawing.Size(size.Width - 20, 20); 
             Type colorType = typeof(System.Drawing.Color);
@@ -131,7 +138,7 @@ namespace VVVV.Nodes
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(120, 23);
             okButton.Text = "&Ok";
-            okButton.Location = new System.Drawing.Point(10, 183);
+            okButton.Location = new System.Drawing.Point(10, 216);
             okButton.FlatStyle = FlatStyle.Flat;
             okButton.ForeColor = Color.FromArgb(200, 200, 200);
             okButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
@@ -144,7 +151,7 @@ namespace VVVV.Nodes
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(120, 23);
             cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 130, 183);
+            cancelButton.Location = new System.Drawing.Point(size.Width - 130, 216);
             cancelButton.FlatStyle = FlatStyle.Flat;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
             cancelButton.TabStop = false;
@@ -167,6 +174,7 @@ namespace VVVV.Nodes
             duration = Convert.ToInt32(timeUpDownend.Value);
             fadeIn = Convert.ToInt32(fadeInNum.Value);
             fadeOut = Convert.ToInt32(fadeOutNum.Value);
+            varInput = (varTextBox.Text == "string variable" || varTextBox.Text.Length == 0) ? "empty" : varTextBox.Text;
 
             colorName = cmbboxClr.SelectedItem.ToString();
             return result;

@@ -35,10 +35,11 @@ namespace VVVV.Nodes
             int fadeIn = 0;
             int fadeOut = 0;
             string colorName = lastColorName;
+            string variable = "string variable";
 
             PushUndoStep();
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Add Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Add Clip", dpi) == DialogResult.OK)
             {
                 //int duration = duration;
 
@@ -52,7 +53,8 @@ namespace VVVV.Nodes
                     FadeIn = fadeIn,
                     FadeOut = fadeOut,
                     Bounds = new Rectangle(new Point(startFrame / timeZoom, mousePos.Y), new Size(duration / timeZoom, 20)),
-                    Color = colorName
+                    Color = colorName,
+                    Variable = variable
                 });
 
                 lastColorName = colorName;
@@ -68,10 +70,11 @@ namespace VVVV.Nodes
             string colorName = clip.Color;
             int fadeIn = clip.FadeIn;
             int fadeOut = clip.FadeOut;
+            string variable = clip.Variable;
 
             PushUndoStep();
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, "Edit Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Edit Clip", dpi) == DialogResult.OK)
             {
                 clip.Name = input;
                 clip.StartFrame = startFrame;
@@ -79,6 +82,7 @@ namespace VVVV.Nodes
                 clip.FadeIn = fadeIn;
                 clip.FadeOut = fadeOut;
                 clip.Color = colorName;
+                clip.Variable = variable;
                 clip.Bounds = new Rectangle(new Point(startFrame / timeZoom, clip.Bounds.Location.Y), new Size(duration / timeZoom, 20));
                 lastColorName = colorName;
                 UpdateClipXML();
@@ -304,6 +308,7 @@ namespace VVVV.Nodes
                     Duration = myclip.Duration,
                     FadeIn = myclip.FadeIn,
                     FadeOut = myclip.FadeOut,
+                    Variable = myclip.Variable,
                     Bounds = new Rectangle(new Point(((myclip.StartFrame - distance) / timeZoom), myclip.Bounds.Y), myclip.Bounds.Size),
                     Color = myclip.Color
                 });
