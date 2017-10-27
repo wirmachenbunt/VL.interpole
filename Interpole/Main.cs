@@ -43,8 +43,14 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Show Window", DefaultBoolean = true)]
+        [Input("Show Window")]
         public IDiffSpread<bool> FShowWindow;
+
+        [Input("External Clock", IsSingle = true)]
+        public IDiffSpread<int> FExternalClock;
+
+        [Input("Set External Clock")]
+        public IDiffSpread<bool> FSetExternalClock;
 
         [Input("ClipXMLIn")]
         public IDiffSpread<string> ClipXMLIn;
@@ -82,7 +88,8 @@ namespace VVVV.Nodes
         int UpdateCounter = 0;
         bool UI_Lock = false;
 
-        bool lastShowWindow = true;
+        bool lastShowWindow = false;
+        int lastExternalClock = 0;
 
         Rectangle playHeadInvalidate;
 
@@ -126,7 +133,6 @@ namespace VVVV.Nodes
                 lastShowWindow = FShowWindow[0];
             }
 
-
             if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
 
             if (FLoopRegion.SliceCount != 2) FLoopRegion.SliceCount = 2;
@@ -150,10 +156,10 @@ namespace VVVV.Nodes
                     this.DoubleBuffered = true; //not sure if this is actually nessecary
 
                     Invalidate(); // redraw all
-                }
-                catch
+                } 
+                catch (Exception e)
                 {
-                    FLogger.Log(LogType.Debug, "Loading clip list failed :(");
+                    FLogger.Log(LogType.Error, "Loading clip list failed :( " + e);
                     clipList = new List<Clip>(); // fixes many bugs when interpole is fresh and empty
                 }
 
@@ -172,7 +178,14 @@ namespace VVVV.Nodes
 
             if (play && !FSetTimecode[0])
             {
-                playPosFrames += 1;
+                if (FSetExternalClock[0])
+                {
+                    int diff = FExternalClock[0] - lastExternalClock;
+                    playPosFrames += diff > 0 ? diff : 0;
+
+                    if (lastExternalClock != FExternalClock[0]) lastExternalClock = FExternalClock[0];
+                }
+                else playPosFrames += 1;
 
                 PlaybackMoveStage(); // scroll stage when playback
 
