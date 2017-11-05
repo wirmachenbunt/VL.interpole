@@ -182,8 +182,6 @@ namespace VVVV.Nodes
                 {
                     int diff = FExternalClock[0] - lastExternalClock;
                     playPosFrames += diff > 0 ? diff : 0;
-
-                    if (lastExternalClock != FExternalClock[0]) lastExternalClock = FExternalClock[0];
                 }
                 else playPosFrames += 1;
 
@@ -208,6 +206,9 @@ namespace VVVV.Nodes
                 playPosFrames >= FLoopRegion[1] && 
                 play && FLoopRegion[1] > 0 &&
                 FLoopRegion[1] > FLoopRegion[0]) playPosFrames = FLoopRegion[0];
+
+            // always sample external clock
+            if (FSetExternalClock[0]) lastExternalClock = FExternalClock[0];
         }
 
         //called when data for any output pin is requested

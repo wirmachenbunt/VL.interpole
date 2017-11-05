@@ -1,212 +1,250 @@
 ﻿#region usings
 using System;
+using System.Linq;
 using System.ComponentModel.Composition;
 using System.Collections.Generic;
+
 using VVVV.PluginInterfaces.V1;
 using VVVV.PluginInterfaces.V2;
 using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
-using System.Linq;
 using VVVV.Nodes;
-
 
 using VVVV.Core.Logging;
 #endregion usings
 
 namespace VVVV.Nodes
-{
+{    
     #region PluginInfo
     [PluginInfo(Name = "GetClipByColor",
                 Category = "Interpole",
-                Help = "get a clip information by color",
+                Help = "get clip information by color",
                 Tags = "color",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class GetStateByColor : IPluginEvaluate, IPartImportsSatisfiedNotification
+    public class GetClipByColor : IPluginEvaluate, IPartImportsSatisfiedNotification
     {
         #region fields & pins
-        protected IDiffSpread<EnumEntry> EnumClip;
 
-        [Input("Interpole")]
-        public Pin<Interpole> InterpoleIn;
+        [Input("Interpole", IsSingle = true)]
+        protected Pin<Interpole> FInterpoleIn;
+
+        // Clip Name
+        protected IDiffSpread<EnumEntry> FColorIn;
 
         [Output("Normalized")]
-        public ISpread<double> Normalized;
+        protected ISpread<double> FNormalizedOut;
 
         [Output("Seconds")]
-        public ISpread<double> FSecondsOut;
+        protected ISpread<double> FSecondsOut;
 
-        [Output("FadeInOut")]
-        public ISpread<double> FadeInOut;
+        [Output("Fade In/Out")]
+        protected ISpread<double> FFadeOut;
 
         [Output("Variable")]
-        public ISpread<string> FVariableOut;
+        protected ISpread<string> FVariableOut;
 
-        [Output("IsActive")]
-        public ISpread<bool> IsActive;
+        [Output("Is Active")]
+        protected ISpread<bool> FIsActiveOut;
 
-        [Output("ClipName", Visibility = PinVisibility.OnlyInspector)]
-        public ISpread<string> FName;
+        [Output("Bin Size")]
+        protected ISpread<int> FBinSizeOut;
 
-        [Output("FramePosition", Visibility = PinVisibility.OnlyInspector)]
-        public ISpread<int> FramePosition;
+        [Output("Name", Visibility = PinVisibility.OnlyInspector)]
+        protected ISpread<string> FNameOut;
+
+        [Output("Color", Visibility = PinVisibility.OnlyInspector)]
+        protected ISpread<string> FColorOut;
+
+        [Output("Position", Visibility = PinVisibility.OnlyInspector)]
+        protected ISpread<int> FPositionOut;
 
         [Output("Duration", Visibility = PinVisibility.OnlyInspector)]
-        public ISpread<int> Duration;
-
-        Interpole.Clip myclip = new Interpole.Clip();
+        protected ISpread<int> FDurationOut;
 
         [Import()]
         public ILogger FLogger;
         [Import()]
-        public IIOFactory FIOFactory;
+        private IPluginHost FHost;
         [Import()]
-        IPluginHost FHost;
+        private IIOFactory FIOFactory;
 
-        string EnumName;
-        bool invalidate = false;
-
-        List<Interpole.Clip> getClipList = new List<Interpole.Clip>();
+        private List<List<Interpole.Clip>> FClipList;
+        private string FEnumName;
+        private int FLastFramePos;
+        private bool FValid;
 
         #endregion fields & pins
-
+        
         public void OnImportsSatisfied()
         {
-            InterpoleIn.Connected += Input_Connected;
-            InterpoleIn.Disconnected += Input_Disconnected;
+            FInterpoleIn.Connected += OnInterpoleConnected;
+            FInterpoleIn.Disconnected += OnInterpoleDisconnected;
 
-            FHost.GetNodePath(true, out EnumName); //get unique node path
-            EnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Color"); //name of pin
-            attr.EnumName = EnumName;
-            EnumClip = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
+            FHost.GetNodePath(true, out FEnumName); //get unique node path
+            FEnumName += "Interpole"; // add unique name to path
+            InputAttribute attr = new InputAttribute("Clip Color"); // name of pin
+            attr.EnumName = FEnumName;
+            FColorIn = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
         }
 
-        private void Input_Disconnected(object sender, PinConnectionEventArgs args)
+        private void OnInterpoleConnected(object sender, PinConnectionEventArgs args)
         {
-            FLogger.Log(LogType.Debug, "DisConnected");
-            //invalidate = true;
+            FValid = false;
+
+            // TODO: ??? find out why we can't update enum and list here -> needs to be auto evaluated
+            // // if (FInterpoleIn[0].clipList != null) {
+            //     UpdateEnum();
+            //     UpdateClipList();
+            // // }
         }
 
-        private void Input_Connected(object sender, PinConnectionEventArgs args)
+        private void OnInterpoleDisconnected(object sender, PinConnectionEventArgs args)
         {
-            invalidate = true;
-            FLogger.Log(LogType.Debug, "connected");
+            ResetSliceCount();
+            FClipList = null;
         }
 
-        public void UpdateEnum()
+        private void UpdateEnum()
         {
-            if (invalidate || InterpoleIn[0].needsUpdate)
+            try
             {
-                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Color, InterpoleIn[0].clipList.Select(x => x.Color).Distinct().ToArray());
-                invalidate = false;
-                FLogger.Log(LogType.Debug, "Update GetClipByColor Enum");
+                EnumManager.UpdateEnum(
+                    FEnumName,
+                    FInterpoleIn[0].clipList[0].Color,
+                    FInterpoleIn[0].clipList.Select(x => x.Color).Distinct().ToArray()
+                );
             }
+            catch (Exception e)
+            {
+                FLogger.Log(LogType.Error, "updating enum failed: " + e);
+            }
+
         }
 
-        public static double Clamp(double value, double min, double max)
+        private double Clamp(double value, double min, double max)
         {
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        public double CalcFade(Interpole.Clip myclip, int clipPos)
+        private double CalcFade(Interpole.Clip clip, int clipPos)
         {
             double value = 0.0;
-            value = ((double)1 / myclip.FadeIn) * clipPos;
+            value = 1f / clip.FadeIn * clipPos;
             value = Clamp(value, 0, 1);
-            if (myclip.Duration - clipPos < myclip.FadeOut)
+            if (clip.Duration - clipPos < clip.FadeOut)
             {
-                value = Clamp((((double)myclip.Duration - clipPos) / myclip.FadeOut), 0, 1);
+                value = Clamp((((double)clip.Duration - clipPos) / clip.FadeOut), 0, 1);
             }
 
-
+            value = double.IsNaN(value) ? 0 : value;
 
             return value;
         }
 
-        public void UpdateOutputs()
-        {
-            try // fixes missing clip bug, when deleting a choosen clip
-            {
-
-                //set all sliceCounts to zero
-                FramePosition.SliceCount = FadeInOut.SliceCount = Normalized.SliceCount = Duration.SliceCount = IsActive.SliceCount = FName.SliceCount = FSecondsOut.SliceCount = FVariableOut.SliceCount = 0;
-
-                for (int i = 0; i < EnumClip.SliceCount; i++)
-                {
-
-                    //myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Color == EnumClip[i]);
-
-
-                    var tempCLipList = InterpoleIn[0].clipList.Where(x => x.Color == EnumClip[i]).ToArray();
-
-
-                    //FLogger.Log(LogType.Debug, "found this: " + tempCLipList.Length);
-                    //var tempCLip = InterpoleIn[0].clipList.Where(x => x.Color == EnumClip[i] &&
-                    //                                            x.StartFrame <= InterpoleIn[0].playPosFrames &&
-                    //                                            (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).FirstOrDefault();
-
-
-                    if (tempCLipList != null)
-                    {
-                        foreach(var clip in tempCLipList)
-                        {
-                            int ClipFramePos = InterpoleIn[0].playPosFrames - clip.StartFrame;
-                            if (ClipFramePos < 0) ClipFramePos = 0;
-                            if (InterpoleIn[0].playPosFrames > (clip.Duration + clip.StartFrame)) ClipFramePos = clip.Duration;
-                            FramePosition.Add(ClipFramePos);
-
-                            //get relative pointer position normalized
-                            Normalized.Add((double)ClipFramePos / clip.Duration);
-                            FSecondsOut.Add((double)ClipFramePos / InterpoleIn[0].Framerate[0]);
-
-                            //get fadein fade out
-                            double fadeInOut = CalcFade(clip, ClipFramePos);
-                            if (double.IsNaN(fadeInOut)) fadeInOut = 0;
-                            FadeInOut.Add(fadeInOut);
-
-                            FVariableOut.Add(clip.Variable);
-
-                            //is clip active ?
-                            if (fadeInOut > 0 && ClipFramePos <= (clip.Duration - 1)) IsActive.Add(true);
-                            else IsActive.Add(false);
-
-                            //duration
-                            Duration.Add(clip.Duration);
-
-                            //name
-                            FName.Add(clip.Name);
-                        }
-                    }
-                    else
-                    {
-                        FLogger.Log(LogType.Debug, "cant get into those darn spreads");
-                    }
-         
-                }
-
-                //FLogger.Log(LogType.Debug, "GetClip");
-            }
-            catch { }
+        private void ResetSliceCount() {
+            FNormalizedOut.SliceCount = 0;
+            FSecondsOut.SliceCount = 0;
+            FFadeOut.SliceCount = 0;
+            FVariableOut.SliceCount = 0;
+            FIsActiveOut.SliceCount = 0;
+            FBinSizeOut.SliceCount = 0;
+            FNameOut.SliceCount = 0;
+            FColorOut.SliceCount = 0;
+            FPositionOut.SliceCount = 0;
+            FDurationOut.SliceCount = 0;
         }
 
+        private void UpdateClipList()
+        {
+            ResetSliceCount();
 
-        //called when data for any output pin is requested
+            try {
+                FClipList = null;
+                FClipList = new List<List<Interpole.Clip>>();
+
+                for (int i = 0; i < FColorIn.SliceCount; i++)
+                {
+                    FClipList.Add(new List<Interpole.Clip>());
+
+                    FClipList[i].AddRange(
+                        from clip in FInterpoleIn[0].clipList
+                        where clip.Color == FColorIn[i]
+                        select clip
+                    );
+
+                    FBinSizeOut.Add(FClipList[i].Count); // set bin size
+
+                    for (int x = 0; x < FClipList[i].Count; x++) // get the static infos
+                    {
+                        Interpole.Clip clip = FClipList[i][x];
+
+                        FVariableOut.Add(clip.Variable);
+                        FNameOut.Add(clip.Name);
+                        FColorOut.Add(clip.Color);
+                        FDurationOut.Add(clip.Duration);
+                    }
+
+                    // set slice count of the updating values
+                    FNormalizedOut.SliceCount = FNormalizedOut.SliceCount + FClipList[i].Count;
+                    FSecondsOut.SliceCount = FSecondsOut.SliceCount + FClipList[i].Count;
+                    FFadeOut.SliceCount = FFadeOut.SliceCount + FClipList[i].Count;
+                    FIsActiveOut.SliceCount = FIsActiveOut.SliceCount + FClipList[i].Count;
+                    FPositionOut.SliceCount = FPositionOut.SliceCount + FClipList[i].Count;
+                }
+            }
+            catch (Exception e)
+            {
+                FLogger.Log(LogType.Error, "updating clip list failed: " + e);
+            }
+        }
+
+        private void UpdateOutputs()
+        {
+            int framePos = FInterpoleIn[0].playPosFrames;
+            int frameRate = FInterpoleIn[0].Framerate[0];
+
+            int count = 0;
+
+            for (int i = 0; i < FClipList.Count; i++)
+            {
+                for (int x = 0; x < FClipList[i].Count; x++)
+                {
+                    Interpole.Clip clip = FClipList[i][x];
+                    int clipFramePos = framePos - clip.StartFrame;
+                    if (clipFramePos < 0 ) clipFramePos = 0;
+                    if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
+
+                    // TODO: try to find a way to iterate only on the relevant ones
+                    FNormalizedOut[x + count] = (double)clipFramePos / clip.Duration;
+                    FSecondsOut[x + count] = (double)clipFramePos / frameRate;
+                    FFadeOut[x + count] = CalcFade(clip, clipFramePos);
+                    FIsActiveOut[x + count] = clipFramePos > 0 && clipFramePos < clip.Duration ? true : false;
+                    FPositionOut[x + count] = clipFramePos;
+                }
+                count += FClipList[i].Count;
+            }
+        }
+
         public void Evaluate(int SpreadMax)
         {
-
-
-            if (InterpoleIn.IsConnected && InterpoleIn[0].clipList != null)
+            if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                if (InterpoleIn[0].clipList.Count > 0)
+                 // update everything
+                if (FInterpoleIn[0].needsUpdate || FColorIn.IsChanged || !FValid)
                 {
                     UpdateEnum();
+                    UpdateClipList();
+                    FValid = true;
+                }
+                
+                if (FInterpoleIn[0].playPosFrames != FLastFramePos)  // run only if time changes
+                {
                     UpdateOutputs();
+
+                    FLastFramePos = FInterpoleIn[0].playPosFrames;
                 }
             }
         }
-
-
-
     }
 }
