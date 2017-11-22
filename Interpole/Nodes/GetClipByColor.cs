@@ -16,13 +16,13 @@ using VVVV.Core.Logging;
 namespace VVVV.Nodes
 {
     #region PluginInfo
-    [PluginInfo(Name = "GetClip",
+    [PluginInfo(Name = "GetClipByColor",
                 Category = "Interpole",
-                Help = "get a clip information",
-                Tags = "",
+                Help = "get a clip information by color",
+                Tags = "color",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class GetClip : IPluginEvaluate, IPartImportsSatisfiedNotification
+    public class GetStateByColor : IPluginEvaluate, IPartImportsSatisfiedNotification
     {
         #region fields & pins
         protected IDiffSpread<EnumEntry> EnumClip;
@@ -33,14 +33,20 @@ namespace VVVV.Nodes
         [Output("Normalized")]
         public ISpread<double> Normalized;
 
+        [Output("Seconds")]
+        public ISpread<double> FSecondsOut;
+
         [Output("FadeInOut")]
         public ISpread<double> FadeInOut;
+
+        [Output("Variable")]
+        public ISpread<string> FVariableOut;
 
         [Output("IsActive")]
         public ISpread<bool> IsActive;
 
-        [Output("ClipColor", Visibility = PinVisibility.OnlyInspector)]
-        public ISpread<string> FColor;
+        [Output("ClipName", Visibility = PinVisibility.OnlyInspector)]
+        public ISpread<string> FName;
 
         [Output("FramePosition", Visibility = PinVisibility.OnlyInspector)]
         public ISpread<int> FramePosition;
@@ -71,7 +77,7 @@ namespace VVVV.Nodes
 
             FHost.GetNodePath(true, out EnumName); //get unique node path
             EnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Clip"); //name of pin
+            InputAttribute attr = new InputAttribute("Color"); //name of pin
             attr.EnumName = EnumName;
             EnumClip = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
         }
@@ -92,9 +98,9 @@ namespace VVVV.Nodes
         {
             if (invalidate || InterpoleIn[0].needsUpdate)
             {
-                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Name, InterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray());
+                EnumManager.UpdateEnum(EnumName, InterpoleIn[0].clipList[0].Color, InterpoleIn[0].clipList.Select(x => x.Color).Distinct().ToArray());
                 invalidate = false;
-                FLogger.Log(LogType.Debug, "Update GetClip Enum");
+                FLogger.Log(LogType.Debug, "Update GetClipByColor Enum");
             }
         }
 
@@ -124,58 +130,59 @@ namespace VVVV.Nodes
             {
 
                 //set all sliceCounts to zero
-                FramePosition.SliceCount = FadeInOut.SliceCount = Normalized.SliceCount = Duration.SliceCount = IsActive.SliceCount = FColor.SliceCount = 0;
+                FramePosition.SliceCount = FadeInOut.SliceCount = Normalized.SliceCount = Duration.SliceCount = IsActive.SliceCount = FName.SliceCount = FSecondsOut.SliceCount = FVariableOut.SliceCount = 0;
 
                 for (int i = 0; i < EnumClip.SliceCount; i++)
                 {
 
-                    myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Name == EnumClip[i]);
+                    //myclip = InterpoleIn[0].clipList.FirstOrDefault(x => x.Color == EnumClip[i]);
 
 
-                    var tempCLip = InterpoleIn[0].clipList.Where(x => x.Name == EnumClip[i] &&
-                                                                x.StartFrame <= InterpoleIn[0].playPosFrames &&
-                                                                (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).FirstOrDefault();
-                    if (tempCLip != null)
+                    var tempCLipList = InterpoleIn[0].clipList.Where(x => x.Color == EnumClip[i]).ToArray();
+
+
+                    //FLogger.Log(LogType.Debug, "found this: " + tempCLipList.Length);
+                    //var tempCLip = InterpoleIn[0].clipList.Where(x => x.Color == EnumClip[i] &&
+                    //                                            x.StartFrame <= InterpoleIn[0].playPosFrames &&
+                    //                                            (x.StartFrame + x.Duration > InterpoleIn[0].playPosFrames)).FirstOrDefault();
+
+
+                    if (tempCLipList != null)
                     {
-                        myclip = tempCLip;
+                        foreach(var clip in tempCLipList)
+                        {
+                            int ClipFramePos = InterpoleIn[0].playPosFrames - clip.StartFrame;
+                            if (ClipFramePos < 0) ClipFramePos = 0;
+                            if (InterpoleIn[0].playPosFrames > (clip.Duration + clip.StartFrame)) ClipFramePos = clip.Duration;
+                            FramePosition.Add(ClipFramePos);
+
+                            //get relative pointer position normalized
+                            Normalized.Add((double)ClipFramePos / clip.Duration);
+                            FSecondsOut.Add((double)ClipFramePos / InterpoleIn[0].Framerate[0]);
+
+                            //get fadein fade out
+                            double fadeInOut = CalcFade(clip, ClipFramePos);
+                            if (double.IsNaN(fadeInOut)) fadeInOut = 0;
+                            FadeInOut.Add(fadeInOut);
+
+                            FVariableOut.Add(clip.Variable);
+
+                            //is clip active ?
+                            if (fadeInOut > 0 && ClipFramePos <= (clip.Duration - 1)) IsActive.Add(true);
+                            else IsActive.Add(false);
+
+                            //duration
+                            Duration.Add(clip.Duration);
+
+                            //name
+                            FName.Add(clip.Name);
+                        }
                     }
-                    
-                    // FLogger.Log(LogType.Debug, "something went wrong");
-                    
-
-                    //myclip = InterpoleIn[0].clipList[EnumClip[i].Index]; // get enum index of selected clip
-
-                    // get relative pointer position in frames
-                    int ClipFramePos = InterpoleIn[0].playPosFrames - myclip.StartFrame;
-                    if (ClipFramePos < 0) ClipFramePos = 0;
-                    if (InterpoleIn[0].playPosFrames > (myclip.Duration + myclip.StartFrame)) ClipFramePos = myclip.Duration;
-                    FramePosition.Add(ClipFramePos);
-
-                    //get fadein fade out
-                    double fadeInOut = CalcFade(myclip, ClipFramePos);
-                    if (double.IsNaN(fadeInOut)) fadeInOut = 0;
-                    FadeInOut.Add(fadeInOut);
-
-
-                    //is clip active ?
-                    if (fadeInOut > 0 && ClipFramePos <= (myclip.Duration - 1)) IsActive.Add(true);
-                    else IsActive.Add(false);
-
-                    //get relative pointer position normalized
-                    Normalized.Add((double)1 / myclip.Duration * ClipFramePos);
-
-                    //weirdo bugfix
-                    if(!IsActive[i])
+                    else
                     {
-                        FadeInOut[i] = 0;
-                        Normalized[i] = 0;
+                        FLogger.Log(LogType.Debug, "cant get into those darn spreads");
                     }
-
-                    //duration
-                    Duration.Add(myclip.Duration);
-
-                    //Color
-                    FColor.Add(myclip.Color);
+         
                 }
 
                 //FLogger.Log(LogType.Debug, "GetClip");

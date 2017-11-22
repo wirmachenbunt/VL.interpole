@@ -62,7 +62,13 @@ namespace VVVV.Nodes
                 set;
             }
 
-            public List<int>ReferenceClipPos
+            public string Variable
+            {
+                get;
+                set;
+            }
+
+            public List<int> ReferenceClipPos
             {
                 get;
                 set;

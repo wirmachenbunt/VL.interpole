@@ -58,7 +58,7 @@ namespace VVVV.Nodes
             {
                 
 
-                if (IsVisible && !FHideWindow[0] && clipList != null)
+                if (IsVisible && FShowWindow[0] && clipList != null)
                 {
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
@@ -356,6 +356,19 @@ namespace VVVV.Nodes
                 var myPath = FPluginHost.GetNodePath(false);
                 var selfAsNode = FHdeHost.GetNodeFromPath(myPath);
                 FHdeHost.SetComponentMode(selfAsNode, ComponentMode.Hidden);
+            }
+            
+
+        }
+
+        public void ShowWindow()
+        {
+           
+            if(!IsVisible)
+            {
+                var myPath = FPluginHost.GetNodePath(false);
+                var selfAsNode = FHdeHost.GetNodeFromPath(myPath);
+                FHdeHost.SetComponentMode(selfAsNode, ComponentMode.InAWindow);
             }
             
 

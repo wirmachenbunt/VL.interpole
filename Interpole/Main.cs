@@ -28,7 +28,7 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
-        [Config("Framerate",DefaultValue = 50 )]
+        [Config("Framerate", DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
         [Input("Play")]
@@ -43,8 +43,8 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Hide Window")]
-        public IDiffSpread<bool> FHideWindow;
+        [Input("Show Window", DefaultBoolean = true)]
+        public IDiffSpread<bool> FShowWindow;
 
         [Input("ClipXMLIn")]
         public IDiffSpread<string> ClipXMLIn;
@@ -82,6 +82,8 @@ namespace VVVV.Nodes
         int UpdateCounter = 0;
         bool UI_Lock = false;
 
+        bool lastShowWindow = true;
+
         Rectangle playHeadInvalidate;
 
         #endregion fields & pins
@@ -110,9 +112,7 @@ namespace VVVV.Nodes
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
             MouseWheel += Form1_MouseWheel;
-            KeyDown += Form_Keydown;
-
-            
+            KeyDown += Form_Keydown;     
         }
 
         #endregion constructor and init
@@ -120,7 +120,12 @@ namespace VVVV.Nodes
         public void InitInterpole()
         {
             //hide window programatically
-            if ( FHideWindow[0]) HideWindow();
+            if (!FShowWindow[0] == lastShowWindow) {
+                if (FShowWindow[0]) ShowWindow();
+                else HideWindow();
+                lastShowWindow = FShowWindow[0];
+            }
+
 
             if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
 
