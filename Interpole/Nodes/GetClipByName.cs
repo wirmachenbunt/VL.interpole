@@ -172,6 +172,7 @@ namespace VVVV.Nodes
                     FClipList[i].AddRange(
                         from clip in FInterpoleIn[0].clipList
                         where clip.Name == FNameIn[i]
+                        orderby clip.StartFrame
                         select clip
                     );
 
