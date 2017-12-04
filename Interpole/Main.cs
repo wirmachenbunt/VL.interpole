@@ -61,7 +61,7 @@ namespace VVVV.Nodes
         [Config("LoopRegion")]
         public IDiffSpread<Int32> FLoopRegion;
 
-        [Config("ZoomBounds", DefaultValues = new double[] {1, 20})]
+        [Config("ZoomBounds", DefaultValues = new double[] {1, 20}, MinValue = 1)]
         public IDiffSpread<Vector2D> FZoomBoundsIn;
 
         [Config("ClipXML")]
