@@ -38,25 +38,25 @@ namespace VVVV.Nodes
         [Output("Seconds")]
         protected ISpread<double> FSecondsOut;
 
-        [Output("Fade In/Out")]
+        [Output("FadeInOut")]
         protected ISpread<double> FFadeOut;
 
         [Output("Variable")]
         protected ISpread<string> FVariableOut;
 
-        [Output("Is Active")]
+        [Output("IsActive")]
         protected ISpread<bool> FIsActiveOut;
 
         [Output("Bin Size")]
         protected ISpread<int> FBinSizeOut;
 
-        [Output("Name", Visibility = PinVisibility.OnlyInspector)]
+        [Output("ClipName", Visibility = PinVisibility.OnlyInspector)]
         protected ISpread<string> FNameOut;
 
-        [Output("Color", Visibility = PinVisibility.OnlyInspector)]
+        [Output("ClipColor", Visibility = PinVisibility.OnlyInspector)]
         protected ISpread<string> FColorOut;
 
-        [Output("Position", Visibility = PinVisibility.OnlyInspector)]
+        [Output("FramePosition", Visibility = PinVisibility.OnlyInspector)]
         protected ISpread<int> FPositionOut;
 
         [Output("Duration", Visibility = PinVisibility.OnlyInspector)]
@@ -83,7 +83,7 @@ namespace VVVV.Nodes
 
             FHost.GetNodePath(true, out FEnumName); //get unique node path
             FEnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Clip Color"); // name of pin
+            InputAttribute attr = new InputAttribute("Color"); // name of pin
             attr.EnumName = FEnumName;
             FColorIn = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
         }
@@ -237,13 +237,10 @@ namespace VVVV.Nodes
                     UpdateClipList();
                     FValid = true;
                 }
-                
-                if (FInterpoleIn[0].playPosFrames != FLastFramePos)  // run only if time changes
-                {
-                    UpdateOutputs();
 
-                    FLastFramePos = FInterpoleIn[0].playPosFrames;
-                }
+                // needs to be updated every frame to have instant feedback while editing clips
+                // TODO?: another possibilty would be firing needsUpdate while clips are getting edited
+                if (FInterpoleIn[0].clipList.Count > 0) UpdateOutputs();
             }
         }
     }
