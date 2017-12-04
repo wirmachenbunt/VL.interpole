@@ -78,12 +78,12 @@ namespace VVVV.Nodes
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Delta > 0 && timeZoom < 20)
+            if (e.Delta > 0 && timeZoom < FZoomBoundsIn[0].y)
             {
                 timeZoom += 1;
                 ApplyTimeZoom();
             }
-            if (e.Delta < 0 && timeZoom > 1)
+            if (e.Delta < 0 && timeZoom > FZoomBoundsIn[0].x)
             {
                 timeZoom -= 1;
                 ApplyTimeZoom();

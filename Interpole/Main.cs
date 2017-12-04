@@ -28,7 +28,7 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
-        [Config("Framerate", DefaultValue = 50 )]
+        [Config("Framerate", DefaultValue = 50)]
         public IDiffSpread<int> Framerate;
 
         [Input("Play")]
@@ -60,6 +60,9 @@ namespace VVVV.Nodes
 
         [Config("LoopRegion")]
         public IDiffSpread<Int32> FLoopRegion;
+
+        [Config("ZoomBounds", DefaultValues = new double[] {1, 20})]
+        public IDiffSpread<Vector2D> FZoomBoundsIn;
 
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
