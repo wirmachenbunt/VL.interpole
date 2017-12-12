@@ -28,7 +28,7 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
-        [Config("Framerate", DefaultValue = 50 )]
+        [Config("Framerate", DefaultValue = 50)]
         public IDiffSpread<int> Framerate;
 
         [Input("Play")]
@@ -43,8 +43,14 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Show Window", DefaultBoolean = true)]
+        [Input("Show Window")]
         public IDiffSpread<bool> FShowWindow;
+
+        [Input("External Clock", IsSingle = true)]
+        public IDiffSpread<int> FExternalClock;
+
+        [Input("Set External Clock")]
+        public IDiffSpread<bool> FSetExternalClock;
 
         [Input("ClipXMLIn")]
         public IDiffSpread<string> ClipXMLIn;
@@ -54,6 +60,9 @@ namespace VVVV.Nodes
 
         [Config("LoopRegion")]
         public IDiffSpread<Int32> FLoopRegion;
+
+        [Config("ZoomBounds", DefaultValues = new double[] {1, 20}, MinValue = 1)]
+        public IDiffSpread<Vector2D> FZoomBoundsIn;
 
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
@@ -82,7 +91,8 @@ namespace VVVV.Nodes
         int UpdateCounter = 0;
         bool UI_Lock = false;
 
-        bool lastShowWindow = true;
+        bool lastShowWindow = false;
+        int lastExternalClock = 0;
 
         Rectangle playHeadInvalidate;
 
@@ -126,7 +136,6 @@ namespace VVVV.Nodes
                 lastShowWindow = FShowWindow[0];
             }
 
-
             if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
 
             if (FLoopRegion.SliceCount != 2) FLoopRegion.SliceCount = 2;
@@ -150,10 +159,10 @@ namespace VVVV.Nodes
                     this.DoubleBuffered = true; //not sure if this is actually nessecary
 
                     Invalidate(); // redraw all
-                }
-                catch
+                } 
+                catch (Exception e)
                 {
-                    FLogger.Log(LogType.Debug, "Loading clip list failed :(");
+                    FLogger.Log(LogType.Error, "Loading clip list failed :( " + e);
                     clipList = new List<Clip>(); // fixes many bugs when interpole is fresh and empty
                 }
 
@@ -172,7 +181,12 @@ namespace VVVV.Nodes
 
             if (play && !FSetTimecode[0])
             {
-                playPosFrames += 1;
+                if (FSetExternalClock[0])
+                {
+                    int diff = FExternalClock[0] - lastExternalClock;
+                    playPosFrames += diff > 0 ? diff : 0;
+                }
+                else playPosFrames += 1;
 
                 PlaybackMoveStage(); // scroll stage when playback
 
@@ -195,6 +209,9 @@ namespace VVVV.Nodes
                 playPosFrames >= FLoopRegion[1] && 
                 play && FLoopRegion[1] > 0 &&
                 FLoopRegion[1] > FLoopRegion[0]) playPosFrames = FLoopRegion[0];
+
+            // always sample external clock
+            if (FSetExternalClock[0]) lastExternalClock = FExternalClock[0];
         }
 
         //called when data for any output pin is requested
