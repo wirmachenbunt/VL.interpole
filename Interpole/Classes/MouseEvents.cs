@@ -43,7 +43,7 @@ namespace VVVV.Nodes
             //DragDuration
             if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock) DragDuration(hitObject);
 
-            this.Invalidate(); //redraw
+            
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -65,7 +65,7 @@ namespace VVVV.Nodes
 
             selectionRectangle.Size = new Size(0, 0);
 
-            this.Invalidate(); //redraw
+            
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -73,22 +73,22 @@ namespace VVVV.Nodes
             if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !UI_Lock) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left && !UI_Lock) EditClip(hitObject); // EDIT CLIP
             if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !UI_Lock) EditTimeCode(); // EDIT TIMECODE
-            Invalidate(); //redraw
+            
         }
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (e.Delta > 0 && timeZoom < FZoomBoundsIn[0].y)
+            if (e.Delta > 0 && timeZoom < 20)
             {
                 timeZoom += 1;
                 ApplyTimeZoom();
             }
-            if (e.Delta < 0 && timeZoom > FZoomBoundsIn[0].x)
+            if (e.Delta < 0 && timeZoom > 1)
             {
                 timeZoom -= 1;
                 ApplyTimeZoom();
             }
-            this.Invalidate(); //redraw
+           
         }
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -175,14 +175,14 @@ namespace VVVV.Nodes
             if (e.KeyCode == Keys.L && e.Modifiers == Keys.Shift)
             {
                 FIsLoop[0] = !FIsLoop[0]; // invert loop activate
-                Invalidate();
+                //Invalidate();
             }
 
             //Lock UI
             if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
             {
                 UI_Lock = !UI_Lock;
-                Invalidate();
+                //Invalidate();
             }
 
             //SET TO ZERO
@@ -190,14 +190,14 @@ namespace VVVV.Nodes
             {
                 StagePos.X = 0;
                 playPosFrames = 0;
-                Invalidate();
+                //Invalidate();
             }
 
             //SET TO ZERO
             if (e.KeyCode == Keys.R)
             {
                 StagePos.Y = 0;     
-                Invalidate();
+                //Invalidate();
             }
 
             //DELETE CLIPS OF SELECTION
@@ -205,7 +205,7 @@ namespace VVVV.Nodes
             {
                 DeleteClipSelection();
                 selectionList.Clear();
-                Invalidate();
+                //Invalidate();
             }
 
             //MARKER & LOOPING
@@ -221,11 +221,11 @@ namespace VVVV.Nodes
             {
                 case Keys.B:
                     FLoopRegion[0] = playPosFrames;
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.N:
                     FLoopRegion[1] = playPosFrames;
-                    Invalidate();
+                    //Invalidate();
                     break;
             }
 
@@ -241,100 +241,100 @@ namespace VVVV.Nodes
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[0] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[0] / timeZoom);
                     playPosFrames = FMarker[0];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad2:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[1] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[1] / timeZoom);
                     playPosFrames = FMarker[1];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad3:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[2] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[2] / timeZoom);
                     playPosFrames = FMarker[2];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad4:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[3] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[3] / timeZoom);
                     playPosFrames = FMarker[3];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad5:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[4] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[4] / timeZoom);
                     playPosFrames = FMarker[4];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad6:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[5] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[5] / timeZoom);
                     playPosFrames = FMarker[5];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad7:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[6] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[6] / timeZoom);
                     playPosFrames = FMarker[6];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad8:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[7] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[7] / timeZoom);
                     playPosFrames = FMarker[7];
-                    Invalidate();
+                    //Invalidate();
                     break;
                 case Keys.NumPad9:
                     if (e.Modifiers == Keys.Control)
                     {
                         FMarker[8] = playPosFrames;
-                        Invalidate();
+                        //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[8] / timeZoom);
                     playPosFrames = FMarker[8];
-                    Invalidate();
+                    //Invalidate();
                     break;
             }
 
@@ -349,7 +349,7 @@ namespace VVVV.Nodes
                 prevMousePos = mousePos;
                 StagePos.X += deltaX;
                 if (StagePos.X > 0) StagePos.X = 0;
-                Invalidate();
+                //Invalidate();
             }
 
             if (click && !(hitObject is Clip) && Form.ModifierKeys == Keys.Control)
@@ -358,7 +358,7 @@ namespace VVVV.Nodes
                 prevMousePos = mousePos;
                 StagePos.Y += deltaY;
                 //if (StagePos.Y > 0) StagePos.X = 0;
-                Invalidate();
+                //Invalidate();
             }
 
 
@@ -391,7 +391,7 @@ namespace VVVV.Nodes
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
-                Invalidate(); //redraw
+                //Invalidate(); //redraw
             }
         }
 
@@ -434,7 +434,7 @@ namespace VVVV.Nodes
 
                 selectionRectangle = rc;        //new Rectangle(holdMousePos, targetSize);
                 MultiSelectionClips();
-                Invalidate();
+                //Invalidate();
             }
         }
 

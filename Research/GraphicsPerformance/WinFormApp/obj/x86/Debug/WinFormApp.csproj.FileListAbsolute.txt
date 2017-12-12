@@ -1,0 +1,13 @@
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.csprojResolveAssemblyReference.cache
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.Form1.resources
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.Properties.Resources.resources
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.csproj.GenerateResource.Cache
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.csproj.CoreCompileInputs.cache
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\WinFormApp.exe.config
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\WinFormApp.exe
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\WinFormApp.pdb
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\GraphicsControl.dll
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\SlimDX.dll
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\bin\Debug\GraphicsControl.pdb
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.exe
+C:\Users\CE\Desktop\GraphicsPerformance\WinFormApp\obj\x86\Debug\WinFormApp.pdb

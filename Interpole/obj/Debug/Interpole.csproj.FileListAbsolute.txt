@@ -12,3 +12,8 @@ C:\INTERPOLE\Interpole\bin\Debug\Interpole.pdb
 C:\INTERPOLE\Interpole\obj\Debug\Interpole.csprojResolveAssemblyReference.cache
 C:\INTERPOLE\Interpole\obj\Debug\Interpole.dll
 C:\INTERPOLE\Interpole\obj\Debug\Interpole.pdb
+C:\Users\CE\Desktop\interpole\Interpole\obj\Debug\Interpole.csprojResolveAssemblyReference.cache
+C:\Users\CE\Desktop\interpole\Interpole\obj\Debug\Interpole.dll
+C:\Users\CE\Desktop\interpole\Interpole\obj\Debug\Interpole.pdb
+C:\Users\CE\Desktop\interpole\Interpole\bin\Debug\Interpole.dll
+C:\Users\CE\Desktop\interpole\Interpole\bin\Debug\Interpole.pdb

@@ -1,0 +1,7 @@
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\obj\Debug\GraphicsControl.csprojResolveAssemblyReference.cache
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\obj\Debug\GraphicsControl.csproj.CoreCompileInputs.cache
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\bin\Debug\GraphicsControl.dll
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\bin\Debug\GraphicsControl.pdb
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\bin\Debug\SlimDX.dll
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\obj\Debug\GraphicsControl.dll
+C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControl\obj\Debug\GraphicsControl.pdb

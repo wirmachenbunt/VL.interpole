@@ -1,0 +1,20 @@
+﻿<Window x:Class="WPFApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:my="clr-namespace:GraphicsControlWPF;assembly=GraphicsControlWPF"
+        Title="MainWindow" Height="575" Width="800" Loaded="Window_Loaded">
+    <Grid>
+    <my:WPFFormControl Margin="0,67,0,0" Name="wpfFormControl" />
+    <GroupBox Header="Paint Elements" Height="49" HorizontalAlignment="Left" Margin="22,12,0,0" Name="groupBox1" VerticalAlignment="Top" Width="285">
+      <Grid>
+        <CheckBox Content="Line" Height="16" HorizontalAlignment="Left" Margin="6,8,0,0" Name="cbLine" VerticalAlignment="Top" IsChecked="True" Checked="cbElements_Checked" Unchecked="cbElements_Checked" />
+        <CheckBox Content="Ellipse" Height="16" HorizontalAlignment="Left" IsChecked="True" Margin="47,8,0,0" Name="cbEllipse" VerticalAlignment="Top" Checked="cbElements_Checked" Unchecked="cbElements_Checked" />
+        <CheckBox Content="Text" Height="16" HorizontalAlignment="Right" IsChecked="True" Margin="0,8,139,0" Name="cbText" VerticalAlignment="Top" Checked="cbElements_Checked" Unchecked="cbElements_Checked" />
+        <CheckBox Content="Rectangle" Height="16" HorizontalAlignment="Right" IsChecked="True" Margin="0,8,70,0" Name="cbRectangle" VerticalAlignment="Top" Checked="cbElements_Checked" Unchecked="cbElements_Checked" />
+        <CheckBox Content="Polygon" Height="16" HorizontalAlignment="Left" IsChecked="True" Margin="209,8,0,0" Name="cbPolygon" VerticalAlignment="Top" Checked="cbElements_Checked" Unchecked="cbElements_Checked" />
+      </Grid>
+    </GroupBox>
+    <Slider Height="23" Margin="575,26,82,0" Name="slider1" VerticalAlignment="Top" Maximum="50" LargeChange="10" SmallChange="5" TickFrequency="10" IsDirectionReversed="False" FlowDirection="RightToLeft" ValueChanged="slider1_ValueChanged" />
+    <Label Content="Element Density:" Height="28" HorizontalAlignment="Left" Margin="476,25,0,0" Name="label1" VerticalAlignment="Top" />
+  </Grid>
+</Window>

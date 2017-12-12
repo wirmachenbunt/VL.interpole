@@ -102,7 +102,7 @@ namespace VVVV.Nodes
                     myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                     myclip.StartFrame = dragHorizontal * timeZoom;
                     rememberLastFunction = "dragclip";
-                    Invalidate(); //redraw
+                    //Invalidate(); //redraw
                 }
             }
 
@@ -117,7 +117,7 @@ namespace VVVV.Nodes
                     if (dragVertical < 0) dragVertical = 0;
                     myclip.Bounds = new Rectangle(new Point(myclip.Bounds.Location.X, dragVertical), myclip.Bounds.Size);
                     rememberLastFunction = "dragclip";
-                    Invalidate(); //redraw
+                    //Invalidate(); //redraw
                 }
             }
 
@@ -155,7 +155,7 @@ namespace VVVV.Nodes
             {
                 playPosFrames = TimeCode2Frames(input, Framerate[0]);
                 StagePos.X = 0 - playPosFrames / timeZoom;
-                Invalidate();
+                //Invalidate();
             }
 
         }
@@ -182,7 +182,7 @@ namespace VVVV.Nodes
 
                 myclip.Duration = dragHorizontal * timeZoom;
                 rememberLastFunction = "dragclip";
-                Invalidate(); //redraw
+                //Invalidate(); //redraw
 
             }
 

@@ -13,6 +13,11 @@ using VVVV.Utils.VMath;
 using VVVV.Core.Logging;
 using System.Reflection;
 using System.Diagnostics;
+
+using SlimDX;
+using D2D = SlimDX.Direct2D;
+using DWrite = SlimDX.DirectWrite;
+
 #endregion usings
 
 namespace VVVV.Nodes
@@ -28,7 +33,7 @@ namespace VVVV.Nodes
     {
         #region fields & pins
 
-        [Config("Framerate", DefaultValue = 50)]
+        [Config("Framerate", DefaultValue = 50 )]
         public IDiffSpread<int> Framerate;
 
         [Input("Play")]
@@ -43,14 +48,8 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Show Window")]
+        [Input("Show Window", DefaultBoolean = true)]
         public IDiffSpread<bool> FShowWindow;
-
-        [Input("External Clock", IsSingle = true)]
-        public IDiffSpread<int> FExternalClock;
-
-        [Input("Set External Clock")]
-        public IDiffSpread<bool> FSetExternalClock;
 
         [Input("ClipXMLIn")]
         public IDiffSpread<string> ClipXMLIn;
@@ -60,9 +59,6 @@ namespace VVVV.Nodes
 
         [Config("LoopRegion")]
         public IDiffSpread<Int32> FLoopRegion;
-
-        [Config("ZoomBounds", DefaultValues = new double[] {1, 20}, MinValue = 1)]
-        public IDiffSpread<Vector2D> FZoomBoundsIn;
 
         [Config("ClipXML")]
         public IDiffSpread<string> ClipXML;
@@ -84,6 +80,7 @@ namespace VVVV.Nodes
 
         [Import]
         IPluginHost2 FPluginHost;
+        
 
         bool initialized = false; // controlling init of plugin
         public bool play = false;
@@ -91,8 +88,7 @@ namespace VVVV.Nodes
         int UpdateCounter = 0;
         bool UI_Lock = false;
 
-        bool lastShowWindow = false;
-        int lastExternalClock = 0;
+        bool lastShowWindow = true;
 
         Rectangle playHeadInvalidate;
 
@@ -103,26 +99,56 @@ namespace VVVV.Nodes
         public Interpole()
         {
             //setup the gui
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            this.SetStyle(ControlStyles.Opaque, true);
+            this.SetStyle(ControlStyles.ResizeRedraw, true);
+
+            //setup the gui
             InitializeComponent();
-            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); // setup playbar
+            
         }
 
         void InitializeComponent()
         {
             //clear controls in case init is called multiple times
             Controls.Clear();
-
-            Paint += MainDraw; //paint event
-            SetStyle(ControlStyles.ResizeRedraw, true);
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
-
+            
             //bind events
             MouseMove += Form1_MouseMove; //mouse move event
             MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
             MouseDown += Form1_MouseDown; //mouse down event
             MouseUp += Form1_MouseUp;
             MouseWheel += Form1_MouseWheel;
-            KeyDown += Form_Keydown;     
+            KeyDown += Form_Keydown;
+
+            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); // setup playbar
+
+            //m_factoryWrite = new DWrite.Factory(DWrite.FactoryType.Shared);
+
+            //Get requested debug level
+            D2D.DebugLevel debugLevel = D2D.DebugLevel.None;
+            if (m_debugMode) { debugLevel = D2D.DebugLevel.Error; }
+
+            //Create factory object
+            m_factory = new D2D.Factory(D2D.FactoryType.SingleThreaded, debugLevel);
+
+            //Create the render target
+            m_renderTarget = new D2D.WindowRenderTarget(m_factory, new D2D.WindowRenderTargetProperties()
+            {
+                Handle = this.Handle,
+                PixelSize = this.Size,
+                PresentOptions = D2D.PresentOptions.Immediately
+            });
+
+            m_renderTarget.AntialiasMode = D2D.AntialiasMode.PerPrimitive;
+
+            //init brushes and texts
+            InitD2DObjects();
+
+
+            //Update initialization flag
+            m_initialized = true;
+
         }
 
         #endregion constructor and init
@@ -135,6 +161,7 @@ namespace VVVV.Nodes
                 else HideWindow();
                 lastShowWindow = FShowWindow[0];
             }
+
 
             if (FMarker.SliceCount != 9) FMarker.SliceCount = 9;
 
@@ -156,13 +183,13 @@ namespace VVVV.Nodes
                     FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
                     FLogger.Log(LogType.Debug, "Interpole " + fvi.FileVersion + " successful initialized");
 
-                    this.DoubleBuffered = true; //not sure if this is actually nessecary
+                   
 
-                    Invalidate(); // redraw all
-                } 
-                catch (Exception e)
+                    //Invalidate(); // redraw all
+                }
+                catch
                 {
-                    FLogger.Log(LogType.Error, "Loading clip list failed :( " + e);
+                    FLogger.Log(LogType.Debug, "Loading clip list failed :(");
                     clipList = new List<Clip>(); // fixes many bugs when interpole is fresh and empty
                 }
 
@@ -181,27 +208,22 @@ namespace VVVV.Nodes
 
             if (play && !FSetTimecode[0])
             {
-                if (FSetExternalClock[0])
-                {
-                    int diff = FExternalClock[0] - lastExternalClock;
-                    playPosFrames += diff > 0 ? diff : 0;
-                }
-                else playPosFrames += 1;
+                playPosFrames += 1;
 
                 PlaybackMoveStage(); // scroll stage when playback
 
                 int pos = playPosFrames/timeZoom;
 
                 playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
-                Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y + StagePos.Y),mytimecode.Bounds.Size)); // invalidate timecode display
-                Invalidate(playHeadInvalidate); // invalidate playhead
+                //Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y + StagePos.Y),mytimecode.Bounds.Size)); // invalidate timecode display
+                //Invalidate(playHeadInvalidate); // invalidate playhead
 
             } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode
             {
                 play = false;
                 playPosFrames = FTimecode[0].Frames + (FTimecode[0].Seconds * Framerate[0]) + (FTimecode[0].Minutes * 60 * Framerate[0]) + (FTimecode[0].Hours * 60 * 60 * Framerate[0]);
                 PlaybackMoveStage(); // scroll stage when playback
-                Invalidate();
+                //Invalidate();
             }
 
             //activate loop region
@@ -209,9 +231,6 @@ namespace VVVV.Nodes
                 playPosFrames >= FLoopRegion[1] && 
                 play && FLoopRegion[1] > 0 &&
                 FLoopRegion[1] > FLoopRegion[0]) playPosFrames = FLoopRegion[0];
-
-            // always sample external clock
-            if (FSetExternalClock[0]) lastExternalClock = FExternalClock[0];
         }
 
         //called when data for any output pin is requested
@@ -223,12 +242,15 @@ namespace VVVV.Nodes
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
+            Draw2D2();
+            //Invalidate();
+
             #region boygrouping
             //iaa special feature for boygrouping
             if (ClipXMLIn.IsChanged && ClipXMLIn[0].Length > 0)
             {
                 clipList = DeserializeClipList(ClipXMLIn[0]);
-                Invalidate();
+                //Invalidate();
             }
             #endregion
 

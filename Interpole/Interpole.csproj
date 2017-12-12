@@ -65,13 +65,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\Drawing.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
     <Compile Include="Classes\DataHandling.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Classes\Dialogs.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Classes\Drawing.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Classes\DrawingD2D.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Classes\GlobalHitTest.cs">
@@ -86,6 +89,7 @@
     <Compile Include="Main.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Nodes\GetClipBuffered.cs" />
     <Compile Include="Nodes\GetClipByName.cs" />
     <Compile Include="Nodes\GetClipByColor.cs" />
     <Compile Include="Nodes\GetUnifiedClipByName.cs" />

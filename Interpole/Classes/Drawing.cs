@@ -60,6 +60,7 @@ namespace VVVV.Nodes
 
                 if (IsVisible && FShowWindow[0] && clipList != null)
                 {
+                    /*
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
                     e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
@@ -80,7 +81,7 @@ namespace VVVV.Nodes
                     DrawSelectedClips(e);
                     DrawSelectionRect(e);
 
-                  
+                  */
 
                 }
                 
