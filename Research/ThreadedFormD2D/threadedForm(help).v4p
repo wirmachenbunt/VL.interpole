@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
    <PATCH nodename="C:\ThreadedFormD2D\threadedForm(help).v4p" systemname="threadedForm (help)" filename="C:\ThreadedFormD2D\threadedForm(help).v4p" scrollx="705" scrolly="-360">
-   <BOUNDS type="Window" left="14505" top="11610" width="9000" height="6000">
+   <BOUNDS type="Window" left="27015" top="15465" width="9000" height="6000">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -12,6 +12,8 @@
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
    <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Y Input Value" slicecount="1" values="2">
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="3">
@@ -30,6 +32,8 @@
    <BOUNDS type="Node" left="5850" top="480" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Prepare Graph Time" visible="1">
+   </PIN>
+   <PIN pinname="frames per second" visible="1">
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="9">
@@ -84,14 +88,94 @@
    </LINK>
    <LINK srcnodeid="12" srcpinname="Output" dstnodeid="9" dstpinname="Y Input Value">
    </LINK>
-   <NODE systemname="ThreadedForm (Value)" filename="threadedForm\threadedForm\bin\Debug\threadedForm.dll" nodename="ThreadedForm (Value)" componentmode="Hidden" id="17">
+   <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
+   <BOUNDS type="Node" left="3555" top="4350" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Maximum Foreground FPS" visible="1">
+   </PIN>
+   <PIN pinname="Maximum Background FPS" visible="1">
+   </PIN>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="19">
+   <BOUNDS type="Box" left="3450" top="3525" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="3450" top="3525" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="999999999999">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="19" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Foreground FPS">
+   </LINK>
+   <LINK srcnodeid="19" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Background FPS">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="22">
+   <BOUNDS type="Box" left="5505" top="3540" width="3405" height="1545">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5505" top="3540" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="s">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Y Input Value" visible="1">
+   </PIN>
+   <PIN pinname="Size" slicecount="1" values="30">
+   </PIN>
+   </NODE>
+   <NODE systemname="Queue (Spreads)" filename="%VVVV%\lib\nodes\plugins\VVVV.Nodes.dll" nodename="Queue (Spreads)" componentmode="Hidden" id="21">
+   <BOUNDS type="Node" left="5505" top="1140" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="5505" top="1140" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Input" visible="1" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Frame Count" slicecount="1" values="50">
+   </PIN>
+   <PIN pinname="Insert" slicecount="1" values="1">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Mean (Spectral)" nodename="Mean (Spectral)" componentmode="Hidden" id="20">
+   <BOUNDS type="Node" left="5535" top="1545" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Input" visible="1">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="21" srcpinname="Output" dstnodeid="20" dstpinname="Input">
+   </LINK>
+   <LINK srcnodeid="8" srcpinname="frames per second" dstnodeid="21" dstpinname="Input">
+   </LINK>
+   <NODE systemname="LinearFilter (Animation)" nodename="LinearFilter (Animation)" componentmode="Hidden" id="23">
+   <BOUNDS type="Node" left="5550" top="2010" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Go To Position" visible="1">
+   </PIN>
+   <PIN pinname="Position Out" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="20" srcpinname="Output" dstnodeid="23" dstpinname="Go To Position">
+   </LINK>
+   <LINK srcnodeid="23" srcpinname="Position Out" dstnodeid="22" dstpinname="Y Input Value">
+   </LINK>
+   <NODE id="24" systemname="ThreadedForm (Value)" filename="threadedForm\threadedForm\bin\Debug\threadedForm.dll" nodename="ThreadedForm (Value)" componentmode="Hidden">
    <BOUNDS type="Node" left="2535" top="1740" width="100" height="100">
    </BOUNDS>
    <BOUNDS type="Box" left="2535" top="1740" width="3000" height="3000">
    </BOUNDS>
    </NODE>
-   <LINK srcnodeid="17" srcpinname="Output" dstnodeid="2" dstpinname="Y Input Value">
+   <LINK srcnodeid="3" srcpinname="Y Output Value" dstnodeid="24" dstpinname="Input">
    </LINK>
-   <LINK srcnodeid="3" srcpinname="Y Output Value" dstnodeid="17" dstpinname="Input">
+   <LINK srcnodeid="24" srcpinname="Output" dstnodeid="2" dstpinname="Y Input Value">
    </LINK>
    </PATCH>
