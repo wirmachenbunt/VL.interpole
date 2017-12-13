@@ -67,7 +67,7 @@ namespace threadedForm
             {
 
                 Render();
-                Thread.Sleep(1);
+                Thread.Sleep(50);
                 //Tick(sender, e);
 
             }
