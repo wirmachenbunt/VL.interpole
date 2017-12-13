@@ -1,0 +1,6 @@
+C:\ThreadedFormD2D\threadedForm\threadedForm\bin\Debug\threadedForm.dll
+C:\ThreadedFormD2D\threadedForm\threadedForm\bin\Debug\threadedForm.pdb
+C:\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.csprojResolveAssemblyReference.cache
+C:\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.csproj.CoreCompileInputs.cache
+C:\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.dll
+C:\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.pdb
