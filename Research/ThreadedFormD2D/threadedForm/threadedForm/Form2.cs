@@ -22,9 +22,12 @@ namespace threadedForm
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         Graphics g;
         bool IsRunning = true;
-        int counter = 0;
-
-        
+        public int counter = 0;
+        SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
+        SolidBrush brightGrayBrush = new SolidBrush(Color.FromArgb(150, 0, 150));
+        Font clipFont = new Font("Segoe UI", 20, FontStyle.Regular);
+        StringFormat format = new StringFormat(StringFormatFlags.LineLimit | StringFormatFlags.NoWrap, 1003);
+        SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
 
         public Form1()
         {
@@ -33,26 +36,38 @@ namespace threadedForm
             
         }
 
+        
 
         void Render()
         {
-            this.Invalidate();
-
-           
+            this.Invalidate();        
         }
 
         protected override void OnPaint(PaintEventArgs pe)
         {
             
             Random r = new Random();
-
+            int x = Cursor.Position.X;
             g = pe.Graphics;
-            counter++;
+            
             g.Clear(MyBackgroundColor);
-            Pen pn = new Pen(Color.Blue, 1000);
-            Rectangle rect = new Rectangle(counter, Hallo, 200, 100);
-            g.DrawEllipse(pn, rect);
+            
+            
+
+
+            for (int i = 0; i < 200; i++)
+            {
+                Rectangle rectt = new Rectangle(r.Next(0,2000), r.Next(0, 2000), 100, 100);
+                g.FillEllipse(brightGrayBrush, rectt);
+
+                g.DrawString("blub", clipFont, textBrush, rectt, format); //text
+            }
+
+            Rectangle rect = new Rectangle(PointToClient(Cursor.Position).X, PointToClient(Cursor.Position).Y, 200, 200);
+            g.FillEllipse(OrangeBrush, rect);
+
             if (counter > 1000) counter = 0;
+            
 
         }
 
@@ -91,7 +106,8 @@ namespace threadedForm
             {
 
                 Render();
-                Thread.Sleep(20);
+                counter++;
+                Thread.Sleep(1);
                 //Tick(sender, e);
 
             }

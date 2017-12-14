@@ -23,6 +23,9 @@ namespace VVVV.Nodes
         [Input("Some Text")]
         ISpread<string> FSomeTextIn;
 
+        [Output("Out")]
+        ISpread<int> FOut;
+
         [Input("Value")]
         IDiffSpread<int> FValue;
 
@@ -30,6 +33,7 @@ namespace VVVV.Nodes
         {
             FUIThread = new Thread(InitializeForm);
             FUIThread.SetApartmentState(ApartmentState.STA);
+            FUIThread.IsBackground = true;
             FUIThread.Start();
         }
 
@@ -73,7 +77,7 @@ namespace VVVV.Nodes
                 //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));
 
             }
-
+            FOut[0] = FMyForm.counter;
             if (FValue.IsChanged) FMyForm.Hallo = FValue[0];
             //FMyForm.Invalidate();
         }
