@@ -61,8 +61,7 @@ namespace threadedForm
         private void InitializeComponent()
         {
             Application.Idle += new EventHandler(Application_Idle);
-            this.Show();
-
+            
             this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             this.SetStyle(ControlStyles.Opaque, true);
             this.SetStyle(ControlStyles.ResizeRedraw, true);
@@ -76,7 +75,7 @@ namespace threadedForm
             this.PerformLayout();
 
             this.ControlBox = false;
-            Application.Run();
+            
 
             this.DoubleBuffered = true;
             g = this.CreateGraphics();
@@ -92,7 +91,7 @@ namespace threadedForm
             {
 
                 Render();
-                Thread.Sleep(50);
+                Thread.Sleep(20);
                 //Tick(sender, e);
 
             }
@@ -121,4 +120,6 @@ namespace threadedForm
 
 
     }
+
+
 }
