@@ -21,20 +21,20 @@ namespace VVVV.Nodes
                 Category = "Value",
                 Help = "Basic template with one value in/out",
                 Tags = "c#",
-        AutoEvaluate = false)]
+        AutoEvaluate = true)]
     #endregion PluginInfo
-    public class Template : IPluginEvaluate , IDisposable
+    public class Template : IPluginEvaluate, IDisposable
     {
         #region fields & pins
-        [Input("Input", DefaultValue = 1.0)]
-        public ISpread<double> FInput;
+        [Input("Input")]
+        public ISpread<int> FInput;
 
         [Output("Output")]
         public ISpread<double> FOutput;
 
 
         private Thread FThread;
-        
+
         private bool isInit = false;
 
         
@@ -51,40 +51,48 @@ namespace VVVV.Nodes
         {
             FOutput.SliceCount = SpreadMax;
 
-            
-            if(!isInit)
+
+            if (!isInit)
             {
+                MyForm = null;
 
-                
-                                FThread = new Thread(new ThreadStart(ShowForm));
-                                FThread.SetApartmentState(ApartmentState.STA);
-                                FThread.Start();
-                                //FThread = new Thread(new ThreadStart(() => MyForm.ShowDialog()));
-                                //new Thread(() => new Form().ShowDialog()).Start();
-               
+                FThread = new Thread(new ThreadStart(ShowForm));
+                FThread.Name = "UIThread";
+                FThread.SetApartmentState(ApartmentState.STA);
 
-                //MyForm.Show();
-               
+                if (FThread != null && !FThread.IsAlive) FThread.Start();
+
+
                 isInit = true;
             }
 
-            
+            if(MyForm != null)
+            {
+                MyForm.Invoke(new Action(() => MyForm.Hallo = FInput[0]));
+                FLogger.Log(LogType.Debug, "doing stuff");
+            }
+               
+            else FLogger.Log(LogType.Debug, "not there");
 
-            //MyForm.Invalidate();
+
+
+
+            //FLogger.Log(LogType.Debug, "doing stuff");
+
             for (int i = 0; i < SpreadMax; i++)
                 FOutput[i] = FInput[i] * 2;
 
-            //FLogger.Log(LogType.Debug, "hi tty!");
+            
         }
 
-        
+
 
 
         public void ShowForm()
         {
-            
+
             MyForm = new Form1();
-            //Application.Run();
+            
 
         }
 
@@ -92,7 +100,7 @@ namespace VVVV.Nodes
         {
             //FThread.Abort();
 
-            if(MyForm != null) MyForm.Dispose();
+            if (MyForm != null) MyForm.Dispose();
 
             //throw new NotImplementedException();
 

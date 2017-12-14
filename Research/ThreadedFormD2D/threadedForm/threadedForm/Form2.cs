@@ -17,27 +17,49 @@ namespace threadedForm
     public class Form1 : Form
     {
 
-
+        public int Hallo = 1000;
 
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         Graphics g;
         bool IsRunning = true;
         int counter = 0;
 
-        Stopwatch stopWatch = Stopwatch.StartNew();
-
-        readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-        readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
-
-        TimeSpan accumulatedTime;
-        TimeSpan lastTime;
-
+        
 
         public Form1()
         {
-            //setup the gui
+
+            InitializeComponent();
+            
+        }
 
 
+        void Render()
+        {
+            this.Invalidate();
+
+           
+        }
+
+        protected override void OnPaint(PaintEventArgs pe)
+        {
+            
+            Random r = new Random();
+
+            g = pe.Graphics;
+            counter++;
+            g.Clear(MyBackgroundColor);
+            Pen pn = new Pen(Color.Blue, 1000);
+            Rectangle rect = new Rectangle(counter, Hallo, 200, 100);
+            g.DrawEllipse(pn, rect);
+            if (counter > 1000) counter = 0;
+
+        }
+
+
+
+        private void InitializeComponent()
+        {
             Application.Idle += new EventHandler(Application_Idle);
             this.Show();
 
@@ -46,17 +68,20 @@ namespace threadedForm
             this.SetStyle(ControlStyles.ResizeRedraw, true);
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
-            
-            InitializeComponent();
+
+
+            this.Name = "Hallooooooo";
+            this.Text = "Hallooooooo";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+            this.ControlBox = false;
             Application.Run();
 
             this.DoubleBuffered = true;
             g = this.CreateGraphics();
+
         }
-
-
-      
-
 
 
         public void Application_Idle(object sender, EventArgs e)
@@ -73,36 +98,6 @@ namespace threadedForm
             }
 
         }
-
-        void Tick(object sender, EventArgs e)
-        {
-            TimeSpan currentTime = stopWatch.Elapsed;
-            TimeSpan elapsedTime = currentTime - lastTime;
-            lastTime = currentTime;
-
-            if (elapsedTime > MaxElapsedTime)
-            {
-                elapsedTime = MaxElapsedTime;
-            }
-
-            accumulatedTime += elapsedTime;
-
-            bool updated = false;
-
-            while (accumulatedTime >= TargetElapsedTime)
-            {
-                Update();
-
-                accumulatedTime -= TargetElapsedTime;
-                updated = true;
-            }
-
-            if (updated)
-            {
-                Invalidate();
-            }
-        }
-
 
 
         static class NativeMethods
@@ -123,40 +118,6 @@ namespace threadedForm
             public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
         }
 
-
-
-        void Render()
-        {
-            this.Invalidate();
-        }
-
-        protected override void OnPaint(PaintEventArgs pe)
-        {
-            
-            Random r = new Random();
-
-            g = pe.Graphics;
-            counter++;
-            g.Clear(MyBackgroundColor);
-            Pen pn = new Pen(Color.Blue, 1000);
-            Rectangle rect = new Rectangle(counter, 1000, 200, 100);
-            g.DrawEllipse(pn, rect);
-            if (counter > 1000) counter = 0;
-
-        }
-
-
-
-        private void InitializeComponent()
-        {
-
-            this.Name = "Hallooooooo";
-            this.Text = "Hallooooooo";
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-
-        }
 
 
     }
