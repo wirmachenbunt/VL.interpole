@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\interpole\Research\ThreadedFormD2D\threadedForm(help).v4p" systemname="threadedForm (help)" filename="C:\ThreadedFormD2D\threadedForm(help).v4p" scrollx="555" scrolly="-360">
-   <BOUNDS type="Window" left="24660" top="12090" width="14175" height="10170">
+   <PATCH nodename="C:\interpole\Research\ThreadedFormD2D\threadedForm(help).v4p" systemname="threadedForm (help)" filename="C:\ThreadedFormD2D\threadedForm(help).v4p" scrollx="0" scrolly="0">
+   <BOUNDS type="Window" left="12330" top="23925" width="14175" height="6420">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -11,11 +11,15 @@
    </PIN>
    <PIN pinname="frames per second" visible="1">
    </PIN>
+   <PIN pinname="Windows Time" visible="1">
+   </PIN>
+   <PIN pinname="Render Time" visible="1">
+   </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="9">
-   <BOUNDS type="Box" left="6480" top="2055" width="4770" height="960">
+   <BOUNDS type="Box" left="6480" top="2475" width="4770" height="960">
    </BOUNDS>
-   <BOUNDS type="Node" left="6480" top="2055" width="0" height="0">
+   <BOUNDS type="Node" left="6480" top="2475" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="s">
    </PIN>
@@ -63,8 +67,6 @@
    </PIN>
    </NODE>
    <LINK srcnodeid="11" srcpinname="Output" dstnodeid="12" dstpinname="Input">
-   </LINK>
-   <LINK srcnodeid="12" srcpinname="Output" dstnodeid="9" dstpinname="Y Input Value">
    </LINK>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
    <BOUNDS type="Node" left="3870" top="660" width="100" height="100">
@@ -119,29 +121,17 @@
    </PIN>
    </NODE>
    <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InAWindow" id="33">
-   <BOUNDS type="Node" left="1170" top="3870" width="100" height="100">
+   <BOUNDS type="Node" left="2415" top="6420" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="1170" top="3870" width="6000" height="4500">
+   <BOUNDS type="Box" left="2415" top="6420" width="6000" height="4500">
    </BOUNDS>
-   <BOUNDS type="Window" left="27570" top="3090" width="10830" height="8910">
+   <BOUNDS type="Window" left="33300" top="3915" width="23715" height="21525">
    </BOUNDS>
    <PIN pinname="Layers" visible="1" slicecount="1" values="||">
    </PIN>
    <PIN pinname="VSync" slicecount="1" values="1">
    </PIN>
    </NODE>
-   <NODE systemname="ThreadedForm (Windows)" filename="threadedForm\threadedForm\bin\Debug\threadedForm.dll" nodename="ThreadedForm (Windows)" componentmode="Hidden" id="37">
-   <BOUNDS type="Node" left="1185" top="2130" width="100" height="100">
-   </BOUNDS>
-   <BOUNDS type="Box" left="1185" top="2130" width="3000" height="3000">
-   </BOUNDS>
-   <PIN pinname="Value" visible="1">
-   </PIN>
-   <PIN pinname="Out" visible="1">
-   </PIN>
-   </NODE>
-   <LINK srcnodeid="31" srcpinname="Output String" dstnodeid="37" dstpinname="Some Text">
-   </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="38">
    <BOUNDS type="Box" left="2250" top="1725" width="795" height="240">
    </BOUNDS>
@@ -156,8 +146,6 @@
    <PIN pinname="Value Type" slicecount="1" values="Integer">
    </PIN>
    </NODE>
-   <LINK srcnodeid="38" srcpinname="Y Output Value" dstnodeid="37" dstpinname="Value">
-   </LINK>
    <NODE systemname="LFO (Animation)" nodename="LFO (Animation)" componentmode="Hidden" id="39">
    <BOUNDS type="Node" left="2250" top="480" width="100" height="100">
    </BOUNDS>
@@ -194,8 +182,6 @@
    <PIN pinname="Layer" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="42" srcpinname="Layer" dstnodeid="33" dstpinname="Layers">
-   </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="43">
    <BOUNDS type="Box" left="1200" top="2580" width="795" height="240">
    </BOUNDS>
@@ -207,9 +193,9 @@
    </PIN>
    <PIN pinname="Value Type" slicecount="1" values="Integer">
    </PIN>
+   <PIN pinname="Y Input Value">
+   </PIN>
    </NODE>
-   <LINK srcnodeid="37" srcpinname="Out" dstnodeid="43" dstpinname="Y Input Value">
-   </LINK>
    <LINK srcnodeid="41" srcpinname="Whole Part" dstnodeid="38" dstpinname="Y Input Value">
    </LINK>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="44">
@@ -240,4 +226,130 @@
    <PIN pinname="String Type" slicecount="1" values="MultiLine">
    </PIN>
    </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="46">
+   <BOUNDS type="Box" left="5490" top="3705" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5490" top="3705" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="s">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="8" srcpinname="Windows Time" dstnodeid="46" dstpinname="Y Input Value">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="47">
+   <BOUNDS type="Box" left="8145" top="1500" width="3765" height="720">
+   </BOUNDS>
+   <BOUNDS type="Node" left="8145" top="1500" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="s">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Size" slicecount="1" values="29">
+   </PIN>
+   <PIN pinname="Y Input Value" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Multiply (Value)" nodename="Multiply (Value)" componentmode="Hidden" id="48">
+   <BOUNDS type="Node" left="8145" top="660" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Input 1" visible="1">
+   </PIN>
+   <PIN pinname="Input 2" slicecount="1" values="1000">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="8" srcpinname="Render Time" dstnodeid="48" dstpinname="Input 1">
+   </LINK>
+   <NODE systemname="LinearFilter (Animation)" nodename="LinearFilter (Animation)" componentmode="Hidden" id="49">
+   <BOUNDS type="Node" left="6480" top="1995" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Go To Position" visible="1">
+   </PIN>
+   <PIN pinname="Position Out" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="12" srcpinname="Output" dstnodeid="49" dstpinname="Go To Position">
+   </LINK>
+   <LINK srcnodeid="49" srcpinname="Position Out" dstnodeid="9" dstpinname="Y Input Value">
+   </LINK>
+   <NODE systemname="LinearFilter (Animation)" nodename="LinearFilter (Animation)" componentmode="Hidden" id="50">
+   <BOUNDS type="Node" left="8145" top="1065" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Go To Position" visible="1" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Position Out" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="48" srcpinname="Output" dstnodeid="50" dstpinname="Go To Position">
+   </LINK>
+   <LINK srcnodeid="50" srcpinname="Position Out" dstnodeid="47" dstpinname="Y Input Value">
+   </LINK>
+   <NODE id="37" systemname="ThreadedForm (Windows)" filename="threadedForm\threadedForm\bin\Debug\threadedForm.dll" nodename="ThreadedForm (Windows)" componentmode="Hidden">
+   <BOUNDS type="Node" left="1185" top="2130" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="1185" top="2130" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Value" visible="1">
+   </PIN>
+   <PIN pinname="Out" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="37" srcpinname="Out" dstnodeid="43" dstpinname="Y Input Value">
+   </LINK>
+   <LINK srcnodeid="38" srcpinname="Y Output Value" dstnodeid="37" dstpinname="Value">
+   </LINK>
+   <LINK srcnodeid="31" srcpinname="Output String" dstnodeid="37" dstpinname="Some Text">
+   </LINK>
+   <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="51">
+   <BOUNDS type="Node" left="2730" top="4980" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2730" top="4980" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer 1" visible="1">
+   </PIN>
+   <PIN pinname="Layer Out" visible="1">
+   </PIN>
+   <PIN pinname="Layer 2" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="42" srcpinname="Layer" dstnodeid="51" dstpinname="Layer 1">
+   </LINK>
+   <LINK srcnodeid="51" srcpinname="Layer Out" dstnodeid="33" dstpinname="Layers">
+   </LINK>
+   <NODE systemname="Quad (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Quad (DX11.Layer)" componentmode="Hidden" id="52">
+   <BOUNDS type="Node" left="3240" top="4290" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="3240" top="4290" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   <PIN pinname="Transform" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="52" srcpinname="Layer" dstnodeid="51" dstpinname="Layer 2">
+   </LINK>
+   <NODE systemname="Transform (Transform 2d)" nodename="Transform (Transform 2d)" componentmode="Hidden" id="53">
+   <BOUNDS type="Node" left="3000" top="3720" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Transform Out" visible="1">
+   </PIN>
+   <PIN pinname="Rotate" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="53" srcpinname="Transform Out" dstnodeid="52" dstpinname="Transform">
+   </LINK>
+   <NODE systemname="LFO (Animation)" nodename="LFO (Animation)" componentmode="Hidden" id="54">
+   <BOUNDS type="Node" left="4005" top="3135" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Period" slicecount="1" values="3.37">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="54" srcpinname="Output" dstnodeid="53" dstpinname="Rotate">
+   </LINK>
    </PATCH>

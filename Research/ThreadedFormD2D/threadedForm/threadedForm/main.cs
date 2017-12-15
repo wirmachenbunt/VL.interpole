@@ -33,7 +33,7 @@ namespace VVVV.Nodes
         {
             FUIThread = new Thread(InitializeForm);
             FUIThread.SetApartmentState(ApartmentState.STA);
-            FUIThread.IsBackground = true;
+            //FUIThread.IsBackground = true;
             FUIThread.Start();
         }
 
@@ -78,7 +78,7 @@ namespace VVVV.Nodes
 
             }
             FOut[0] = FMyForm.counter;
-            if (FValue.IsChanged) FMyForm.Hallo = FValue[0];
+            //if (FValue.IsChanged) FMyForm.Hallo = FValue[0];
             //FMyForm.Invalidate();
         }
     }

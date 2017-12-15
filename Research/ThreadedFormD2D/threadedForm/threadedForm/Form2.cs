@@ -9,7 +9,7 @@ using System.Timers;
 using System.Drawing;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-
+using System.Drawing.Drawing2D;
 
 namespace threadedForm
 {
@@ -49,7 +49,7 @@ namespace threadedForm
             Random r = new Random();
             int x = Cursor.Position.X;
             g = pe.Graphics;
-            
+            g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(MyBackgroundColor);
             
             
