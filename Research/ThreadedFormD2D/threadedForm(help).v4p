@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
    <PATCH nodename="C:\interpole\Research\ThreadedFormD2D\threadedForm(help).v4p" systemname="threadedForm (help)" filename="C:\ThreadedFormD2D\threadedForm(help).v4p" scrollx="0" scrolly="0">
-   <BOUNDS type="Window" left="12330" top="23925" width="14175" height="6420">
+   <BOUNDS type="Window" left="11835" top="5865" width="14175" height="6420">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -107,9 +107,9 @@
    </BOUNDS>
    </NODE>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="31">
-   <BOUNDS type="Box" left="1170" top="1560" width="795" height="240">
+   <BOUNDS type="Box" left="1170" top="1545" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="1170" top="1560" width="0" height="0">
+   <BOUNDS type="Node" left="1170" top="1545" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Input String" slicecount="1" visible="1" values="ds">
    </PIN>
@@ -125,7 +125,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="2415" top="6420" width="6000" height="4500">
    </BOUNDS>
-   <BOUNDS type="Window" left="33300" top="3915" width="23715" height="21525">
+   <BOUNDS type="Window" left="19125" top="465" width="8940" height="9510">
    </BOUNDS>
    <PIN pinname="Layers" visible="1" slicecount="1" values="||">
    </PIN>

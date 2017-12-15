@@ -7,6 +7,5 @@ C:\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.pdb
 C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\bin\Debug\threadedForm.dll
 C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\bin\Debug\threadedForm.pdb
 C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.csprojResolveAssemblyReference.cache
-C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.csproj.CoreCompileInputs.cache
 C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.dll
 C:\interpole\Research\ThreadedFormD2D\threadedForm\threadedForm\obj\Debug\threadedForm.pdb

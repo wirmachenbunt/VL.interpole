@@ -82,10 +82,10 @@ namespace threadedForm
             this.SetStyle(ControlStyles.ResizeRedraw, true);
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
+            this.ShowIcon = false;
 
-
-            this.Name = "Hallooooooo";
-            this.Text = "Hallooooooo";
+            this.Name = "Interpole";
+            this.Text = "Interpole";
             this.ResumeLayout(false);
             this.PerformLayout();
 

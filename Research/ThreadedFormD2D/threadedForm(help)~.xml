@@ -125,7 +125,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="2415" top="6420" width="6000" height="4500">
    </BOUNDS>
-   <BOUNDS type="Window" left="38550" top="2775" width="10830" height="8910">
+   <BOUNDS type="Window" left="33300" top="3915" width="23715" height="21525">
    </BOUNDS>
    <PIN pinname="Layers" visible="1" slicecount="1" values="||">
    </PIN>
@@ -346,6 +346,8 @@
    <BOUNDS type="Node" left="4005" top="3135" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Period" slicecount="1" values="3.37">
    </PIN>
    </NODE>
    <LINK srcnodeid="54" srcpinname="Output" dstnodeid="53" dstpinname="Rotate">
