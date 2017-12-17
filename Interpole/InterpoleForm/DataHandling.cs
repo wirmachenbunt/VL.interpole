@@ -11,9 +11,9 @@ using System.Xml.Serialization;
 using System.IO;
 using VVVV.Core.Logging;
 
-namespace VVVV.Nodes
+namespace Interpole
 {
-    partial class Interpole
+    partial class InterpoleForm
     {
 
         //public ObservableCollection<Clip> clipList;
@@ -216,6 +216,7 @@ namespace VVVV.Nodes
 
         private void UpdateClipXML()
         {
+            /*
             string tempXML = SerializeClipList(clipList); //convert list of objects to string
 
             ClipXML[0] = tempXML; //save config
@@ -228,6 +229,7 @@ namespace VVVV.Nodes
 
             //tty messages
             FLogger.Log(LogType.Debug, "Update XML");
+            */
         }
 
         public static string SerializeClipList(List<Clip> myList)

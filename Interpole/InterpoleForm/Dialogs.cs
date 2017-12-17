@@ -7,9 +7,9 @@ using System.Windows.Forms;
 using System.Reflection;
 using System.Drawing;
 
-namespace VVVV.Nodes
+namespace Interpole
 {
-    partial class Interpole
+    partial class InterpoleForm
     {
         string lastColorName = "Aqua";
          

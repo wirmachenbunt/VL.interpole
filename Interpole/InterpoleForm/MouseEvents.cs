@@ -7,9 +7,9 @@ using System.Windows.Forms;
 using System.Drawing;
 using VVVV.Core.Logging;
 
-namespace VVVV.Nodes
+namespace Interpole
 {
-    partial class Interpole
+    partial class InterpoleForm
     {
         public Point mousePos; //current Mouse Pos
         public Point prevMousePos; //previous Mouse Pos

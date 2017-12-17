@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 
-namespace VVVV.Nodes
+namespace Interpole
 {
-    public partial class Interpole
+    public partial class InterpoleForm
     {
         public abstract class UIelement
         {

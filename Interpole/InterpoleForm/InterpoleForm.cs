@@ -8,14 +8,18 @@ using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using VVVV.Core.Logging;
 using VVVV.PluginInterfaces.V2;
+using System.ComponentModel.Composition;
+using System.Runtime.InteropServices;
+using System.Threading;
 
-
-
-namespace VVVV.Nodes
+namespace Interpole
 {
-    partial class Interpole : IPluginEvaluate
+    partial class InterpoleForm : Form
     {
         #region variables
+        [Import()]
+        public ILogger FLogger;
+
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
@@ -52,14 +56,74 @@ namespace VVVV.Nodes
 
         #endregion
 
+        public InterpoleForm()
+        {
+            InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            Application.Idle += new EventHandler(Application_Idle);
+
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            this.SetStyle(ControlStyles.Opaque, true);
+            this.SetStyle(ControlStyles.ResizeRedraw, true);
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+
+            this.ShowIcon = false;
+
+            this.Name = "Interpole";
+            this.Text = "Interpole";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+            this.ControlBox = false;
+
+
+            this.DoubleBuffered = true;
+            g = this.CreateGraphics();
+
+        }
+
+        public void Application_Idle(object sender, EventArgs e)
+        {
+            NativeMethods.Message message;
+
+            while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
+            {
+                Render();               
+                Thread.Sleep(1);                
+            }
+        }
+
+        void Render()
+        {
+            this.Invalidate();
+        }
+
+        static class NativeMethods
+        {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct Message
+            {
+                public IntPtr hWnd;
+                public uint Msg;
+                public IntPtr wParam;
+                public IntPtr lParam;
+                public uint Time;
+                public System.Drawing.Point Point;
+            }
+
+            [DllImport("User32.dll", CharSet = CharSet.Auto)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
+        }
+
         public void MainDraw(object sender, PaintEventArgs e)
         {
           try
             {
-                
-
-                if (IsVisible && FShowWindow[0] && clipList != null)
-                {
+             
                     /*
                     e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
                     e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
@@ -83,7 +147,7 @@ namespace VVVV.Nodes
 
                   */
 
-                }
+               
                 
             }
             catch (Exception ex)
@@ -332,6 +396,9 @@ namespace VVVV.Nodes
 
         }
 
+
+        /*
+
         public bool IsVisible
         {
             get
@@ -374,6 +441,8 @@ namespace VVVV.Nodes
             
 
         }
+
+    */
 
     }
 }

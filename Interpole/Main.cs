@@ -14,22 +14,19 @@ using VVVV.Core.Logging;
 using System.Reflection;
 using System.Diagnostics;
 
-using SlimDX;
-using D2D = SlimDX.Direct2D;
-using DWrite = SlimDX.DirectWrite;
 
 #endregion usings
 
 namespace VVVV.Nodes
 {
     #region PluginInfo
-    [PluginInfo(Name = "Interpole",
+    [PluginInfo(Name = "Interpole Core",
                 Category = "Interpole",
                 Help = "Clip Timeline",
                 Tags = "c#",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public partial class Interpole : UserControl, IPluginEvaluate
+    public class Interpole : IPluginEvaluate
     {
         #region fields & pins
 
@@ -96,60 +93,8 @@ namespace VVVV.Nodes
 
         #region constructor and init
 
-        public Interpole()
-        {
-            //setup the gui
-            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            this.SetStyle(ControlStyles.Opaque, true);
-            this.SetStyle(ControlStyles.ResizeRedraw, true);
-
-            //setup the gui
-            InitializeComponent();
-            
-        }
-
-        void InitializeComponent()
-        {
-            //clear controls in case init is called multiple times
-            Controls.Clear();
-            
-            //bind events
-            MouseMove += Form1_MouseMove; //mouse move event
-            MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
-            MouseDown += Form1_MouseDown; //mouse down event
-            MouseUp += Form1_MouseUp;
-            MouseWheel += Form1_MouseWheel;
-            KeyDown += Form_Keydown;
-
-            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0), new Size(this.Width, 30)); // setup playbar
-
-            //m_factoryWrite = new DWrite.Factory(DWrite.FactoryType.Shared);
-
-            //Get requested debug level
-            D2D.DebugLevel debugLevel = D2D.DebugLevel.None;
-            if (m_debugMode) { debugLevel = D2D.DebugLevel.Error; }
-
-            //Create factory object
-            m_factory = new D2D.Factory(D2D.FactoryType.SingleThreaded, debugLevel);
-
-            //Create the render target
-            m_renderTarget = new D2D.WindowRenderTarget(m_factory, new D2D.WindowRenderTargetProperties()
-            {
-                Handle = this.Handle,
-                PixelSize = this.Size,
-                PresentOptions = D2D.PresentOptions.Immediately
-            });
-
-            m_renderTarget.AntialiasMode = D2D.AntialiasMode.PerPrimitive;
-
-            //init brushes and texts
-            InitD2DObjects();
 
 
-            //Update initialization flag
-            m_initialized = true;
-
-        }
 
         #endregion constructor and init
 
@@ -214,7 +159,7 @@ namespace VVVV.Nodes
 
                 int pos = playPosFrames/timeZoom;
 
-                playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
+                //playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
                 //Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y + StagePos.Y),mytimecode.Bounds.Size)); // invalidate timecode display
                 //Invalidate(playHeadInvalidate); // invalidate playhead
 
@@ -242,8 +187,6 @@ namespace VVVV.Nodes
             ClipsOut.SliceCount = 1; // set output for additional nodes
             ClipsOut[0] = this;
 
-            Draw2D2();
-            //Invalidate();
 
             #region boygrouping
             //iaa special feature for boygrouping

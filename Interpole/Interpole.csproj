@@ -65,45 +65,44 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\DataHandling.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\DataHandling.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\Dialogs.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\Dialogs.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\Drawing.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\InterpoleForm.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\DrawingD2D.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\GlobalHitTest.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\GlobalHitTest.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\Models.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\Models.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="InterpoleForm\MouseEvents.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Classes\MouseEvents.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Main.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Nodes\GetClipBuffered.cs" />
-    <Compile Include="Nodes\GetClipByName.cs" />
-    <Compile Include="Nodes\GetClipByColor.cs" />
-    <Compile Include="Nodes\GetUnifiedClipByName.cs" />
-    <Compile Include="Nodes\GetUnifiedClipByColor.cs" />
-    <Compile Include="Nodes\Info.cs" />
-    <None Include="Nodes\InterpolateTC.cs" />
-    <Compile Include="Nodes\JoinTC.cs" />
-    <Compile Include="Nodes\PlaybackInfo.cs" />
-    <Compile Include="Nodes\SplitTC.cs" />
+    <None Include="Main.cs" />
+    <None Include="Nodes\GetClipBuffered.cs" />
+    <None Include="Nodes\GetClipByName.cs" />
+    <None Include="Nodes\GetClipByColor.cs" />
+    <None Include="Nodes\GetUnifiedClipByName.cs" />
+    <None Include="Nodes\GetUnifiedClipByColor.cs" />
+    <None Include="Nodes\Info.cs" />
+    <None Include="Nodes\InterpoleCore.cs" />
+    <Compile Include="Nodes\InterpoleUI.cs" />
+    <None Include="Nodes\JoinTC.cs" />
+    <None Include="Nodes\PlaybackInfo.cs" />
+    <None Include="Nodes\Reader.cs" />
+    <None Include="Nodes\SplitTC.cs" />
+    <None Include="Nodes\Writer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

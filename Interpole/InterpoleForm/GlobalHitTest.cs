@@ -8,9 +8,9 @@ using System.Drawing;
 using VVVV.Core.Logging;
 
 
-namespace VVVV.Nodes
+namespace Interpole
 {
-    partial class Interpole
+    partial class InterpoleForm
     {
         List<UIelement> hitTestList = new List<UIelement>();
         List<Clip> selectionList = new List<Clip>();
