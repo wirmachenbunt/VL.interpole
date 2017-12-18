@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Xml.Serialization;
 using System.IO;
 using VVVV.Core.Logging;
+using System.Diagnostics;
 
 namespace Interpole
 {
@@ -211,7 +212,7 @@ namespace Interpole
 
             undoXML.Push(tempXML); //add undo save point to stack
 
-            //FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
+            Debug.WriteLine("undoSteps:" + undoXML.Count.ToString());
         }
 
         private void UpdateClipXML()

@@ -42,8 +42,7 @@ namespace Interpole
 
             //DragDuration
             if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock) DragDuration(hitObject);
-
-            
+          
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -115,9 +114,7 @@ namespace Interpole
             {
                 DragDuration(hitObject);
             }
-
             deltaMousePos = mousePos;
-
         }
 
         private void Form_Keydown(object sender, KeyEventArgs e)
@@ -127,9 +124,7 @@ namespace Interpole
             if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control && !UI_Lock)
             {
                 if (undoXML.Count > 0)
-                {
-                    FLogger.Log(LogType.Debug, "Do Undo!");
-
+                {                  
                     string tempXML = undoXML.Pop();
 
                     clipList.Clear();
@@ -139,7 +134,6 @@ namespace Interpole
                     clipList = DeserializeClipList(tempXML);
 
                     ApplyTimeZoom(); // scale to zoom
-
                     
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();
@@ -213,7 +207,6 @@ namespace Interpole
 
         public void HandleLoopRegion(object sender, KeyEventArgs e)
         {
-
             switch (e.KeyCode)
             {
                 case Keys.B:

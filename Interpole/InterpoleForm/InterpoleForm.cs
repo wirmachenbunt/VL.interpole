@@ -34,8 +34,6 @@ namespace Interpole
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
-        
-  
         public Point StagePos; //StagePosition
         public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
@@ -134,10 +132,7 @@ namespace Interpole
         }
 
         protected override void OnPaint(PaintEventArgs pe)
-        {
-
-            
-            
+        {    
             g = pe.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
@@ -152,12 +147,8 @@ namespace Interpole
             if (clipList.Count > 0) DrawClips(pe);
 
             DrawSelectedClips(pe);
-            DrawSelectionRect(pe);
-            
+            DrawSelectionRect(pe);          
         }
-
-
-
 
         public void DrawClips(PaintEventArgs e)
         {
@@ -177,8 +168,7 @@ namespace Interpole
                     new Point(clip.Bounds.X+fadeIn, clip.Bounds.Y),
                     new Point(clip.Bounds.Width - fadeOut + clip.Bounds.X, clip.Bounds.Y),
                     new Point(clip.Bounds.Width + clip.Bounds.X, clip.Bounds.Y+20) };
-
-                
+           
             e.Graphics.FillPolygon(ClipBrush, points);
 
 
@@ -309,8 +299,8 @@ namespace Interpole
                 new Point(2 - StagePos.X, 30 - StagePos.Y),
                 new Size(200, 60));
 
-            //if(FIsLoop[0]) e.Graphics.DrawString(Frames2Timecode(playPosFrames, Framerate[0], false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
-            //else e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            if(isLoop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            else e.Graphics.DrawString(Frames2Timecode(playPosFrames,frameRate,false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
         public void DrawFooter(PaintEventArgs e)

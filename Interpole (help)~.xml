@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="0">
-   <BOUNDS type="Window" left="6810" top="6375" width="12705" height="9420">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="1839">
+   <BOUNDS type="Window" left="11145" top="5355" width="12705" height="9420">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -31,15 +31,15 @@
    <LINK srcnodeid="2" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Background FPS">
    </LINK>
    <NODE systemname="HSL (Color Join)" nodename="HSL (Color Join)" componentmode="Hidden" id="39">
-   <BOUNDS type="Node" left="4830" top="7260" width="100" height="100">
+   <BOUNDS type="Node" left="4320" top="5325" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Output" visible="1">
    </PIN>
-   <PIN pinname="Alpha" visible="1" slicecount="1" values="0">
+   <PIN pinname="Alpha" visible="1" slicecount="1" values="1">
    </PIN>
    </NODE>
    <NODE systemname="Transform (Transform 2d)" nodename="Transform (Transform 2d)" componentmode="Hidden" id="52">
-   <BOUNDS type="Node" left="4170" top="6375" width="100" height="100">
+   <BOUNDS type="Node" left="3660" top="4440" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Transform Out" visible="1">
    </PIN>
@@ -60,12 +60,12 @@
    <PIN pinname="String Type" slicecount="1" values="MultiLine">
    </PIN>
    </NODE>
-   <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InAWindow" id="63">
-   <BOUNDS type="Node" left="2130" top="9210" width="100" height="100">
+   <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InABox" id="63">
+   <BOUNDS type="Node" left="1620" top="7275" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="2130" top="9210" width="6000" height="4500">
+   <BOUNDS type="Box" left="1620" top="7275" width="6000" height="4500">
    </BOUNDS>
-   <BOUNDS type="Window" left="36090" top="4260" width="21180" height="14415">
+   <BOUNDS type="Window" left="16080" top="0" width="12525" height="8850">
    </BOUNDS>
    <PIN pinname="Layers" visible="1">
    </PIN>
@@ -83,15 +83,15 @@
    </PIN>
    </NODE>
    <NODE systemname="PerfMeter (DX11.Debug)" filename="%VVVV%\packs\dx11\nodes\modules\PerfMeter (DX11.Debug).v4p" nodename="PerfMeter (DX11.Debug)" componentmode="Hidden" id="64">
-   <BOUNDS type="Node" left="5760" top="8175" width="100" height="100">
+   <BOUNDS type="Node" left="5250" top="6240" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Layer" visible="1">
    </PIN>
    </NODE>
    <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="65">
-   <BOUNDS type="Node" left="2280" top="8670" width="5295" height="270">
+   <BOUNDS type="Node" left="1770" top="6735" width="5295" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="2280" top="8670" width="3000" height="3000">
+   <BOUNDS type="Box" left="1770" top="6735" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Layer Out" visible="1">
    </PIN>
@@ -103,9 +103,9 @@
    <LINK srcnodeid="65" srcpinname="Layer Out" dstnodeid="63" dstpinname="Layers">
    </LINK>
    <NODE systemname="Quad (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Quad (DX11.Layer)" componentmode="Hidden" id="66">
-   <BOUNDS type="Node" left="4020" top="7995" width="100" height="100">
+   <BOUNDS type="Node" left="3510" top="6060" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4020" top="7995" width="3000" height="3000">
+   <BOUNDS type="Box" left="3510" top="6060" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Layer" visible="1">
    </PIN>
@@ -114,6 +114,8 @@
    <PIN pinname="Color" visible="1">
    </PIN>
    <PIN pinname="Render State" visible="1">
+   </PIN>
+   <PIN pinname="Enabled" slicecount="1" values="1">
    </PIN>
    </NODE>
    <LINK srcnodeid="66" srcpinname="Layer" dstnodeid="65" dstpinname="Layer 1">
@@ -125,9 +127,9 @@
    <LINK srcnodeid="39" srcpinname="Output" dstnodeid="66" dstpinname="Color">
    </LINK>
    <NODE systemname="Blend (DX11.RenderState)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Blend (DX11.RenderState)" componentmode="Hidden" id="67">
-   <BOUNDS type="Node" left="2670" top="7305" width="100" height="100">
+   <BOUNDS type="Node" left="2160" top="5370" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="2670" top="7305" width="3000" height="3000">
+   <BOUNDS type="Box" left="2160" top="5370" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Render State" visible="1" slicecount="1" values="||">
    </PIN>
@@ -137,9 +139,9 @@
    <LINK srcnodeid="67" srcpinname="Render State" dstnodeid="66" dstpinname="Render State">
    </LINK>
    <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="92">
-   <BOUNDS type="Node" left="9435" top="4995" width="100" height="100">
+   <BOUNDS type="Node" left="315" top="2970" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="9435" top="4995" width="2400" height="1800">
+   <BOUNDS type="Box" left="315" top="2970" width="2400" height="1800">
    </BOUNDS>
    <BOUNDS type="Window" left="1290" top="8355" width="6240" height="5085">
    </BOUNDS>
@@ -183,5 +185,15 @@
    </PIN>
    </NODE>
    <LINK srcnodeid="95" srcpinname="Output String" dstnodeid="93" dstpinname="Some Text">
+   </LINK>
+   <NODE systemname="LFO (Animation)" nodename="LFO (Animation)" componentmode="Hidden" id="96">
+   <BOUNDS type="Node" left="4455" top="3810" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Period" slicecount="1" values="5">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="96" srcpinname="Output" dstnodeid="52" dstpinname="Rotate">
    </LINK>
    </PATCH>
