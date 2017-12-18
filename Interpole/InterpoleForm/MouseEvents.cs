@@ -53,7 +53,7 @@ namespace Interpole
                 UpdateClipXML();
             }
 
-            ClipXMLOut[0] = SerializeClipList(clipList);
+            //ClipXMLOut[0] = SerializeClipList(clipList);
 
             rememberLastFunction = "idle";
 
@@ -140,10 +140,7 @@ namespace Interpole
 
                     ApplyTimeZoom(); // scale to zoom
 
-                    ClipXML[0] = tempXML;
-                    ClipXMLOut[0] = tempXML;
-
-                    needsUpdate = true; //inform getclip about change
+                    
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();
                 }
@@ -174,7 +171,7 @@ namespace Interpole
             //LOOP
             if (e.KeyCode == Keys.L && e.Modifiers == Keys.Shift)
             {
-                FIsLoop[0] = !FIsLoop[0]; // invert loop activate
+                isLoop = !isLoop; // invert loop activate
                 //Invalidate();
             }
 
@@ -220,11 +217,11 @@ namespace Interpole
             switch (e.KeyCode)
             {
                 case Keys.B:
-                    FLoopRegion[0] = playPosFrames;
+                    //FLoopRegion[0] = playPosFrames;
                     //Invalidate();
                     break;
                 case Keys.N:
-                    FLoopRegion[1] = playPosFrames;
+                    //FLoopRegion[1] = playPosFrames;
                     //Invalidate();
                     break;
             }
@@ -233,7 +230,7 @@ namespace Interpole
 
         public void HandleMarker(object sender, KeyEventArgs e)
         {
-
+            /*
 
             switch (e.KeyCode)
             {
@@ -338,7 +335,7 @@ namespace Interpole
                     break;
             }
 
-
+    */
         }
 
         public void CalcStagePosition(Point mousePos, bool click, System.Windows.Forms.MouseEventArgs e)
@@ -400,14 +397,15 @@ namespace Interpole
             snapPosList.Clear();
             List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
 
-            snapPosList.Add(FLoopRegion[0] / timeZoom);
-            snapPosList.Add(FLoopRegion[1] / timeZoom);
+            //snapPosList.Add(FLoopRegion[0] / timeZoom);
+            //snapPosList.Add(FLoopRegion[1] / timeZoom);
 
+            /*
             foreach (int pos in FMarker)
             {
                 snapPosList.Add(pos / timeZoom);
             }
-
+            */
 
             foreach (Clip myclip in snapClipList)
             {

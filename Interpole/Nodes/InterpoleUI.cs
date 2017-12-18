@@ -32,8 +32,7 @@ namespace VVVV.Nodes
         public InterpoleUI()
         {
             FUIThread = new Thread(InitializeForm);
-            FUIThread.SetApartmentState(ApartmentState.STA);
-            //FUIThread.IsBackground = true;
+            FUIThread.SetApartmentState(ApartmentState.STA);            
             FUIThread.Start();
         }
 
@@ -46,8 +45,7 @@ namespace VVVV.Nodes
         void InitializeForm()
         {
             FMyForm = new InterpoleForm();
-            FMyLabel = new Label() { Text = "Lala" };
-            FMyForm.Controls.Add(FMyLabel);
+            
             // Use ShowDialog as it starts its own main loop - using Show alone the window just disappears
             FMyForm.ShowDialog();
         }

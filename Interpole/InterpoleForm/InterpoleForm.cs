@@ -20,6 +20,8 @@ namespace Interpole
         [Import()]
         public ILogger FLogger;
 
+        Graphics g;
+
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
         SolidBrush OrangeBrush = new SolidBrush(Color.Orange);
         SolidBrush textBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
@@ -37,6 +39,7 @@ namespace Interpole
         public Point StagePos; //StagePosition
         public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
+        public int frameRate = 60;
 
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font rulerFont = new Font("Segoe UI", 8, FontStyle.Regular);
@@ -51,8 +54,9 @@ namespace Interpole
         WorkSpace myworkspace = new WorkSpace();
         SizeF stringSize = new SizeF();
 
-
-
+        bool UI_Lock = false;
+        bool play = false;
+        bool isLoop = false;
 
         #endregion
 
@@ -82,6 +86,16 @@ namespace Interpole
 
             this.DoubleBuffered = true;
             g = this.CreateGraphics();
+
+            //bind events
+            MouseMove += Form1_MouseMove; //mouse move event
+            MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
+            MouseDown += Form1_MouseDown; //mouse down event
+            MouseUp += Form1_MouseUp;
+            MouseWheel += Form1_MouseWheel;
+            KeyDown += Form_Keydown;
+
+            clipList = new List<Clip>();
 
         }
 
@@ -119,42 +133,31 @@ namespace Interpole
             public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
         }
 
-        public void MainDraw(object sender, PaintEventArgs e)
+        protected override void OnPaint(PaintEventArgs pe)
         {
-          try
-            {
-             
-                    /*
-                    e.Graphics.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
-                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // shapeman
-                    e.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-                   
-                    e.Graphics.Clear(MyBackgroundColor);
 
+            
+            
+            g = pe.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
+            g.Clear(MyBackgroundColor);
 
-                    DrawPlayBar(e);
-                    DrawPlayHead(e);
-                    DrawFooter(e);
+            DrawPlayBar(pe);
+            DrawPlayHead(pe);
+            DrawFooter(pe);
 
-                    DrawMarker(e);
-              
-                    if(clipList.Count > 0) DrawClips(e);
+            DrawMarker(pe);
 
+            if (clipList.Count > 0) DrawClips(pe);
 
-
-                    DrawSelectedClips(e);
-                    DrawSelectionRect(e);
-
-                  */
-
-               
-                
-            }
-            catch (Exception ex)
-            {
-                FLogger.Log(LogType.Debug, ex.Message);
-            }
+            DrawSelectedClips(pe);
+            DrawSelectionRect(pe);
+            
         }
+
+
+
 
         public void DrawClips(PaintEventArgs e)
         {
@@ -219,19 +222,19 @@ namespace Interpole
             if (timeZoom > 10) rulerSteps = 20;
 
             double startRulerPos = Math.Abs(StagePos.X) * timeZoom;
-            startRulerPos = (startRulerPos / Framerate[0]) / rulerSteps;
+            startRulerPos = (startRulerPos / frameRate) / rulerSteps;
             startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
 
-            double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / Framerate[0];
+            double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / frameRate;
 
             for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
-                int pos = (i * Framerate[0]) / timeZoom;
+                int pos = (i * frameRate) / timeZoom;
                 int size = 30;
                 int height = 5;
                 int y = 25;
                 int thickness = 1;
-                string timecode = Frames2Timecode(i* Framerate[0], Framerate[0],true);
+                string timecode = Frames2Timecode(i* frameRate, frameRate, true);
                 string time = (i%60).ToString() + "s";
                 if (time == "0s")
                 {
@@ -254,7 +257,9 @@ namespace Interpole
 
         public void DrawMarker(PaintEventArgs e)
         {
-            for(int i = 0; i < FMarker.SliceCount;i++)
+            /*
+
+            for (int i = 0; i < FMarker.SliceCount;i++)
             {
                if(FMarker[i] != 0)
                 {
@@ -266,6 +271,7 @@ namespace Interpole
                     e.Graphics.DrawLine(DarkPen, new Point(pos, 34 - StagePos.Y), new Point(pos, 3000 - StagePos.Y));
                 }                         
             }
+            */
         }
 
         public void DrawPlayHead(PaintEventArgs e)
@@ -280,13 +286,14 @@ namespace Interpole
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
-            if(FIsLoop[0])
+            /*
+            if (FIsLoop[0])
             {
                 e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 28 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2)));
                 e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 30 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2000)));
             }
             
-
+            */
         }
 
         public void DrawTimeCode(PaintEventArgs e)
@@ -302,8 +309,8 @@ namespace Interpole
                 new Point(2 - StagePos.X, 30 - StagePos.Y),
                 new Size(200, 60));
 
-            if(FIsLoop[0]) e.Graphics.DrawString(Frames2Timecode(playPosFrames, Framerate[0], false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
-            else e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            //if(FIsLoop[0]) e.Graphics.DrawString(Frames2Timecode(playPosFrames, Framerate[0], false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            //else e.Graphics.DrawString(Frames2Timecode(playPosFrames,Framerate[0],false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
         public void DrawFooter(PaintEventArgs e)
@@ -315,13 +322,15 @@ namespace Interpole
             footer = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
 
+            /*
             //UI Lock display
             if(UI_Lock)
             {
                 format = new StringFormat() { Alignment = StringAlignment.Near };
                 footer = new Rectangle(new Point(0 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
                 e.Graphics.DrawString("Locked", clipFont, OrangeBrush, footer, format); //text
-            }          
+            } 
+            */
         }
 
         public void DrawSelectionRect(PaintEventArgs e)

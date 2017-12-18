@@ -149,11 +149,11 @@ namespace Interpole
 
         public void EditTimeCode()
         {
-            string input = Frames2Timecode(playPosFrames, Framerate[0], false);
+            string input = Frames2Timecode(playPosFrames, frameRate, false);
 
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
-                playPosFrames = TimeCode2Frames(input, Framerate[0]);
+                playPosFrames = TimeCode2Frames(input, frameRate);
                 StagePos.X = 0 - playPosFrames / timeZoom;
                 //Invalidate();
             }
@@ -211,7 +211,7 @@ namespace Interpole
 
             undoXML.Push(tempXML); //add undo save point to stack
 
-            FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
+            //FLogger.Log(LogType.Debug, "undoSteps:" + undoXML.Count.ToString());
         }
 
         private void UpdateClipXML()
@@ -265,7 +265,7 @@ namespace Interpole
 
             if (numbers.Count == 4)
             {
-                frameCount = numbers[3] + (numbers[2] * Framerate[0]) + (numbers[1] * 60 * Framerate[0]) + (numbers[0] * 60 * 60 * Framerate[0]);
+                frameCount = numbers[3] + (numbers[2] * frameRate) + (numbers[1] * 60 * frameRate) + (numbers[0] * 60 * 60 * frameRate);
             }
 
             return frameCount;
