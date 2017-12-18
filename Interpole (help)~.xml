@@ -89,9 +89,9 @@
    </PIN>
    </NODE>
    <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="65">
-   <BOUNDS type="Node" left="1770" top="6735" width="5295" height="270">
+   <BOUNDS type="Node" left="1770" top="6720" width="5295" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="1770" top="6735" width="3000" height="3000">
+   <BOUNDS type="Box" left="1770" top="6720" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Layer Out" visible="1">
    </PIN>

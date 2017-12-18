@@ -18,16 +18,9 @@ namespace VVVV.Nodes
     {
         Thread FUIThread;
         InterpoleForm FMyForm;
-        Label FMyLabel;
-
-        [Input("Some Text")]
-        ISpread<string> FSomeTextIn;
 
         [Output("Out")]
-        ISpread<int> FOut;
-
-        [Input("Value")]
-        IDiffSpread<int> FValue;
+        ISpread<InterpoleUI> FInterpoleOut;
 
         public InterpoleUI()
         {
@@ -55,12 +48,6 @@ namespace VVVV.Nodes
             FMyForm.Dispose();
         }
 
-
-        void InvalidateForm()
-        {
-            FMyForm.Invalidate();
-        }
-
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
@@ -68,12 +55,7 @@ namespace VVVV.Nodes
                 return; // Form not created yet
 
             //FMyForm.Invoke((Action)InvalidateForm);
-
-            //FMyForm.Invalidate();
-            foreach (var value in FSomeTextIn)
-            {
-                //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));
-            }
+            //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       
             
         }
     }
