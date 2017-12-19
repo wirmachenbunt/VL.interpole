@@ -12,7 +12,7 @@ using VVVV.Core.Logging;
 
 namespace VVVV.Nodes
 {
-    [PluginInfo(Name = "InterpoleUI", Category = "Interpole", AutoEvaluate = true)]
+    [PluginInfo(Name = "Interpole UI", Category = "Interpole", AutoEvaluate = true)]
 
     public class InterpoleUI : IPluginEvaluate, IDisposable
     {
