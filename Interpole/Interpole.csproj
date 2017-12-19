@@ -90,7 +90,7 @@
     <None Include="Nodes\GetUnifiedClipByName.cs" />
     <None Include="Nodes\GetUnifiedClipByColor.cs" />
     <None Include="Nodes\Info.cs" />
-    <None Include="Nodes\InterpoleCore.cs" />
+    <Compile Include="Nodes\InterpoleCore.cs" />
     <Compile Include="Nodes\InterpoleUI.cs" />
     <None Include="Nodes\JoinTC.cs" />
     <None Include="Nodes\PlaybackInfo.cs" />
