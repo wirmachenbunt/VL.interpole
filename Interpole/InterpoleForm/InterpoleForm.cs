@@ -17,8 +17,7 @@ namespace Interpole
     partial class InterpoleForm : Form
     {
         #region variables
-        [Import()]
-        public ILogger FLogger;
+        
 
         Graphics g;
 

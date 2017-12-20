@@ -9,6 +9,7 @@ using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 using Interpole;
 using VVVV.Core.Logging;
+using System.Collections.Generic;
 
 namespace VVVV.Nodes
 {
@@ -19,6 +20,8 @@ namespace VVVV.Nodes
         Thread FUIThread;
         InterpoleForm FMyForm;
 
+        public List<InterpoleForm.Clip> clipList; //master clip list
+
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
 
@@ -27,6 +30,8 @@ namespace VVVV.Nodes
             FUIThread = new Thread(InitializeForm);
             FUIThread.SetApartmentState(ApartmentState.STA);            
             FUIThread.Start();
+
+            clipList = new List<InterpoleForm.Clip>();
         }
 
         public void Dispose()
@@ -53,7 +58,10 @@ namespace VVVV.Nodes
         {
             if (FMyForm == null)
                 return; // Form not created yet
-
+            else
+            {
+                clipList = FMyForm.clipList;
+            }
             //FMyForm.Invoke((Action)InvalidateForm);
             //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       
             

@@ -156,16 +156,6 @@
    </NODE>
    <LINK srcnodeid="96" srcpinname="Output" dstnodeid="52" dstpinname="Rotate">
    </LINK>
-   <NODE nodename="IOBox (Node)" componentmode="InABox" id="97">
-   <BOUNDS type="Box" left="4500" top="2925" width="795" height="240">
-   </BOUNDS>
-   <BOUNDS type="Node" left="4500" top="2925" width="0" height="0">
-   </BOUNDS>
-   <PIN pinname="Descriptive Name" slicecount="1" values="Out">
-   </PIN>
-   <PIN pinname="Input Node" visible="1">
-   </PIN>
-   </NODE>
    <NODE systemname="Interpole UI (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole UI (Interpole)" componentmode="Hidden" id="98">
    <BOUNDS type="Node" left="4845" top="1860" width="100" height="100">
    </BOUNDS>
@@ -174,12 +164,14 @@
    <PIN pinname="Out" visible="1">
    </PIN>
    </NODE>
-   <LINK srcnodeid="98" srcpinname="Out" dstnodeid="97" dstpinname="Input Node">
-   </LINK>
    <NODE systemname="Interpole Core (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole Core (Interpole)" componentmode="Hidden" id="99">
-   <BOUNDS type="Node" left="6225" top="3060" width="100" height="100">
+   <BOUNDS type="Node" left="3885" top="2655" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="6225" top="3060" width="3000" height="3000">
+   <BOUNDS type="Box" left="3885" top="2655" width="3000" height="3000">
    </BOUNDS>
+   <PIN pinname="InterpoleIn" visible="1">
+   </PIN>
    </NODE>
+   <LINK srcnodeid="98" srcpinname="Out" dstnodeid="99" dstpinname="InterpoleIn">
+   </LINK>
    </PATCH>

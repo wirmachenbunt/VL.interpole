@@ -8,7 +8,7 @@ using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 using System.Linq;
 using VVVV.Nodes;
-
+using Interpole;
 
 using VVVV.Core.Logging;
 #endregion usings
@@ -22,21 +22,27 @@ namespace VVVV.Nodes
                 Tags = "",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class InterpoleCore : IPluginEvaluate
+    public class InterpoleCoreNode : IPluginEvaluate
     {
         #region fields & pins    
 
-        [Input("Hours")]
-        public IDiffSpread<int> FHours;
+        [Input("Play")]
+        public IDiffSpread<bool> FPlay;
 
-        [Input("Minutes")]
-        public IDiffSpread<int> FMinutes;
+        [Input("Set Timecode")]
+        public IDiffSpread<bool> FSetTimecode;
 
-        [Input("Seconds")]
-        public IDiffSpread<int> FSeconds;
+        [Input("Frame Clock", IsSingle = true)]
+        public IDiffSpread<int> FExternalClock;
 
-        [Input("Frames")]
-        public IDiffSpread<int> FFrames;
+        [Input("Set Frame Clock")]
+        public IDiffSpread<bool> FSetExternalClock;
+
+        [Input("InterpoleIn")]
+        public IDiffSpread<InterpoleUI> FInterpoleIn;
+
+        [Output("ClipXML")]
+        public ISpread<string> ClipXMLOut;
 
 
         [Import()]
@@ -48,10 +54,8 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            
 
-
-
+         
 
 
 
