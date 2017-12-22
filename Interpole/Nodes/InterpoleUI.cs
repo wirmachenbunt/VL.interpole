@@ -60,7 +60,7 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                clipList = FMyForm.clipList;
+                //clipList = FMyForm.id;
             }
             //FMyForm.Invoke((Action)InvalidateForm);
             //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       

@@ -11,13 +11,18 @@ namespace Interpole
     {
         public class InterpoleData
         {
+            public int PlayHeadPosition { get; set; }
+
             public Point WindowLocation { get; set; }
-            public Size WSize { get; set; }
-            public bool IsLoop { get; set; }
-            public int LoopStart { get; set; }
+            public Size WSize { get; set; } //window size
+            public bool UILock { get; set; } // locking the UI 
+
+            public bool Loop { get; set; } //looping timeline
+            public int LoopStart { get; set; } 
             public int LoopEnd { get; set; }
-            public List<Marker> MarkerList { get; set; }
-            public List<Clip> ClipList { get; set; }
+
+            public List<Marker> MarkerList { get; set; } //List of marker, later used for Automata
+            public List<Clip> ClipList { get; set; } // the most important part
         }
 
 // UI OBJECTS //////////////////////////////////////////////////////////////////////////////////////////////////////

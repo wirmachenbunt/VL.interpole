@@ -18,7 +18,9 @@ namespace Interpole
     {
         #region variables
 
-        public List<Clip> clipList; //master clip list
+        private InterpoleData ipD;
+
+        //public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
         public List<int> snapPosList = new List<int>(); // snap position list
         public Clip dragDurationClip = new Clip();
@@ -37,6 +39,18 @@ namespace Interpole
         public InterpoleForm()
         {
             InitializeComponent();
+            InitObjects();
+        }
+
+        public void InitObjects()
+        {
+            //clipList = new List<Clip>();
+
+            ipD = new InterpoleData();
+
+            ipD.ClipList = new List<Clip>();
+            
+
         }
 
 

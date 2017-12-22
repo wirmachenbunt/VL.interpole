@@ -84,8 +84,6 @@ namespace Interpole
             MouseWheel += Form1_MouseWheel;
             KeyDown += Form_Keydown;
 
-            clipList = new List<Clip>();
-
         }
 
         public void Application_Idle(object sender, EventArgs e)
@@ -135,7 +133,7 @@ namespace Interpole
 
             DrawMarker(pe);
 
-            if (clipList.Count > 0) DrawClips(pe);
+            if (ipD.ClipList.Count > 0) DrawClips(pe);
 
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
@@ -148,7 +146,7 @@ namespace Interpole
         public void DrawClips(PaintEventArgs e)
         {
 
-            foreach (Clip clip in clipList)
+            foreach (Clip clip in ipD.ClipList)
             {
                 Color ClipColor = Color.FromName(clip.Color);
                 SolidBrush ClipBrush = new SolidBrush(ClipColor);
@@ -357,7 +355,7 @@ namespace Interpole
 
         public void ApplyTimeZoom()
         {
-            foreach (Clip myclip in clipList)
+            foreach (Clip myclip in ipD.ClipList)
             {
                 Point mypoint = new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Y);
                 Size mysize = new Size(myclip.Duration / timeZoom, myclip.Bounds.Size.Height);

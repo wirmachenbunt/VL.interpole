@@ -34,7 +34,7 @@ namespace Interpole
                 //int duration = duration;
 
                 //add state to state list
-                clipList.Add(new Clip()
+                ipD.ClipList.Add(new Clip()
                 {
                     ID = RNGCharacterMask(),
                     Name = input,
@@ -133,7 +133,7 @@ namespace Interpole
         public void DeleteClip(Clip clip)
         {
             PushUndoStep();
-            clipList.Remove(clip);
+            ipD.ClipList.Remove(clip);
             UpdateClipXML();
         }
 
@@ -197,7 +197,7 @@ namespace Interpole
 
         public void PushUndoStep()
         {
-            string tempXML = SerializeClipList(clipList); //convert list of objects to string
+            string tempXML = SerializeClipList(ipD.ClipList); //convert list of objects to string
 
             undoXML.Push(tempXML); //add undo save point to stack
 
@@ -292,7 +292,7 @@ namespace Interpole
             foreach (Clip myclip in clipBoard)
             {
                 //add state to state list
-                clipList.Add(new Clip()
+                ipD.ClipList.Add(new Clip()
                 {
                     ID = RNGCharacterMask(),
                     Name = myclip.Name,
@@ -322,7 +322,7 @@ namespace Interpole
             PushUndoStep();
             foreach (Clip myclip in selectionList)
             {
-                clipList.Remove(myclip);
+                ipD.ClipList.Remove(myclip);
             }
             UpdateClipXML();
         }

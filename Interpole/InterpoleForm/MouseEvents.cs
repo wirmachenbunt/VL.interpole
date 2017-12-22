@@ -127,11 +127,11 @@ namespace Interpole
                 {                  
                     string tempXML = undoXML.Pop();
 
-                    clipList.Clear();
+                    ipD.ClipList.Clear();
 
                     selectionList.Clear();
 
-                    clipList = DeserializeClipList(tempXML);
+                    ipD.ClipList = DeserializeClipList(tempXML);
 
                     ApplyTimeZoom(); // scale to zoom
                     
@@ -388,7 +388,7 @@ namespace Interpole
         public void UpdateSnapList()
         {
             snapPosList.Clear();
-            List<Clip> snapClipList = clipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
+            List<Clip> snapClipList = ipD.ClipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
 
             //snapPosList.Add(FLoopRegion[0] / timeZoom);
             //snapPosList.Add(FLoopRegion[1] / timeZoom);

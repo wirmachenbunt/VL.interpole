@@ -29,7 +29,7 @@ namespace Interpole
             hitTestList.Add(mytimecode); //add timecode
 
 
-            foreach (Clip myclip in clipList)
+            foreach (Clip myclip in ipD.ClipList)
             {
                 hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
             }
@@ -46,7 +46,7 @@ namespace Interpole
         {
             List<UIelement> myhitTestList = new List<UIelement>();
 
-            foreach (Clip myclip in clipList)
+            foreach (Clip myclip in ipD.ClipList)
             {
                 myhitTestList.Add(myclip); //add all clips, this needs to be culled at some point
             }
@@ -68,7 +68,7 @@ namespace Interpole
 
         public void MultiSelectionClips()
         {
-            selectionList = clipList.Where(x => x.Bounds.IntersectsWith(selectionRectangle)).ToList();
+            selectionList = ipD.ClipList.Where(x => x.Bounds.IntersectsWith(selectionRectangle)).ToList();
         }
 
 
