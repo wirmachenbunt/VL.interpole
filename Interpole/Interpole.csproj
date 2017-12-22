@@ -71,13 +71,16 @@
     <Compile Include="InterpoleForm\Dialogs.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="InterpoleForm\InterpoleForm.cs">
+    <Compile Include="InterpoleForm\Drawing.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="InterpoleForm\GlobalHitTest.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="InterpoleForm\Models.cs">
+    <Compile Include="InterpoleForm\_InitForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InterpoleForm\ObjectDefinitions.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="InterpoleForm\MouseEvents.cs">

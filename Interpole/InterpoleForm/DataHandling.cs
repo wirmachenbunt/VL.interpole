@@ -16,18 +16,7 @@ namespace Interpole
 {
     partial class InterpoleForm
     {
-
-        //public ObservableCollection<Clip> clipList;
-        public List<Clip> clipList; //master clip list
-        public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
-        public List<int> snapPosList = new List<int>(); // snap position list
-        public Clip dragDurationClip = new Clip();
-
-        Stack<string> undoXML = new Stack<string>();
-
-        public int playPosFrames = 100;
-        public string rememberLastFunction = "idle";  // keep track of last command
-
+        
         public void AddClip()
         {
             string input = "MyClip";

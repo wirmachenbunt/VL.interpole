@@ -18,7 +18,7 @@ namespace Interpole
     {
         #region variables
         
-
+        // WINDOWS FORMS VARIABLES ///////////////////////////////////////////////////////////////
         Graphics g;
 
         Color MyBackgroundColor = Color.FromArgb(20, 20, 20);
@@ -51,16 +51,9 @@ namespace Interpole
         WorkSpace myworkspace = new WorkSpace();
         SizeF stringSize = new SizeF();
 
-        bool UI_Lock = false;
-        bool play = false;
-        bool isLoop = false;
+        // WINDOWS FORMS VARIABLES ///////////////////////////////////////////////////////////////
 
         #endregion
-
-        public InterpoleForm()
-        {
-            InitializeComponent();
-        }
 
         private void InitializeComponent()
         {
@@ -79,7 +72,6 @@ namespace Interpole
             this.PerformLayout();
 
             this.ControlBox = false;
-
 
             this.DoubleBuffered = true;
             g = this.CreateGraphics();
@@ -146,7 +138,11 @@ namespace Interpole
             if (clipList.Count > 0) DrawClips(pe);
 
             DrawSelectedClips(pe);
-            DrawSelectionRect(pe);          
+            DrawSelectionRect(pe);
+
+            
+
+            
         }
 
         public void DrawClips(PaintEventArgs e)
