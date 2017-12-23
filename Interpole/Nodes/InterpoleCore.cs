@@ -22,7 +22,7 @@ namespace VVVV.Nodes
                 Tags = "",
                 AutoEvaluate = true)]
     #endregion PluginInfo
-    public class InterpoleCoreNode : IPluginEvaluate
+    public class InterpoleCoreNode : IPluginEvaluate, IPartImportsSatisfiedNotification
     {
         #region fields & pins    
 
@@ -39,7 +39,7 @@ namespace VVVV.Nodes
         public IDiffSpread<bool> FSetExternalClock;
 
         [Input("InterpoleIn")]
-        public IDiffSpread<InterpoleUI> FInterpoleIn;
+        public Pin<InterpoleUI> FInterpoleIn;
 
         [Output("ClipXML")]
         public ISpread<string> ClipXMLOut;
@@ -50,15 +50,46 @@ namespace VVVV.Nodes
 
         #endregion fields & pins
 
+        public void OnImportsSatisfied()
+        {
+            FInterpoleIn.Connected += Input_Connected;
+            FInterpoleIn.Disconnected += Input_Disconnected;
+
+
+        }
+
+        private void Input_Disconnected(object sender, PinConnectionEventArgs args)
+        {
+            FLogger.Log(LogType.Debug, "DisConnected");
+        }
+
+        private void Input_Connected(object sender, PinConnectionEventArgs args)
+        {
+
+            FLogger.Log(LogType.Debug, "connected");
+        }
+
+
+
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-
-         
-
+           
+           
+                try
+                {
+                    //FLogger.Log(LogType.Debug, "hallo");
+                    FInterpoleIn[0].PlayPosFrames += 1;
+                    
+                }
+                
+                //if (FInterpoleIn[0].PlayPosFrames > 100) FInterpoleIn[0].PlayPosFrames = 0;
+                catch { FLogger.Log(LogType.Debug, "nope"); }
+            }
+            
 
 
         }
     }
-}
+

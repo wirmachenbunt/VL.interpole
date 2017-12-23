@@ -30,16 +30,17 @@ namespace Interpole
         public int playPosFrames = 100;
         public string rememberLastFunction = "idle";  // keep track of last command
 
-        bool UI_Lock = false;
         bool play = false;
-        bool isLoop = false;
+
+        public string InterpoleXML = "";
 
         #endregion
 
         public InterpoleForm()
         {
+            InitObjects(); // init interpole data object with all infos
             InitializeComponent();
-            InitObjects();
+            
         }
 
         public void InitObjects()
@@ -49,8 +50,11 @@ namespace Interpole
             ipD = new InterpoleData();
 
             ipD.ClipList = new List<Clip>();
-            
-
+            ipD.Loop = false;
+            ipD.MarkerList = new List<Marker>();
+            ipD.WLocation = new Point(10, 10); //window location
+            ipD.WSize = new Size(600, 400); // window size
+            ipD.UILock = false;
         }
 
 

@@ -32,7 +32,7 @@ namespace Interpole
             SetPlayPosition();
 
             //delete clip
-            if (e.Button == MouseButtons.Middle && hitObject is Clip && !UI_Lock) DeleteClip(hitObject);
+            if (e.Button == MouseButtons.Middle && hitObject is Clip && !ipD.UILock) DeleteClip(hitObject);
 
             //selection aufheben
             if (e.Button == MouseButtons.Left && hitObject is WorkSpace || e.Button == MouseButtons.Middle) selectionList.Clear();
@@ -41,7 +41,7 @@ namespace Interpole
             if (hitObject is Clip) if (!selectionList.Any(cus => cus == hitObject)) selectionList.Clear();
 
             //DragDuration
-            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock) DragDuration(hitObject);
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !ipD.UILock) DragDuration(hitObject);
           
         }
 
@@ -52,7 +52,7 @@ namespace Interpole
                 UpdateClipXML();
             }
 
-            //ClipXMLOut[0] = SerializeClipList(clipList);
+            InterpoleXML = SerializeInterpoleData(ipD);
 
             rememberLastFunction = "idle";
 
@@ -69,9 +69,9 @@ namespace Interpole
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !UI_Lock) AddClip(); //ADD CLIP
-            if (hitObject is Clip && e.Button == MouseButtons.Left && !UI_Lock) EditClip(hitObject); // EDIT CLIP
-            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !UI_Lock) EditTimeCode(); // EDIT TIMECODE
+            if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !ipD.UILock) AddClip(); //ADD CLIP
+            if (hitObject is Clip && e.Button == MouseButtons.Left && !ipD.UILock) EditClip(hitObject); // EDIT CLIP
+            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !ipD.UILock) EditTimeCode(); // EDIT TIMECODE
             
         }
 
@@ -100,17 +100,17 @@ namespace Interpole
 
             SetPlayPosition(); // set playhead
 
-            if(!UI_Lock) SetSelectionRectangle(e); // selection rectangle
+            if(!ipD.UILock) SetSelectionRectangle(e); // selection rectangle
 
             //dragging multiselection
-            if (selectionList.Count > 0 && hitObject is Clip && !UI_Lock)
+            if (selectionList.Count > 0 && hitObject is Clip && !ipD.UILock)
             {
                 if (rememberLastFunction != "dragclip") PushUndoStep();
                 DragSelection(e);
             }
 
             //DragDuration
-            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !UI_Lock)
+            if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !ipD.UILock)
             {
                 DragDuration(hitObject);
             }
@@ -121,7 +121,7 @@ namespace Interpole
         {
             //undo function
             #region undo
-            if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control && !UI_Lock)
+            if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control && !ipD.UILock)
             {
                 if (undoXML.Count > 0)
                 {                  
@@ -146,7 +146,7 @@ namespace Interpole
 
             //COPY
             #region copy
-            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control && !UI_Lock)
+            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control && !ipD.UILock)
             {
                 clipBoard.Clear();
                 CopyClips();
@@ -155,7 +155,7 @@ namespace Interpole
 
             //Paste
             #region paste
-            if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control && !UI_Lock)
+            if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control && !ipD.UILock)
             {
                 PasteClips();
                 Invalidate();
@@ -165,14 +165,14 @@ namespace Interpole
             //LOOP
             if (e.KeyCode == Keys.L && e.Modifiers == Keys.Shift)
             {
-                isLoop = !isLoop; // invert loop activate
+                ipD.Loop = !ipD.Loop; // invert loop activate
                 //Invalidate();
             }
 
             //Lock UI
             if (e.KeyCode == Keys.L && e.Modifiers == Keys.Control)
             {
-                UI_Lock = !UI_Lock;
+                ipD.UILock = !ipD.UILock;
                 //Invalidate();
             }
 
@@ -192,7 +192,7 @@ namespace Interpole
             }
 
             //DELETE CLIPS OF SELECTION
-            if (e.KeyCode == Keys.Delete && selectionList.Count > 0 && !UI_Lock)
+            if (e.KeyCode == Keys.Delete && selectionList.Count > 0 && !ipD.UILock)
             {
                 DeleteClipSelection();
                 selectionList.Clear();

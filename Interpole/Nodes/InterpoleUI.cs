@@ -20,18 +20,19 @@ namespace VVVV.Nodes
         Thread FUIThread;
         InterpoleForm FMyForm;
 
-        public List<InterpoleForm.Clip> clipList; //master clip list
+        [Output("XML")]
+        ISpread<string> FXMLOut;
 
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
+
+        public int PlayPosFrames = 200;
 
         public InterpoleUI()
         {
             FUIThread = new Thread(InitializeForm);
             FUIThread.SetApartmentState(ApartmentState.STA);            
-            FUIThread.Start();
-
-            clipList = new List<InterpoleForm.Clip>();
+            FUIThread.Start();          
         }
 
         public void Dispose()
@@ -60,7 +61,9 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                //clipList = FMyForm.id;
+                FXMLOut[0] = FMyForm.InterpoleXML;
+                FMyForm.playPosFrames = PlayPosFrames;
+                FInterpoleOut[0] = this;
             }
             //FMyForm.Invoke((Action)InvalidateForm);
             //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       

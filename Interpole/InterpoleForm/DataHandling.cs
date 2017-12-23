@@ -171,9 +171,7 @@ namespace Interpole
 
 
                 myclip.Duration = dragHorizontal * timeZoom;
-                rememberLastFunction = "dragclip";
-                //Invalidate(); //redraw
-
+                rememberLastFunction = "dragclip";          
             }
 
 
@@ -227,6 +225,14 @@ namespace Interpole
             StringWriter sw = new StringWriter();
             XmlSerializer s = new XmlSerializer(myList.GetType());
             s.Serialize(sw, myList);
+            return sw.ToString();
+        }
+
+        public static string SerializeInterpoleData(InterpoleData myipD)
+        {
+            StringWriter sw = new StringWriter();
+            XmlSerializer s = new XmlSerializer(myipD.GetType());
+            s.Serialize(sw, myipD);
             return sw.ToString();
         }
 

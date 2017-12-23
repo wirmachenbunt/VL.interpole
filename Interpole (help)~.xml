@@ -1,6 +1,6 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
-   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="360">
-   <BOUNDS type="Window" left="11145" top="5355" width="12705" height="9420">
+   <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="2721">
+   <BOUNDS type="Window" left="15765" top="345" width="12705" height="9420">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
@@ -21,7 +21,7 @@
    </PIN>
    </NODE>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
-   <BOUNDS type="Node" left="3225" top="810" width="100" height="100">
+   <BOUNDS type="Node" left="3300" top="915" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Time Mode" slicecount="1" values="Filtered">
    </PIN>
@@ -157,21 +157,123 @@
    <LINK srcnodeid="96" srcpinname="Output" dstnodeid="52" dstpinname="Rotate">
    </LINK>
    <NODE systemname="Interpole UI (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole UI (Interpole)" componentmode="Hidden" id="98">
-   <BOUNDS type="Node" left="4845" top="1860" width="100" height="100">
+   <BOUNDS type="Node" left="4095" top="1890" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4845" top="1860" width="3000" height="3000">
+   <BOUNDS type="Box" left="4095" top="1890" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Out" visible="1">
    </PIN>
    </NODE>
    <NODE systemname="Interpole Core (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole Core (Interpole)" componentmode="Hidden" id="99">
-   <BOUNDS type="Node" left="4620" top="2685" width="100" height="100">
+   <BOUNDS type="Node" left="3885" top="2655" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4620" top="2685" width="3000" height="3000">
+   <BOUNDS type="Box" left="3885" top="2655" width="3000" height="3000">
    </BOUNDS>
-   <PIN pinname="InterpoleIn" visible="1">
+   <PIN pinname="InterpoleIn" visible="1" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="ClipXML" visible="1">
+   </PIN>
+   <PIN pinname="Play" visible="1">
    </PIN>
    </NODE>
+   <NODE nodename="IOBox (String)" componentmode="InABox" id="100">
+   <BOUNDS type="Box" left="3180" top="3375" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="3180" top="3375" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Default" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="File Mask" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Maximum Characters" slicecount="1" values="-1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="99" srcpinname="ClipXML" dstnodeid="100" dstpinname="Input String">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="101">
+   <BOUNDS type="Box" left="3315" top="1875" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="3315" top="1875" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="Play">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="101" srcpinname="Y Output Value" dstnodeid="99" dstpinname="Play">
+   </LINK>
    <LINK srcnodeid="98" srcpinname="Out" dstnodeid="99" dstpinname="InterpoleIn">
+   </LINK>
+   <NODE systemname="Timing (Debug)" nodename="Timing (Debug)" componentmode="Hidden" id="102">
+   <BOUNDS type="Node" left="6795" top="1710" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Prepare Graph Time" visible="1">
+   </PIN>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="103">
+   <BOUNDS type="Box" left="7380" top="2205" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="7380" top="2205" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="s">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="102" srcpinname="Prepare Graph Time" dstnodeid="103" dstpinname="Y Input Value">
+   </LINK>
+   <NODE systemname="Multiply (Value)" nodename="Multiply (Value)" componentmode="Hidden" id="104">
+   <BOUNDS type="Node" left="7710" top="2595" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Input 1" visible="1">
+   </PIN>
+   <PIN pinname="Input 2" slicecount="1" values="1000">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="103" srcpinname="Y Output Value" dstnodeid="104" dstpinname="Input 1">
+   </LINK>
+   <NODE systemname="OneEuroFilter (Animation)" filename="%VVVV%\lib\nodes\plugins\VVVV.Nodes.dll" nodename="OneEuroFilter (Animation)" componentmode="Hidden" id="105">
+   <BOUNDS type="Node" left="7755" top="2970" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="7755" top="2970" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Input" visible="1">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Beta" slicecount="1" values="0.59">
+   </PIN>
+   <PIN pinname="Minimum Cutoff" slicecount="1" values="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="104" srcpinname="Output" dstnodeid="105" dstpinname="Input">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="106">
+   <BOUNDS type="Box" left="7710" top="3465" width="2100" height="615">
+   </BOUNDS>
+   <BOUNDS type="Node" left="7710" top="3465" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Size" slicecount="1" values="20">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="105" srcpinname="Output" dstnodeid="106" dstpinname="Y Input Value">
    </LINK>
    </PATCH>

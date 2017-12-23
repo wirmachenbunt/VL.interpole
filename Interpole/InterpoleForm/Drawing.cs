@@ -84,6 +84,8 @@ namespace Interpole
             MouseWheel += Form1_MouseWheel;
             KeyDown += Form_Keydown;
 
+            this.Location = ipD.WLocation;
+            this.Size = ipD.WSize;
         }
 
         public void Application_Idle(object sender, EventArgs e)
@@ -93,7 +95,7 @@ namespace Interpole
             while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
             {
                 Render();               
-                Thread.Sleep(1);                
+                Thread.Sleep(5);                
             }
         }
 
@@ -292,7 +294,7 @@ namespace Interpole
                 new Point(2 - StagePos.X, 30 - StagePos.Y),
                 new Size(200, 60));
 
-            if(isLoop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            if(ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames,frameRate,false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
         }
 
