@@ -79,8 +79,8 @@ namespace VVVV.Nodes
            
                 try
                 {
-                    //FLogger.Log(LogType.Debug, "hallo");
-                    FInterpoleIn[0].PlayPosFrames += 1;
+                //FLogger.Log(LogType.Debug, "hallo");
+                FInterpoleIn[0].interpoleForm.playPosFrames += 1;
                     
                 }
                 

@@ -233,9 +233,9 @@
    <LINK srcnodeid="105" srcpinname="Output" dstnodeid="106" dstpinname="Y Input Value">
    </LINK>
    <NODE id="101" nodename="IOBox (Value Advanced)" componentmode="InABox" systemname="IOBox (Value Advanced)">
-   <BOUNDS type="Box" left="3315" top="1875" width="480" height="480">
+   <BOUNDS type="Box" left="3015" top="1980" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="3315" top="1875" width="0" height="0">
+   <BOUNDS type="Node" left="3015" top="1980" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
@@ -273,6 +273,8 @@
    </BOUNDS>
    <BOUNDS type="Box" left="4095" top="1890" width="3000" height="3000">
    </BOUNDS>
+   <PIN pinname="Out" visible="1">
+   </PIN>
    </NODE>
    <LINK srcnodeid="107" srcpinname="Out" dstnodeid="99" dstpinname="InterpoleIn">
    </LINK>

@@ -18,7 +18,7 @@ namespace VVVV.Nodes
     public class InterpoleUI : IPluginEvaluate, IDisposable
     {
         Thread FUIThread;
-        InterpoleForm FMyForm;
+        public InterpoleForm interpoleForm;
 
         [Output("XML")]
         ISpread<string> FXMLOut;
@@ -37,32 +37,32 @@ namespace VVVV.Nodes
 
         public void Dispose()
         {
-            if (FMyForm != null)
-                FMyForm.Invoke((Action)CleanupForm);
+            if (interpoleForm != null)
+                interpoleForm.Invoke((Action)CleanupForm);
         }
 
         void InitializeForm()
         {
-            FMyForm = new InterpoleForm();
+            interpoleForm = new InterpoleForm();
             
             // Use ShowDialog as it starts its own main loop - using Show alone the window just disappears
-            FMyForm.ShowDialog();
+            interpoleForm.ShowDialog();
         }
 
         void CleanupForm()
         {
-            FMyForm.Dispose();
+            interpoleForm.Dispose();
         }
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            if (FMyForm == null)
+            if (interpoleForm == null)
                 return; // Form not created yet
             else
             {
-                FXMLOut[0] = FMyForm.InterpoleXML;
-                FMyForm.playPosFrames = PlayPosFrames;
+                FXMLOut[0] = interpoleForm.InterpoleXML;
+                //interpoleForm.playPosFrames = PlayPosFrames;
                 FInterpoleOut[0] = this;
             }
             //FMyForm.Invoke((Action)InvalidateForm);

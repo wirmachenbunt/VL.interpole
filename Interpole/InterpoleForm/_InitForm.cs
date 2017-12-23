@@ -55,6 +55,7 @@ namespace Interpole
             ipD.WLocation = new Point(10, 10); //window location
             ipD.WSize = new Size(600, 400); // window size
             ipD.UILock = false;
+            ipD.Play = false;
         }
 
 
