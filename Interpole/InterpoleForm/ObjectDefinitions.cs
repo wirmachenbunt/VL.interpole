@@ -12,8 +12,7 @@ namespace Interpole
         public class InterpoleData
         {
             public int PlayHeadPosition { get; set; }
-            public bool Play { get; set; }
-
+           
             public Point WLocation { get; set; }
             public Size WSize { get; set; } //window size
             public bool UILock { get; set; } // locking the UI 

@@ -269,9 +269,9 @@
    <LINK srcnodeid="99" srcpinname="ClipXML" dstnodeid="100" dstpinname="Input String">
    </LINK>
    <NODE id="107" systemname="Interpole UI (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole UI (Interpole)" componentmode="Hidden">
-   <BOUNDS type="Node" left="4095" top="1890" width="100" height="100">
+   <BOUNDS type="Node" left="4095" top="1875" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4095" top="1890" width="3000" height="3000">
+   <BOUNDS type="Box" left="4095" top="1875" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Out" visible="1">
    </PIN>

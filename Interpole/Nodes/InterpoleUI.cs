@@ -26,8 +26,6 @@ namespace VVVV.Nodes
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
 
-        public int PlayPosFrames = 200;
-
         public InterpoleUI()
         {
             FUIThread = new Thread(InitializeForm);

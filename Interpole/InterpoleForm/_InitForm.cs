@@ -18,7 +18,7 @@ namespace Interpole
     {
         #region variables
 
-        private InterpoleData ipD;
+        public InterpoleData ipD;
 
         //public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
@@ -28,9 +28,10 @@ namespace Interpole
         Stack<string> undoXML = new Stack<string>();
 
         public int playPosFrames = 100;
+        public bool play = false;
         public string rememberLastFunction = "idle";  // keep track of last command
 
-        bool play = false;
+        //bool play = false;
 
         public string InterpoleXML = "";
 
@@ -55,7 +56,6 @@ namespace Interpole
             ipD.WLocation = new Point(10, 10); //window location
             ipD.WSize = new Size(600, 400); // window size
             ipD.UILock = false;
-            ipD.Play = false;
         }
 
 

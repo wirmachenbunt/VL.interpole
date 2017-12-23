@@ -44,6 +44,7 @@ namespace VVVV.Nodes
         [Output("ClipXML")]
         public ISpread<string> ClipXMLOut;
 
+        int playPosFrames = 0;
 
         [Import()]
         public ILogger FLogger;
@@ -70,26 +71,26 @@ namespace VVVV.Nodes
         }
 
 
-
-
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-           
-           
-                try
+            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null) // only do this when there is a connection to the UI
+            {
+                if (FInterpoleIn[0].interpoleForm.play) // UI is playing, get core playhead to UI
                 {
-                //FLogger.Log(LogType.Debug, "hallo");
-                FInterpoleIn[0].interpoleForm.playPosFrames += 1;
-                    
+                    this.playPosFrames++;
+                    FInterpoleIn[0].interpoleForm.playPosFrames = this.playPosFrames;
                 }
+                else this.playPosFrames = FInterpoleIn[0].interpoleForm.playPosFrames; //if UI is not playing, get UI playhead to core
+
                 
-                //if (FInterpoleIn[0].PlayPosFrames > 100) FInterpoleIn[0].PlayPosFrames = 0;
-                catch { FLogger.Log(LogType.Debug, "nope"); }
             }
-            
+
+            //FLogger.Log(LogType.Debug, "nope"); 
 
 
         }
+
     }
+}
 
