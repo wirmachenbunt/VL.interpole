@@ -1,0 +1,147 @@
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
+   <PATCH nodename="C:\Users\Chris\Desktop\Camera2DPlugin\_test.v4p" systemname="_test" filename="C:\Users\Chris\Desktop\Camera2DPlugin\_test.v4p">
+   <BOUNDS type="Window" left="26820" top="13530" width="18465" height="12690">
+   </BOUNDS>
+   <NODE systemname="Camera (Transform 2d Legacy)" filename="%VVVV%\lib\nodes\modules\_legacy\Editing\Camera (Transform 2d Legacy).v4p" nodename="Camera (Transform 2d Legacy)" componentmode="Hidden" id="1">
+   <BOUNDS type="Node" left="3645" top="4275" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Transform Out" visible="1">
+   </PIN>
+   <PIN pinname="Zoom speed" slicecount="1" values="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InAWindow" id="2">
+   <BOUNDS type="Node" left="2220" top="4725" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2220" top="4725" width="6000" height="4500">
+   </BOUNDS>
+   <BOUNDS type="Window" left="30225" top="4245" width="6240" height="5085">
+   </BOUNDS>
+   <PIN pinname="Layers" visible="1">
+   </PIN>
+   <PIN pinname="View" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Quad (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Quad (DX11.Layer)" componentmode="Hidden" id="3">
+   <BOUNDS type="Node" left="780" top="2025" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="780" top="2025" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Cursor (DX11)" filename="%VVVV%\packs\dx11\nodes\modules\Cursor (DX11).v4p" nodename="Cursor (DX11)" componentmode="Hidden" id="4">
+   <BOUNDS type="Node" left="3255" top="2760" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   <PIN pinname="Mouse" visible="1">
+   </PIN>
+   <PIN pinname="Color" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="5">
+   <BOUNDS type="Node" left="2370" top="3450" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2370" top="3450" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer 1" visible="1">
+   </PIN>
+   <PIN pinname="Layer 2" visible="1">
+   </PIN>
+   <PIN pinname="Layer Out" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="3" srcpinname="Layer" dstnodeid="5" dstpinname="Layer 1">
+   </LINK>
+   <LINK srcnodeid="4" srcpinname="Layer" dstnodeid="5" dstpinname="Layer 2">
+   </LINK>
+   <LINK srcnodeid="5" srcpinname="Layer Out" dstnodeid="2" dstpinname="Layers">
+   </LINK>
+   <NODE systemname="Mouse (Devices Window)" filename="%VVVV%\lib\nodes\plugins\VVVV.Nodes.dll" nodename="Mouse (Devices Window)" componentmode="Hidden" id="6">
+   <BOUNDS type="Node" left="3240" top="1650" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="3240" top="1650" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Device" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="6" srcpinname="Device" dstnodeid="4" dstpinname="Mouse">
+   </LINK>
+   <NODE systemname="HSL (Color Join)" nodename="HSL (Color Join)" componentmode="Hidden" id="7">
+   <BOUNDS type="Node" left="3585" top="2055" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Lightness" slicecount="1" values="0.5">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="7" srcpinname="Output" dstnodeid="4" dstpinname="Color">
+   </LINK>
+   <LINK srcnodeid="1" srcpinname="Transform Out" dstnodeid="2" dstpinname="View">
+   </LINK>
+   <PACK Name="addonpack" Version="35.0.0">
+   </PACK>
+   <NODE systemname="Camera2D (Transform)" filename="plugins\TransformCamera2D\TransformCamera2D.csproj" nodename="Camera2D (Transform)" componentmode="Hidden" id="8">
+   <BOUNDS type="Node" left="7905" top="4185" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="7905" top="4185" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="ScaleXYZXYZ" visible="1">
+   </PIN>
+   <PIN pinname="CenterXYZXYZ" visible="1">
+   </PIN>
+   <PIN pinname="ScaleXYZ" visible="1">
+   </PIN>
+   <PIN pinname="CenterXYZ" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Camera (Transform 2d)" filename="%VVVV%\lib\packs\VL.EditingFramework.0.55.43-g436959e253\vvvv\nodes\modules\Camera (Transform 2d).v4p" nodename="Camera (Transform 2d)" componentmode="InAWindow" id="9">
+   <BOUNDS type="Node" left="11385" top="1725" width="100" height="100">
+   </BOUNDS>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="12">
+   <BOUNDS type="Box" left="8520" top="2460" width="795" height="720">
+   </BOUNDS>
+   <BOUNDS type="Node" left="8520" top="2460" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="3" visible="1" values="0,0,0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Vector Size" slicecount="1" values="3">
+   </PIN>
+   <PIN pinname="Rows" slicecount="1" values="3">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="ScaleXYZ">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="12" srcpinname="Y Output Value" dstnodeid="8" dstpinname="ScaleXYZ">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="13">
+   <BOUNDS type="Box" left="9495" top="2490" width="795" height="720">
+   </BOUNDS>
+   <BOUNDS type="Node" left="9495" top="2490" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="3" visible="1" values="0,0,0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Vector Size" slicecount="1" values="3">
+   </PIN>
+   <PIN pinname="Rows" slicecount="1" values="3">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="CenterXYZ">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="13" srcpinname="Y Output Value" dstnodeid="8" dstpinname="CenterXYZ">
+   </LINK>
+   <NODE systemname="RandomSpread (Spreads)" nodename="RandomSpread (Spreads)" componentmode="Hidden" id="15">
+   <BOUNDS type="Node" left="6300" top="5775" width="100" height="100">
+   </BOUNDS>
+   </NODE>
+   </PATCH>
