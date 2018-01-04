@@ -96,10 +96,6 @@
    <PIN pinname="CenterXYZ" visible="1">
    </PIN>
    </NODE>
-   <NODE systemname="Camera (Transform 2d)" filename="%VVVV%\lib\packs\VL.EditingFramework.0.55.43-g436959e253\vvvv\nodes\modules\Camera (Transform 2d).v4p" nodename="Camera (Transform 2d)" componentmode="InAWindow" id="9">
-   <BOUNDS type="Node" left="11385" top="1725" width="100" height="100">
-   </BOUNDS>
-   </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="12">
    <BOUNDS type="Box" left="8520" top="2460" width="795" height="720">
    </BOUNDS>

@@ -31,7 +31,7 @@ namespace VVVV.Nodes
 		
 
 		[Output("Output")]
-		public ISpread<Matrix4x4> FOutput;
+		public ISpread<Matrix> FOutput;
 
 		[Import()]
 		public ILogger FLogger;
@@ -47,6 +47,10 @@ namespace VVVV.Nodes
 			Matrix negCenterTrans = Matrix.Translation(Vector3.Negate(Center[0]));
 			Matrix scaling = Matrix.Scaling(Scale[0]);
 			
+			Matrix result = Matrix.Multiply(centerTrans,scaling);
+			
+			result = Matrix.Multiply(result,negCenterTrans);
+			FOutput[0] = result;
 			//FOutput[0] = VMath.Translate(Center[0].x, Center[0].y, Center[0].z);
 
 			//FLogger.Log(LogType.Debug, "Logging to Renderer (TTY)");
