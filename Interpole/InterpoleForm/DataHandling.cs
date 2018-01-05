@@ -20,7 +20,7 @@ namespace Interpole
         public void AddClip()
         {
             string input = "MyClip";
-            int startFrame = mousePos.X * timeZoom;
+            int startFrame = mousePos.X;
             int duration = 160;
             int fadeIn = 0;
             int fadeOut = 0;
@@ -42,7 +42,7 @@ namespace Interpole
                     Duration = duration,
                     FadeIn = fadeIn,
                     FadeOut = fadeOut,
-                    Bounds = new Rectangle(new Point(startFrame / timeZoom, mousePos.Y), new Size(duration / timeZoom, 20)),
+                    Bounds = new Rectangle(new Point(startFrame, mousePos.Y), new Size(duration, 20)),
                     Color = colorName,
                     Variable = variable
                 });
@@ -73,7 +73,7 @@ namespace Interpole
                 clip.FadeOut = fadeOut;
                 clip.Color = colorName;
                 clip.Variable = variable;
-                clip.Bounds = new Rectangle(new Point(startFrame / timeZoom, clip.Bounds.Location.Y), new Size(duration / timeZoom, 20));
+                clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
                 lastColorName = colorName;
                 UpdateClipXML();
             }
@@ -90,7 +90,7 @@ namespace Interpole
                     int dragHorizontal = myclip.Bounds.Location.X + (mousePos.X - deltaMousePos.X);
                     if (dragHorizontal < 0) dragHorizontal = 0;
                     myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
-                    myclip.StartFrame = dragHorizontal * timeZoom;
+                    myclip.StartFrame = dragHorizontal;
                     rememberLastFunction = "dragclip";
                     //Invalidate(); //redraw
                 }
@@ -122,7 +122,7 @@ namespace Interpole
                     foreach (Clip myclip in selectionList)
                     {
                         myclip.StartFrame = myclip.StartFrame - distance;
-                        myclip.Bounds = new Rectangle(new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Location.Y), myclip.Bounds.Size);
+                        myclip.Bounds = new Rectangle(new Point(myclip.StartFrame, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                     }
                     rememberLastFunction = "dragclip";
                 }
@@ -144,7 +144,7 @@ namespace Interpole
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
                 playPosFrames = TimeCode2Frames(input, frameRate);
-                StagePos.X = 0 - playPosFrames / timeZoom;
+                StagePos.X = 0 - playPosFrames;
                 //Invalidate();
             }
 
@@ -170,7 +170,7 @@ namespace Interpole
                 myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
 
 
-                myclip.Duration = dragHorizontal * timeZoom;
+                myclip.Duration = dragHorizontal;
                 rememberLastFunction = "dragclip";          
             }
 
@@ -184,7 +184,7 @@ namespace Interpole
                 {
                     myclip.Duration = playPosFrames - myclip.StartFrame;
 
-                    myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(myclip.Duration/timeZoom, myclip.Bounds.Height));
+                    myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(myclip.Duration, myclip.Bounds.Height));
               
                     rememberLastFunction = "dragclip";
                 }
@@ -307,7 +307,7 @@ namespace Interpole
                     FadeIn = myclip.FadeIn,
                     FadeOut = myclip.FadeOut,
                     Variable = myclip.Variable,
-                    Bounds = new Rectangle(new Point(((myclip.StartFrame - distance) / timeZoom), myclip.Bounds.Y), myclip.Bounds.Size),
+                    Bounds = new Rectangle(new Point(((myclip.StartFrame - distance)), myclip.Bounds.Y), myclip.Bounds.Size),
                     Color = myclip.Color
                 });
             }

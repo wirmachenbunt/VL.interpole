@@ -77,6 +77,9 @@ namespace Interpole
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
+
+            /*
+
             if (e.Delta > 0 && timeZoom < 20)
             {
                 timeZoom += 1;
@@ -87,6 +90,8 @@ namespace Interpole
                 timeZoom -= 1;
                 ApplyTimeZoom();
             }
+
+            */
            
         }
 
@@ -366,18 +371,18 @@ namespace Interpole
 
             if (hitObject is Playbar)
             {
-                playPosFrames = mousePos.X * timeZoom;
+                playPosFrames = mousePos.X;
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
 
                 // snap playhead to clip in out
                 if (Form.ModifierKeys == Keys.Shift)
                 {
-                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames / timeZoom))).First();
+                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames ))).First();
 
-                    int distance = Math.Abs(playPosFrames / timeZoom - closest);
+                    int distance = Math.Abs(playPosFrames  - closest);
 
-                    if (distance < 12) playPosFrames = closest * timeZoom;
+                    if (distance < 12) playPosFrames = closest;
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
@@ -404,8 +409,8 @@ namespace Interpole
             {
                 snapPosList.Add(myclip.Bounds.X);
                 snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width);
-                if (myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn / timeZoom));
-                if (myclip.FadeOut > 0) snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width - (myclip.FadeOut / timeZoom));
+                if (myclip.FadeIn > 0) snapPosList.Add(myclip.Bounds.X + (myclip.FadeIn));
+                if (myclip.FadeOut > 0) snapPosList.Add(myclip.Bounds.X + myclip.Bounds.Width - (myclip.FadeOut));
             }
             //FLogger.Log(LogType.Debug, snapPosList.Count.ToString());
         }

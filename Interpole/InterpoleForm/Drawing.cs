@@ -34,7 +34,7 @@ namespace Interpole
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
         public Point StagePos; //StagePosition
-        public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
+        //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
         public int frameRate = 60;
 
@@ -155,8 +155,8 @@ namespace Interpole
 
                 e.Graphics.FillRectangle(grayBrush, clip.Bounds);
 
-                int fadeIn = clip.FadeIn/timeZoom;
-                int fadeOut = clip.FadeOut/timeZoom;
+                int fadeIn = clip.FadeIn;
+                int fadeOut = clip.FadeOut;
 
                 Point[] points = {
                     new Point(clip.Bounds.X, clip.Bounds.Y+20),
@@ -202,19 +202,19 @@ namespace Interpole
         public void DrawRuler(PaintEventArgs e)
         {
             int rulerSteps = 1; //in seconds
-            if (timeZoom > 1) rulerSteps = 5;
-            if (timeZoom > 4) rulerSteps = 10;
-            if (timeZoom > 10) rulerSteps = 20;
+            //if (timeZoom > 1) rulerSteps = 5;
+            //if (timeZoom > 4) rulerSteps = 10;
+            //if (timeZoom > 10) rulerSteps = 20;
 
-            double startRulerPos = Math.Abs(StagePos.X) * timeZoom;
+            double startRulerPos = Math.Abs(StagePos.X);
             startRulerPos = (startRulerPos / frameRate) / rulerSteps;
             startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
 
-            double endRulerPos = ((this.Width + Math.Abs(StagePos.X)) * timeZoom) / frameRate;
+            double endRulerPos = ((this.Width + Math.Abs(StagePos.X))) / frameRate;
 
             for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
-                int pos = (i * frameRate) / timeZoom;
+                int pos = (i * frameRate);
                 int size = 30;
                 int height = 5;
                 int y = 25;
@@ -261,7 +261,7 @@ namespace Interpole
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            int pos = playPosFrames / timeZoom;
+            int pos = playPosFrames;
             
 
             Point[] points = { new Point(-7 + pos, 20 - StagePos.Y), new Point(7 + pos, 20 - StagePos.Y), new Point(0 + pos, 30 - StagePos.Y) }; //play head triangle
@@ -300,7 +300,7 @@ namespace Interpole
 
         public void DrawFooter(PaintEventArgs e)
         {
-            string Percentage = Convert.ToString(100 / timeZoom) + "%";
+            string Percentage = Convert.ToString(100) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
             //zoom display rectangle
@@ -360,19 +360,19 @@ namespace Interpole
         {
             foreach (Clip myclip in ipD.ClipList)
             {
-                Point mypoint = new Point(myclip.StartFrame / timeZoom, myclip.Bounds.Y);
-                Size mysize = new Size(myclip.Duration / timeZoom, myclip.Bounds.Size.Height);
+                Point mypoint = new Point(myclip.StartFrame, myclip.Bounds.Y);
+                Size mysize = new Size(myclip.Duration, myclip.Bounds.Size.Height);
 
                 myclip.Bounds = new Rectangle(mypoint, mysize);
 
-                StagePos.X = 0 - ((playPosFrames / timeZoom) - this.Width / 2);
+                StagePos.X = 0 - ((playPosFrames) - this.Width / 2);
                 if (StagePos.X > 0) StagePos.X = 0;
             }
         }
 
         public void PlaybackMoveStage()
         {
-            int pos = playPosFrames / timeZoom;
+            int pos = playPosFrames;
             
             if (pos > this.Width  - StagePos.X)
             {
