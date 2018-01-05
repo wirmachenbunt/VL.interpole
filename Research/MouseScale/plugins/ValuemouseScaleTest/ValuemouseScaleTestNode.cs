@@ -32,7 +32,7 @@ namespace VVVV.Nodes
 		public ISpread<Vector2D> FPosOut;	
 		
 		[Output("ScaleOut",DefaultValue = 1.0)]
-		public ISpread<Matrix4x4> ZoomOut;
+		public ISpread<double> ZoomOut;
 
 		[Import()]
 		public ILogger FLogger;
@@ -77,13 +77,13 @@ namespace VVVV.Nodes
 				
 	
 	            FPosOut[0] = new Vector2D(imgx,imgy);
-				ZoomOut[0] = VMath.Scale(zoom,zoom,1);
+				ZoomOut[0] = zoom;
 			}
 			
 			if(FReset[0])
 			{
 				FPosOut[0] = new Vector2D(0,0);
-				ZoomOut[0] = VMath.Scale(1,1,1);
+				ZoomOut[0] = zoom;
 			}
 			
 			
