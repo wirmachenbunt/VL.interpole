@@ -29,7 +29,7 @@ namespace Interpole
 
             PushUndoStep();
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Add Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Add Clip") == DialogResult.OK)
             {
                 //int duration = duration;
 
@@ -64,7 +64,7 @@ namespace Interpole
 
             PushUndoStep();
 
-            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Edit Clip", dpi) == DialogResult.OK)
+            if (ClipDialog(ref input, ref startFrame, ref duration, ref fadeIn, ref fadeOut, ref colorName, ref variable, "Edit Clip") == DialogResult.OK)
             {
                 clip.Name = input;
                 clip.StartFrame = startFrame;

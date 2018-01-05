@@ -78,21 +78,19 @@ namespace Interpole
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
 
-            /*
+            
 
-            if (e.Delta > 0 && timeZoom < 20)
+            if (e.Delta > 0)
             {
-                timeZoom += 1;
-                ApplyTimeZoom();
+                Zoom += 0.09F;
             }
-            if (e.Delta < 0 && timeZoom > 1)
+            if (e.Delta < 0)
             {
-                timeZoom -= 1;
-                ApplyTimeZoom();
+                Zoom = Math.Max(Zoom - 0.09F, 0.01F);        
             }
 
-            */
-           
+            
+
         }
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -136,9 +134,7 @@ namespace Interpole
 
                     selectionList.Clear();
 
-                    ipD.ClipList = DeserializeClipList(tempXML);
-
-                    ApplyTimeZoom(); // scale to zoom
+                    ipD.ClipList = DeserializeClipList(tempXML);        
                     
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();
@@ -371,7 +367,7 @@ namespace Interpole
 
             if (hitObject is Playbar)
             {
-                playPosFrames = mousePos.X;
+                playPosFrames = Convert.ToInt32(mousePos.X/Zoom);
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
 

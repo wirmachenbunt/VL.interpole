@@ -13,7 +13,7 @@ namespace Interpole
     {
         string lastColorName = "Aqua";
          
-        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName, float dpi)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName)
         {
             System.Drawing.Size size = new System.Drawing.Size(250, 248);
 
@@ -165,7 +165,7 @@ namespace Interpole
             inputBox.CancelButton = cancelButton; 
             #endregion
 
-            inputBox.Scale(dpi);
+            inputBox.Scale(1);
 
             DialogResult result = inputBox.ShowDialog();
             if (textBox.Text.Length > 0) input = textBox.Text;

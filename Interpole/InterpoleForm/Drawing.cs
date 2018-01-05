@@ -35,7 +35,8 @@ namespace Interpole
 
         public Point StagePos; //StagePosition
         //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
-        public float dpi = 1; //DPI Value
+        public float Zoom = 1; 
+       
         public int frameRate = 60;
 
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
@@ -126,12 +127,20 @@ namespace Interpole
         {    
             g = pe.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            g.ScaleTransform(1, 1); //ScaleStage
             g.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
+
             g.Clear(MyBackgroundColor);
 
             DrawPlayBar(pe);
             DrawPlayHead(pe);
             DrawFooter(pe);
+
+            g.ScaleTransform(Zoom, 1); //ScaleStage
+            
+
+            
 
             DrawMarker(pe);
 
@@ -171,14 +180,16 @@ namespace Interpole
                 SizeF stringSize = new SizeF();
                 stringSize = e.Graphics.MeasureString(text, clipFont, 400);
 
-                Point center = new Point(clip.Bounds.Location.X,clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
+                Point center = new Point(Convert.ToInt32( clip.Bounds.Location.X * Zoom),clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
 
                 Rectangle Bounds = new Rectangle(
                 center,
                 new Size(Convert.ToInt32(stringSize.Width + 1),
-                Convert.ToInt32(stringSize.Height + 1)));       
+                Convert.ToInt32(stringSize.Height + 1)));
 
+                e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
                 e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
+                e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
             }          
         }
 
@@ -261,7 +272,7 @@ namespace Interpole
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            int pos = playPosFrames;
+            int pos = Convert.ToInt32( playPosFrames*Zoom);
             
 
             Point[] points = { new Point(-7 + pos, 20 - StagePos.Y), new Point(7 + pos, 20 - StagePos.Y), new Point(0 + pos, 30 - StagePos.Y) }; //play head triangle
@@ -284,18 +295,19 @@ namespace Interpole
         public void DrawTimeCode(PaintEventArgs e)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(5 - StagePos.X, 60 - StagePos.Y),
-                new Size(200, 30));
+                new Point(Convert.ToInt32(5 - StagePos.X ), 60 - StagePos.Y),
+                new Size(200, 30));   
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
 
             mytimecode.Bounds = new Rectangle(
-                new Point(2 - StagePos.X, 30 - StagePos.Y),
+                new Point(Convert.ToInt32(2 - StagePos.X ), 30 - StagePos.Y),
                 new Size(200, 60));
 
             if(ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames,frameRate,false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            
         }
 
         public void DrawFooter(PaintEventArgs e)
@@ -333,8 +345,7 @@ namespace Interpole
 
             if (selectionList.Count > 0)
             {
-               
-                
+                            
                 foreach (Clip clip in selectionList)
                 {
                     e.Graphics.FillRectangle(selectbrush, clip.Bounds);
@@ -356,19 +367,6 @@ namespace Interpole
             } 
         }
 
-        public void ApplyTimeZoom()
-        {
-            foreach (Clip myclip in ipD.ClipList)
-            {
-                Point mypoint = new Point(myclip.StartFrame, myclip.Bounds.Y);
-                Size mysize = new Size(myclip.Duration, myclip.Bounds.Size.Height);
-
-                myclip.Bounds = new Rectangle(mypoint, mysize);
-
-                StagePos.X = 0 - ((playPosFrames) - this.Width / 2);
-                if (StagePos.X > 0) StagePos.X = 0;
-            }
-        }
 
         public void PlaybackMoveStage()
         {
@@ -377,7 +375,6 @@ namespace Interpole
             if (pos > this.Width  - StagePos.X)
             {
                 StagePos.X = (StagePos.X) - this.Width / 2;
-                ApplyTimeZoom();
                 Invalidate();
             }
 

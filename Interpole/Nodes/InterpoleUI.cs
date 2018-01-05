@@ -59,8 +59,7 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                FXMLOut[0] = interpoleForm.InterpoleXML;
-                //interpoleForm.playPosFrames = PlayPosFrames;
+                FXMLOut[0] = interpoleForm.InterpoleXML;           
                 FInterpoleOut[0] = this;
             }
             //FMyForm.Invoke((Action)InvalidateForm);
