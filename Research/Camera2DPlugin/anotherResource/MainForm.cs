@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -96,6 +97,9 @@ namespace ImageZoom
 
             int x = mousePosNow.X - pictureBox.Location.X;    // Where location of the mouse in the pictureframe
             int y = mousePosNow.Y - pictureBox.Location.Y;
+
+            Debug.WriteLine("picturebox location" + pictureBox.Location.X.ToString());
+            Debug.WriteLine(pictureBox.Location.Y.ToString());
 
             int oldimagex = (int)(x / oldzoom);  // Where in the IMAGE is it now
             int oldimagey = (int)(y / oldzoom);
