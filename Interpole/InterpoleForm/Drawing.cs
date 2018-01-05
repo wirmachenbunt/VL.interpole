@@ -34,7 +34,7 @@ namespace Interpole
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
         public Point StagePos; //StagePosition
-        public int timeZoom = 4; // Magnifiy Time on Stage, larger means you see more of time
+        public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float dpi = 1; //DPI Value
         public int frameRate = 60;
 
@@ -304,7 +304,8 @@ namespace Interpole
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
             //zoom display rectangle
-            footer = new Rectangle(new Point(this.Width - 50 - StagePos.X, this.Height - 15 - StagePos.Y), new Size(50, 20)); //update playbar bounds
+            
+            footer = new Rectangle(new Point(this.Width - 70 - StagePos.X, this.Height - 55 - StagePos.Y), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
 
             /*
@@ -366,8 +367,6 @@ namespace Interpole
 
                 StagePos.X = 0 - ((playPosFrames / timeZoom) - this.Width / 2);
                 if (StagePos.X > 0) StagePos.X = 0;
-
-
             }
         }
 
