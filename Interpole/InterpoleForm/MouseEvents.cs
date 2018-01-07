@@ -77,8 +77,7 @@ namespace Interpole
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-
-            
+            float oldzoom = Zoom;
 
             if (e.Delta > 0)
             {
@@ -89,7 +88,11 @@ namespace Interpole
                 Zoom = Math.Max(Zoom - 0.09F, 0.01F);        
             }
 
-            
+            int x = e.X;
+            int oldimagex = (int)(x / oldzoom);
+            int newimagex = (int)(x / Zoom);
+            StagePos.X = newimagex - oldimagex + StagePos.X;
+
 
         }
 

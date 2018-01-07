@@ -128,7 +128,7 @@ namespace Interpole
             g = pe.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            g.ScaleTransform(1, 1); //ScaleStage
+            g.ScaleTransform(Zoom, 1); //ScaleStage
             g.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
 
             g.Clear(MyBackgroundColor);
@@ -137,20 +137,14 @@ namespace Interpole
             DrawPlayHead(pe);
             DrawFooter(pe);
 
-            g.ScaleTransform(Zoom, 1); //ScaleStage
+            //g.ScaleTransform(Zoom, 1); //ScaleStage
             
-
-            
-
             DrawMarker(pe);
 
             if (ipD.ClipList.Count > 0) DrawClips(pe);
 
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
-
-            
-
             
         }
 
