@@ -91,7 +91,7 @@ namespace Interpole
             int x = e.X;
             int oldimagex = (int)(x / oldzoom);
             int newimagex = (int)(x / Zoom);
-            StagePos.X = newimagex - oldimagex + StagePos.X;
+            StagePos.x = newimagex - oldimagex + StagePos.x;
 
 
         }
@@ -183,7 +183,7 @@ namespace Interpole
             //SET TO ZERO
             if (e.KeyCode == Keys.NumPad0)
             {
-                StagePos.X = 0;
+                StagePos.x = 0;
                 playPosFrames = 0;
                 //Invalidate();
             }
@@ -191,7 +191,7 @@ namespace Interpole
             //SET TO ZERO
             if (e.KeyCode == Keys.R)
             {
-                StagePos.Y = 0;     
+                StagePos.y = 0;     
                 //Invalidate();
             }
 
@@ -341,18 +341,16 @@ namespace Interpole
             {
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;
-                StagePos.X += deltaX;
-                if (StagePos.X > 0) StagePos.X = 0;
-                //Invalidate();
+                StagePos.x += deltaX/Zoom;
+                if (StagePos.x > 0) StagePos.x = 0;
+                
             }
 
             if (click && !(hitObject is Clip) && Form.ModifierKeys == Keys.Control)
             {
                 int deltaY = mousePos.Y - prevMousePos.Y;
                 prevMousePos = mousePos;
-                StagePos.Y += deltaY;
-                //if (StagePos.Y > 0) StagePos.X = 0;
-                //Invalidate();
+                StagePos.y += deltaY/Zoom;          
             }
 
 
@@ -360,8 +358,8 @@ namespace Interpole
 
         public void SetGlobalMousePos(MouseEventArgs e)
         {
-            mousePos.X = Convert.ToInt32(e.X - StagePos.X);
-            mousePos.Y = Convert.ToInt32(e.Y - StagePos.Y);
+            mousePos.X = Convert.ToInt32(e.X - StagePos.x);
+            mousePos.Y = Convert.ToInt32(e.Y - StagePos.y);
         }
 
         public void SetPlayPosition()

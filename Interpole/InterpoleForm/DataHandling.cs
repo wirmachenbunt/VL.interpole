@@ -144,7 +144,7 @@ namespace Interpole
             if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
             {
                 playPosFrames = TimeCode2Frames(input, frameRate);
-                StagePos.X = 0 - playPosFrames;
+                StagePos.x = 0 - playPosFrames;
                 //Invalidate();
             }
 

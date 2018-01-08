@@ -11,6 +11,7 @@ using VVVV.PluginInterfaces.V2;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using System.Threading;
+using VVVV.Utils.VMath;
 
 namespace Interpole
 {
@@ -33,7 +34,7 @@ namespace Interpole
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
-        public Point StagePos; //StagePosition
+        public Vector2D StagePos; //StagePosition
         //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float Zoom = 1; 
        
@@ -129,7 +130,7 @@ namespace Interpole
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             g.ScaleTransform(Zoom, 1); //ScaleStage
-            g.TranslateTransform(StagePos.X, StagePos.Y); //Move stage
+            g.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
             g.Clear(MyBackgroundColor);
 
@@ -189,13 +190,13 @@ namespace Interpole
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            myplaybar.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, 30)); //update playbar bounds
+            myplaybar.Bounds = new Rectangle(new Point(0 - (int)StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds
 
             // show pre-roll
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point(0 - StagePos.X, 0 - StagePos.Y), new Size(this.Width, this.Height));
+            myworkspace.Bounds = new Rectangle(new Point(0 - (int)StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, this.Height));
 
             DrawLoopRegion(e);
 
@@ -211,11 +212,11 @@ namespace Interpole
             //if (timeZoom > 4) rulerSteps = 10;
             //if (timeZoom > 10) rulerSteps = 20;
 
-            double startRulerPos = Math.Abs(StagePos.X);
+            double startRulerPos = Math.Abs(StagePos.x);
             startRulerPos = (startRulerPos / frameRate) / rulerSteps;
             startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
 
-            double endRulerPos = ((this.Width + Math.Abs(StagePos.X))) / frameRate;
+            double endRulerPos = ((this.Width + Math.Abs(StagePos.x))) / frameRate;
 
             for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
             {
@@ -237,8 +238,8 @@ namespace Interpole
                 stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
 
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5 - StagePos.Y), new Size(size, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y - StagePos.Y), new Size(thickness, height)));
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5 - (int)StagePos.y), new Size(size, 50)), format); //draw seconds
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y - (int)StagePos.y), new Size(thickness, height)));
             }
             
             //FLogger.Log(LogType.Debug, countBars.ToString());
@@ -269,9 +270,9 @@ namespace Interpole
             int pos = Convert.ToInt32( playPosFrames*Zoom);
             
 
-            Point[] points = { new Point(-7 + pos, 20 - StagePos.Y), new Point(7 + pos, 20 - StagePos.Y), new Point(0 + pos, 30 - StagePos.Y) }; //play head triangle
+            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y), new Point(7 + pos, 20 - (int)StagePos.y), new Point(0 + pos, 30 - (int)StagePos.y) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen,new Point(pos,30 - StagePos.Y),new Point(pos,this.Height - StagePos.Y));
+            e.Graphics.DrawLine(GrayPen,new Point(pos,30 - (int)StagePos.y),new Point(pos,this.Height - (int)StagePos.y));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
@@ -289,14 +290,14 @@ namespace Interpole
         public void DrawTimeCode(PaintEventArgs e)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(Convert.ToInt32(5 - StagePos.X ), 60 - StagePos.Y),
+                new Point(Convert.ToInt32(5 - StagePos.x ), 60 - (int)StagePos.y),
                 new Size(200, 30));   
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
 
             mytimecode.Bounds = new Rectangle(
-                new Point(Convert.ToInt32(2 - StagePos.X ), 30 - StagePos.Y),
+                new Point(Convert.ToInt32(2 - StagePos.x ), 30 - (int)StagePos.y),
                 new Size(200, 60));
 
             if(ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
@@ -311,7 +312,7 @@ namespace Interpole
 
             //zoom display rectangle
             
-            footer = new Rectangle(new Point(this.Width - 70 - StagePos.X, this.Height - 55 - StagePos.Y), new Size(50, 20)); //update playbar bounds
+            footer = new Rectangle(new Point(this.Width - 70 - (int)StagePos.x, this.Height - 55 - (int)StagePos.y), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
 
             /*
@@ -366,15 +367,15 @@ namespace Interpole
         {
             int pos = playPosFrames;
             
-            if (pos > this.Width  - StagePos.X)
+            if (pos > this.Width  - StagePos.x)
             {
-                StagePos.X = (StagePos.X) - this.Width / 2;
+                StagePos.x = (StagePos.x) - this.Width / 2;
                 Invalidate();
             }
 
-            if(pos < Math.Abs(StagePos.X))
+            if(pos < Math.Abs(StagePos.x))
             {
-                StagePos.X = 0 - pos;
+                StagePos.x = 0 - pos;
                 Invalidate();
             }
 
