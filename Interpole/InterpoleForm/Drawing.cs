@@ -38,7 +38,7 @@ namespace Interpole
         //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
         public float Zoom = 1;
 
-        public int frameRate = 60;
+        public int frameRate = 50;
 
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font rulerFont = new Font("Segoe UI", 8, FontStyle.Regular);
@@ -169,6 +169,7 @@ namespace Interpole
 
             // show pre-roll
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update for hittest
 
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, this.Height));
@@ -182,12 +183,31 @@ namespace Interpole
 
         public void DrawRuler(PaintEventArgs e)
         {
-            int rulerSteps = 1; //in seconds
-            //if (timeZoom > 1) rulerSteps = 5;
-            //if (timeZoom > 4) rulerSteps = 10;
-            //if (timeZoom > 10) rulerSteps = 20;
+            int secondsIn = (int)Math.Truncate(-StagePos.x / frameRate);
+            int secondsInPos = Convert.ToInt32((secondsIn * frameRate + (int)StagePos.x) % 60 * Zoom);
 
-            double startRulerPos = Math.Abs(StagePos.x);
+            string time = Convert.ToString(secondsIn);
+
+            stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
+
+            e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+
+            while (secondsInPos < this.Width)
+            {
+                secondsIn += 1;
+                time = Convert.ToString(secondsIn);
+                secondsInPos += Convert.ToInt32(frameRate * Zoom);
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+            }
+
+
+            /*
+            int rulerSteps = 1; //in seconds
+            if (Zoom > 1) rulerSteps = 5;
+            if (Zoom > 4) rulerSteps = 10;
+            if (Zoom > 10) rulerSteps = 20;
+
+            double startRulerPos = Math.Abs(StagePos.x/Zoom);
             startRulerPos = (startRulerPos / frameRate) / rulerSteps;
             startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
 
@@ -218,6 +238,7 @@ namespace Interpole
             }
 
             //FLogger.Log(LogType.Debug, countBars.ToString());
+            */
 
         }
 

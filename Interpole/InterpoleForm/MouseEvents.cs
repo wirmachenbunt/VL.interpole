@@ -85,8 +85,9 @@ namespace Interpole
             }
             if (e.Delta < 0)
             {
-                Zoom = Math.Max(Zoom - 0.09F, 0.01F);        
+                Zoom = Math.Max(Zoom - 0.09F, 0.03F);        
             }
+            
 
             int x = e.X;
             int oldimagex = (int)(x / oldzoom);
@@ -367,8 +368,6 @@ namespace Interpole
             if (hitObject is Playbar)
             {
                 playPosFrames = Convert.ToInt32(mousePos.X);
-
-                //playPosFrames + StagePos.x) *Zoom
 
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
