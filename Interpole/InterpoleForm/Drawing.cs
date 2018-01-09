@@ -111,8 +111,6 @@ namespace Interpole
             pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
             pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
-            //pe.Graphics.FillRectangle(OrangeBrush, myworkspace.Bounds);
-
             DrawClips(pe);
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
@@ -174,7 +172,7 @@ namespace Interpole
             myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); //update for hittest
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point((int)-StagePos.x, 50 - (int)StagePos.y), new Size((int)(this.Width / Zoom), this.Height));
+            myworkspace.Bounds = new Rectangle(new Point((int)-StagePos.x, 30 - (int)StagePos.y), new Size((int)(this.Width / Zoom), this.Height));
 
             DrawLoopRegion(e);
 
@@ -185,23 +183,40 @@ namespace Interpole
 
         public void DrawRuler(PaintEventArgs e)
         {
-            int secondsIn = (int)Math.Truncate(-StagePos.x / frameRate);
-            int secondsInPos = Convert.ToInt32((secondsIn * frameRate + (int)StagePos.x) % 60 * Zoom);
+            int steps = 1; //seconds
 
-            string time = Convert.ToString(secondsIn);
+            double startTime = -StagePos.x / frameRate; //canvas starting at point in time in seconds
 
+            double roundedTime = Math.Ceiling(startTime); //round seconds
+
+            double gap = Math.Abs((startTime - roundedTime) * (frameRate*Zoom)); 
+
+            string time = Convert.ToString(startTime);
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
-            e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+            e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(0, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+            e.Graphics.DrawString(Convert.ToString(roundedTime), rulerFont, whiteBrush, new Rectangle(new Point((int)gap, 30 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
 
+            
+
+            for (int i = 0; i < 20; i++)
+            {
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap, 15), new Size(5, 10)));
+                gap += (frameRate) * Zoom;
+            }
+
+            
+
+
+            /*
             while (secondsInPos < this.Width)
             {
                 secondsIn += 1;
                 time = Convert.ToString(secondsIn);
                 secondsInPos += Convert.ToInt32(frameRate * Zoom);
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point((int)secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
             }
-
+            */
 
             /*
             int rulerSteps = 1; //in seconds
