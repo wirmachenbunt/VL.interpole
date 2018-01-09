@@ -92,10 +92,10 @@ namespace Interpole
 
         protected override void OnPaint(PaintEventArgs pe)
         {
-            g = pe.Graphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            
+            pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            g.Clear(MyBackgroundColor);
+            pe.Graphics.Clear(MyBackgroundColor);
 
             //transform free stuff//////////////////////////////////////////
 
@@ -108,8 +108,10 @@ namespace Interpole
             ////////////////////////////////////////////////////////////////
 
             //transformed stage ///////////////////////////////////////////
-            g.ScaleTransform(Zoom, 1); //ScaleStage
-            g.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
+            pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
+            pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
+
+            //pe.Graphics.FillRectangle(OrangeBrush, myworkspace.Bounds);
 
             DrawClips(pe);
             DrawSelectedClips(pe);
@@ -169,10 +171,10 @@ namespace Interpole
 
             // show pre-roll
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
-            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update for hittest
+            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); //update for hittest
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, this.Height));
+            myworkspace.Bounds = new Rectangle(new Point((int)-StagePos.x, 50 - (int)StagePos.y), new Size((int)(this.Width / Zoom), this.Height));
 
             DrawLoopRegion(e);
 
