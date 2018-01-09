@@ -308,15 +308,14 @@ namespace Interpole
                 new Size(200, 30));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
-
-
+            
             mytimecode.Bounds = new Rectangle(
                 new Point(2, 30 - (int)StagePos.y),
                 new Size(200, 60));
 
             if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
-
+      
         }
 
         public void DrawFooter(PaintEventArgs e)

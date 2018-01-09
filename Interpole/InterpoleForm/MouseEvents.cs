@@ -81,18 +81,18 @@ namespace Interpole
 
             if (e.Delta > 0)
             {
-                Zoom += 0.05F;
+                Zoom += 0.01F;
             }
             if (e.Delta < 0)
             {
-                Zoom = Math.Max(Zoom - 0.05F, 0.01F);        
+                Zoom = Math.Max(Zoom - 0.01F, 0.01F);        
             }
      
             float oldimagex = e.X / oldzoom;
             float newimagex = e.X / Zoom;
             StagePos.x = newimagex - oldimagex + StagePos.x;
 
-            if (StagePos.x > 0) StagePos.x = 0;
+            //if (StagePos.x > 0) StagePos.x = 0;
 
         }
 
