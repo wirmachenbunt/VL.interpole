@@ -87,11 +87,9 @@ namespace Interpole
             {
                 Zoom = Math.Max(Zoom - 0.09F, 0.03F);        
             }
-            
-
-            int x = e.X;
-            int oldimagex = (int)(x / oldzoom);
-            int newimagex = (int)(x / Zoom);
+     
+            float oldimagex = e.X / oldzoom;
+            float newimagex = e.X / Zoom;
             StagePos.x = newimagex - oldimagex + StagePos.x;
 
 
