@@ -97,18 +97,25 @@ namespace Interpole
 
             g.Clear(MyBackgroundColor);
 
+            //transform free stuff//////////////////////////////////////////
+
             DrawPlayBar(pe);
             DrawPlayHead(pe);
             DrawFooter(pe);
-
             DrawMarker(pe);
 
+            //transform free stuff//////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////
+
+            //transformed stage ///////////////////////////////////////////
             g.ScaleTransform(Zoom, 1); //ScaleStage
             g.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
             DrawClips(pe);
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
+
+            //transformed stage ///////////////////////////////////////////
 
         }
 

@@ -358,7 +358,7 @@ namespace Interpole
 
         public void SetGlobalMousePos(MouseEventArgs e)
         {
-            mousePos.X = Convert.ToInt32(e.X - StagePos.x);
+            mousePos.X = Convert.ToInt32((e.X / Zoom)-StagePos.x);
             mousePos.Y = Convert.ToInt32(e.Y - StagePos.y);
         }
 
