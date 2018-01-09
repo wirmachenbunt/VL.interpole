@@ -12,6 +12,7 @@ using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VVVV.Utils.VMath;
+using System.Diagnostics;
 
 namespace Interpole
 {
@@ -183,13 +184,13 @@ namespace Interpole
 
         public void DrawRuler(PaintEventArgs e)
         {
-            int steps = 1; //seconds
+            int steps = 10; //seconds
 
-            double startTime = -StagePos.x / frameRate; //canvas starting at point in time in seconds
+            double startTime = -StagePos.x / frameRate / steps; //canvas starting at point in time in seconds
 
             double roundedTime = Math.Ceiling(startTime); //round seconds
 
-            double gap = Math.Abs((startTime - roundedTime) * (frameRate*Zoom)); 
+            double gap = steps *  Math.Abs((startTime - roundedTime) * (frameRate*Zoom)); 
 
             string time = Convert.ToString(startTime);
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
@@ -201,8 +202,8 @@ namespace Interpole
 
             for (int i = 0; i < 20; i++)
             {
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap, 15), new Size(5, 10)));
-                gap += (frameRate) * Zoom;
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap-1, 15), new Size(1, 10)));
+                gap += (frameRate) * Zoom * steps ;
             }
 
             
