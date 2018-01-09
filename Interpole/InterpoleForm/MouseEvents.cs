@@ -364,11 +364,12 @@ namespace Interpole
 
         public void SetPlayPosition()
         {
-
-
             if (hitObject is Playbar)
             {
-                playPosFrames = Convert.ToInt32(mousePos.X/Zoom);
+                playPosFrames = Convert.ToInt32(mousePos.X);
+
+                //playPosFrames + StagePos.x) *Zoom
+
                 if (mousePos.X < 0) playPosFrames = 0;
                 play = false;
 

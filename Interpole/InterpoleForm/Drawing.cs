@@ -18,7 +18,7 @@ namespace Interpole
     partial class InterpoleForm : Form
     {
         #region variables
-        
+
         // WINDOWS FORMS VARIABLES ///////////////////////////////////////////////////////////////
         Graphics g;
 
@@ -36,8 +36,8 @@ namespace Interpole
 
         public Vector2D StagePos; //StagePosition
         //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
-        public float Zoom = 1; 
-       
+        public float Zoom = 1;
+
         public int frameRate = 60;
 
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
@@ -90,47 +90,10 @@ namespace Interpole
             this.Size = ipD.WSize;
         }
 
-        public void Application_Idle(object sender, EventArgs e)
-        {
-            NativeMethods.Message message;
-
-            while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
-            {
-                Render();               
-                Thread.Sleep(5);                
-            }
-        }
-
-        void Render()
-        {
-            this.Invalidate();
-        }
-
-        static class NativeMethods
-        {
-            [StructLayout(LayoutKind.Sequential)]
-            public struct Message
-            {
-                public IntPtr hWnd;
-                public uint Msg;
-                public IntPtr wParam;
-                public IntPtr lParam;
-                public uint Time;
-                public System.Drawing.Point Point;
-            }
-
-            [DllImport("User32.dll", CharSet = CharSet.Auto)]
-            [return: MarshalAs(UnmanagedType.Bool)]
-            public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
-        }
-
         protected override void OnPaint(PaintEventArgs pe)
-        {    
+        {
             g = pe.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            g.ScaleTransform(Zoom, 1); //ScaleStage
-            g.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
             g.Clear(MyBackgroundColor);
 
@@ -138,65 +101,70 @@ namespace Interpole
             DrawPlayHead(pe);
             DrawFooter(pe);
 
-            //g.ScaleTransform(Zoom, 1); //ScaleStage
-            
             DrawMarker(pe);
 
-            if (ipD.ClipList.Count > 0) DrawClips(pe);
+            g.ScaleTransform(Zoom, 1); //ScaleStage
+            g.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
+            DrawClips(pe);
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
-            
+
         }
 
         public void DrawClips(PaintEventArgs e)
         {
 
-            foreach (Clip clip in ipD.ClipList)
+            if (ipD.ClipList.Count > 0)
             {
-                Color ClipColor = Color.FromName(clip.Color);
-                SolidBrush ClipBrush = new SolidBrush(ClipColor);
+                foreach (Clip clip in ipD.ClipList)
+                {
+                    Color ClipColor = Color.FromName(clip.Color);
+                    SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
-                e.Graphics.FillRectangle(grayBrush, clip.Bounds);
+                    e.Graphics.FillRectangle(grayBrush, clip.Bounds);
 
-                int fadeIn = clip.FadeIn;
-                int fadeOut = clip.FadeOut;
+                    int fadeIn = clip.FadeIn;
+                    int fadeOut = clip.FadeOut;
 
-                Point[] points = {
+                    Point[] points = {
                     new Point(clip.Bounds.X, clip.Bounds.Y+20),
                     new Point(clip.Bounds.X+fadeIn, clip.Bounds.Y),
                     new Point(clip.Bounds.Width - fadeOut + clip.Bounds.X, clip.Bounds.Y),
                     new Point(clip.Bounds.Width + clip.Bounds.X, clip.Bounds.Y+20) };
-           
-            e.Graphics.FillPolygon(ClipBrush, points);
+
+                    e.Graphics.FillPolygon(ClipBrush, points);
 
 
-                string text = clip.Name; // create text
-                SizeF stringSize = new SizeF();
-                stringSize = e.Graphics.MeasureString(text, clipFont, 400);
+                    string text = clip.Name; // create text
+                    SizeF stringSize = new SizeF();
+                    stringSize = e.Graphics.MeasureString(text, clipFont, 400);
 
-                Point center = new Point(Convert.ToInt32( clip.Bounds.Location.X * Zoom),clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
+                    Point center = new Point(Convert.ToInt32(clip.Bounds.Location.X * Zoom), clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
 
-                Rectangle Bounds = new Rectangle(
-                center,
-                new Size(Convert.ToInt32(stringSize.Width + 1),
-                Convert.ToInt32(stringSize.Height + 1)));
+                    Rectangle Bounds = new Rectangle(
+                    center,
+                    new Size(Convert.ToInt32(stringSize.Width + 1),
+                    Convert.ToInt32(stringSize.Height + 1)));
 
-                e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
-                e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
-                e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
-            }          
+                    e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
+                    e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
+                    e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
+                }
+            }
+
+
         }
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            myplaybar.Bounds = new Rectangle(new Point(0 - (int)StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds
+            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds
 
             // show pre-roll
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point(0 - (int)StagePos.x, 0 - (int)StagePos.y), new Size(this.Width, this.Height));
+            myworkspace.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, this.Height));
 
             DrawLoopRegion(e);
 
@@ -225,8 +193,8 @@ namespace Interpole
                 int height = 5;
                 int y = 25;
                 int thickness = 1;
-                string timecode = Frames2Timecode(i* frameRate, frameRate, true);
-                string time = (i%60).ToString() + "s";
+                string timecode = Frames2Timecode(i * frameRate, frameRate, true);
+                string time = (i % 60).ToString() + "s";
                 if (time == "0s")
                 {
                     time = timecode + "s";
@@ -238,10 +206,10 @@ namespace Interpole
                 stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
 
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width/2) +1, 5 - (int)StagePos.y), new Size(size, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos- (thickness/2),y - (int)StagePos.y), new Size(thickness, height)));
+                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width / 2) + 1, 5 - (int)StagePos.y), new Size(size, 50)), format); //draw seconds
+                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos - (thickness / 2), y - (int)StagePos.y), new Size(thickness, height)));
             }
-            
+
             //FLogger.Log(LogType.Debug, countBars.ToString());
 
         }
@@ -267,12 +235,12 @@ namespace Interpole
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            int pos = Convert.ToInt32( playPosFrames*Zoom);
-            
+            int pos = Convert.ToInt32((playPosFrames  + StagePos.x) * Zoom);
+
 
             Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y), new Point(7 + pos, 20 - (int)StagePos.y), new Point(0 + pos, 30 - (int)StagePos.y) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen,new Point(pos,30 - (int)StagePos.y),new Point(pos,this.Height - (int)StagePos.y));
+            e.Graphics.DrawLine(GrayPen, new Point(pos, 30 - (int)StagePos.y), new Point(pos, this.Height - (int)StagePos.y));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
@@ -290,29 +258,29 @@ namespace Interpole
         public void DrawTimeCode(PaintEventArgs e)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(Convert.ToInt32(5 - StagePos.x ), 60 - (int)StagePos.y),
-                new Size(200, 30));   
+                new Point(5, 60 - (int)StagePos.y),
+                new Size(200, 30));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
 
             mytimecode.Bounds = new Rectangle(
-                new Point(Convert.ToInt32(2 - StagePos.x ), 30 - (int)StagePos.y),
+                new Point(2, 30 - (int)StagePos.y),
                 new Size(200, 60));
 
-            if(ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
-            else e.Graphics.DrawString(Frames2Timecode(playPosFrames,frameRate,false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
-            
+            if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            else e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+
         }
 
         public void DrawFooter(PaintEventArgs e)
         {
-            string Percentage = Convert.ToString(100) + "%";
+            string Percentage = Convert.ToString(Convert.ToInt32(100/Zoom)) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
             //zoom display rectangle
-            
-            footer = new Rectangle(new Point(this.Width - 70 - (int)StagePos.x, this.Height - 55 - (int)StagePos.y), new Size(50, 20)); //update playbar bounds
+
+            footer = new Rectangle(new Point(this.Width - 70, this.Height - 55 - (int)StagePos.y), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
 
             /*
@@ -331,8 +299,8 @@ namespace Interpole
 
             Brush selectbrush = new SolidBrush(Color.FromArgb(50, 255, 255, 255));
             e.Graphics.FillRectangle(selectbrush, selectionRectangle);
-               
-           
+
+
         }
 
         public void DrawSelectedClips(PaintEventArgs e)
@@ -340,45 +308,79 @@ namespace Interpole
 
             if (selectionList.Count > 0)
             {
-                            
+
                 foreach (Clip clip in selectionList)
                 {
                     e.Graphics.FillRectangle(selectbrush, clip.Bounds);
                 }
             }
-            
+
         }
-        
+
         //debug draw for snap positions
         public void DrawSnapPositions(PaintEventArgs e)
         {
-            if(snapPosList.Count > 0)
+            if (snapPosList.Count > 0)
             {
                 Pen DebugPen = new Pen(Color.BlueViolet);
                 foreach (int pos in snapPosList)
                 {
                     e.Graphics.DrawLine(DebugPen, new Point(pos, 30), new Point(pos, 3000));
                 }
-            } 
+            }
         }
 
 
         public void PlaybackMoveStage()
         {
             int pos = playPosFrames;
-            
-            if (pos > this.Width  - StagePos.x)
+
+            if (pos > this.Width - StagePos.x)
             {
                 StagePos.x = (StagePos.x) - this.Width / 2;
                 Invalidate();
             }
 
-            if(pos < Math.Abs(StagePos.x))
+            if (pos < Math.Abs(StagePos.x))
             {
                 StagePos.x = 0 - pos;
                 Invalidate();
             }
 
+        }
+
+        public void Application_Idle(object sender, EventArgs e)
+        {
+            NativeMethods.Message message;
+
+            while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
+            {
+                Render();
+                Thread.Sleep(5);
+            }
+        }
+
+        void Render()
+        {
+            this.Invalidate();
+        }
+
+        static class NativeMethods
+        {
+            [StructLayout(LayoutKind.Sequential)]
+            public struct Message
+            {
+                public IntPtr hWnd;
+                public uint Msg;
+                public IntPtr wParam;
+                public IntPtr lParam;
+                public uint Time;
+                public System.Drawing.Point Point;
+            }
+
+            [DllImport("User32.dll", CharSet = CharSet.Auto)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
         }
 
 
