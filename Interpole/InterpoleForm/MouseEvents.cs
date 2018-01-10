@@ -342,7 +342,7 @@ namespace Interpole
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;
                 StagePos.x += deltaX/Zoom;
-                if (StagePos.x > 0) StagePos.x = 0;
+                //if (StagePos.x > 0) StagePos.x = 0;
                 
             }
 
@@ -378,7 +378,7 @@ namespace Interpole
 
                     int distance = Math.Abs(playPosFrames  - closest);
 
-                    if (distance < 12) playPosFrames = closest;
+                    if (distance < 12/Zoom) playPosFrames = closest;
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }

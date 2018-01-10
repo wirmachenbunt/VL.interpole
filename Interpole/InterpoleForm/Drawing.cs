@@ -30,6 +30,7 @@ namespace Interpole
         SolidBrush darkgrayBrush = new SolidBrush(Color.FromArgb(30, 30, 30));
         SolidBrush brightGrayBrush = new SolidBrush(Color.FromArgb(150, 150, 150));
         SolidBrush whiteBrush = new SolidBrush(Color.FromArgb(200, 200, 200));
+        HatchBrush myHatchBrush = new HatchBrush(HatchStyle.BackwardDiagonal, Color.FromArgb(90, 90, 90), Color.Black);
         Brush selectbrush = new SolidBrush(Color.FromArgb(150, 255, 255, 255));
 
         Pen GrayPen = new Pen(Color.FromArgb(70, 70, 70), 1.0f);
@@ -166,14 +167,18 @@ namespace Interpole
 
         public void DrawPlayBar(PaintEventArgs e)
         {
-            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds
 
-            // show pre-roll
+            // playbar background
+            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds          
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
-            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); //update for hittest
+            //move playbar bounds for hittest
+            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); 
 
             // for workspace hittest
             myworkspace.Bounds = new Rectangle(new Point((int)-StagePos.x, 30 - (int)StagePos.y), new Size((int)(this.Width / Zoom), this.Height));
+
+            // draw negativ workspace
+            e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0,30, (int)(StagePos.x*Zoom), this.Height)); // background
 
             DrawLoopRegion(e);
 

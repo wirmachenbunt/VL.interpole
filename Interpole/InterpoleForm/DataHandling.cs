@@ -116,7 +116,7 @@ namespace Interpole
             {
                 Clip firstClip = selectionList.OrderBy(n => n.StartFrame).First();
                 int distance = firstClip.StartFrame - playPosFrames;
-                if (Math.Abs(distance) < 20)
+                if (Math.Abs(distance) < (20/Zoom))
                 {
                     //FLogger.Log(LogType.Debug, "within distance");
                     foreach (Clip myclip in selectionList)
@@ -152,8 +152,8 @@ namespace Interpole
 
         public void DragDuration(Clip myclip)
         {
-            int start = (myclip.Bounds.X + myclip.Bounds.Width) - (10);
-            int end = myclip.Bounds.X + myclip.Bounds.Width + 5;
+            int start = myclip.Bounds.X + myclip.Bounds.Width - (int)(10 / Zoom);
+            int end = myclip.Bounds.X + myclip.Bounds.Width + (int)(5/Zoom);
 
             
 
