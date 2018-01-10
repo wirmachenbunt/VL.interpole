@@ -180,9 +180,9 @@ namespace Interpole
             return result;
         }
 
-        public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName)
+        public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName, ref int fps)
         {
-            System.Drawing.Size size = new System.Drawing.Size(190, 90);
+            System.Drawing.Size size = new System.Drawing.Size(190, 120);
 
             Form timecodeWindow = new Form();
 
@@ -199,17 +199,25 @@ namespace Interpole
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
             textBox.TabStop = false;
-
-            textBox.Text = TimeCode;
-            
+            textBox.Text = TimeCode;         
             timecodeWindow.Controls.Add(textBox);
 
             System.Windows.Forms.Label timeCodeLabel = new System.Windows.Forms.Label();
-            timeCodeLabel.Location = new System.Drawing.Point(5, 45);
+            timeCodeLabel.Location = new System.Drawing.Point(60, 59);
             timeCodeLabel.Size = new System.Drawing.Size(200, 15);
-            timeCodeLabel.Text = "hh:mm:ss:ff";
+            timeCodeLabel.Text = "FPS";
             timeCodeLabel.ForeColor = Color.FromArgb(110, 110, 110);
             timecodeWindow.Controls.Add(timeCodeLabel);
+
+            System.Windows.Forms.NumericUpDown frameBase = new System.Windows.Forms.NumericUpDown();
+            frameBase.Name = "FrameBase";
+            frameBase.Location = new System.Drawing.Point(6, 56);
+            frameBase.Size = new System.Drawing.Size(50, 20);
+            frameBase.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            frameBase.Maximum = Decimal.MaxValue;
+            frameBase.Value = fps;
+            timecodeWindow.Controls.Add(frameBase);
+
 
             #region buttons
             Button okButton = new Button();
@@ -217,7 +225,7 @@ namespace Interpole
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(90, 23);
             okButton.Text = "&OK";
-            okButton.Location = new System.Drawing.Point(5, 63);
+            okButton.Location = new System.Drawing.Point(5, 93);
             okButton.FlatStyle = FlatStyle.Flat;
             okButton.FlatAppearance.BorderSize = 0;
             okButton.ForeColor = Color.FromArgb(200, 200, 200);
@@ -229,7 +237,7 @@ namespace Interpole
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(90, 23);
             cancelButton.Text = "&Cancel";
-            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 63);
+            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 93);
             cancelButton.FlatStyle = FlatStyle.Flat;
             cancelButton.FlatAppearance.BorderSize = 0;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
@@ -244,6 +252,7 @@ namespace Interpole
             DialogResult myresult = timecodeWindow.ShowDialog();
 
             TimeCode = textBox.Text;
+            fps = Convert.ToInt32(frameBase.Value);
             return myresult;
         }
 

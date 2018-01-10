@@ -113,6 +113,8 @@ namespace Interpole
             pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
             pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
+            //pe.Graphics.FillRectangle(OrangeBrush, myworkspace.Bounds); // debug rectangle workspace
+
             DrawClips(pe);
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
@@ -175,7 +177,7 @@ namespace Interpole
             myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); 
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(new Point((int)-StagePos.x, 30 - (int)StagePos.y), new Size((int)(this.Width / Zoom), this.Height));
+            myworkspace.Bounds = new Rectangle(0, 30 - (int)StagePos.y, (int)(((this.Width/Zoom) - StagePos.x)), this.Height);
 
             // draw negativ workspace
             e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0,30, (int)(StagePos.x*Zoom), this.Height)); // background
@@ -282,7 +284,9 @@ namespace Interpole
 
             if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
-      
+
+            //timecode bounds for hittest
+            mytimecode.Bounds = new Rectangle((int)-StagePos.x, 30 - (int)StagePos.y,(int)(200/Zoom), 60);
         }
 
         public void DrawFooter(PaintEventArgs e)

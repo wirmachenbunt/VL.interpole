@@ -140,11 +140,13 @@ namespace Interpole
         public void EditTimeCode()
         {
             string input = Frames2Timecode(playPosFrames, frameRate, false);
+            int tempFrameRate = frameRate;
 
-            if (TimecodeDialog(ref input, "Edit Timecode") == DialogResult.OK)
+            if (TimecodeDialog(ref input, "Edit Timecode",ref tempFrameRate) == DialogResult.OK)
             {
                 playPosFrames = TimeCode2Frames(input, frameRate);
                 StagePos.x = 0 - playPosFrames;
+                frameRate = tempFrameRate;
                 //Invalidate();
             }
 
