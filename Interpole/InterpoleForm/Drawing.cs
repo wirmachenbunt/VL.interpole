@@ -37,8 +37,8 @@ namespace Interpole
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
         public Vector2D StagePos; //StagePosition
-        //public int timeZoom = 1; // Magnifiy Time on Stage, larger means you see more of time
-        public float Zoom = 1;
+        
+        public float Zoom = 0.25f; // less means you see a greater range of time
 
         public int frameRate = 50;
 
@@ -200,15 +200,20 @@ namespace Interpole
             string time = Convert.ToString(startTime);
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
-            e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(0, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
-            e.Graphics.DrawString(Convert.ToString(roundedTime), rulerFont, whiteBrush, new Rectangle(new Point((int)gap, 30 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+            
+            //e.Graphics.DrawString(Convert.ToString(roundedTime*steps), rulerFont, whiteBrush, new Rectangle(new Point((int)gap, 30 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
 
             
 
             for (int i = 0; i < 20; i++)
             {
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap-1, 15), new Size(1, 10)));
+                if(roundedTime >= 0 )
+                {
+                    e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25), new Size(1, 5)));
+                    e.Graphics.DrawString(Convert.ToString(roundedTime), rulerFont, whiteBrush, new Rectangle((int)gap-3, 5 - (int)StagePos.y, 50, 50), format);
+                }
                 gap += (frameRate) * Zoom * steps ;
+                roundedTime += 1 * steps;
             }
 
             
