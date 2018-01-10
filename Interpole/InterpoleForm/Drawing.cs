@@ -189,7 +189,15 @@ namespace Interpole
 
         public void DrawRuler(PaintEventArgs e)
         {
-            int steps = 10; //seconds
+            int steps = 5; //seconds
+            if (Zoom >= 1) steps = 1;
+            //if (Zoom < 0.75) steps = 2;
+            if (Zoom < 0.5) steps = 5;
+            if (Zoom < 0.25) steps = 10;
+            if (Zoom < 0.1) steps = 30;
+            if (Zoom < 0.034) steps = 120;
+            
+
 
             double startTime = -StagePos.x / frameRate / steps; //canvas starting at point in time in seconds
 
@@ -201,73 +209,22 @@ namespace Interpole
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
             
-            //e.Graphics.DrawString(Convert.ToString(roundedTime*steps), rulerFont, whiteBrush, new Rectangle(new Point((int)gap, 30 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
+            int frames = 0;
 
-            
-
-            for (int i = 0; i < 20; i++)
+            while (gap < this.Width)
             {
-                if(roundedTime >= 0 )
+                frames = Convert.ToInt32(((gap / Zoom) - StagePos.x));
+
+                if (frames >= 0)
                 {
                     e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25), new Size(1, 5)));
-                    e.Graphics.DrawString(Convert.ToString(roundedTime), rulerFont, whiteBrush, new Rectangle((int)gap-3, 5 - (int)StagePos.y, 50, 50), format);
+                    e.Graphics.DrawString(Frames2Timecode(frames,frameRate,true)+"s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y, 50, 50), format);
                 }
-                gap += (frameRate) * Zoom * steps ;
-                roundedTime += 1 * steps;
-            }
 
+                gap += frameRate * Zoom * steps;
+                             
+            }
             
-
-
-            /*
-            while (secondsInPos < this.Width)
-            {
-                secondsIn += 1;
-                time = Convert.ToString(secondsIn);
-                secondsInPos += Convert.ToInt32(frameRate * Zoom);
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point((int)secondsInPos, 5 - (int)StagePos.y), new Size(50, 50)), format); //draw seconds
-            }
-            */
-
-            /*
-            int rulerSteps = 1; //in seconds
-            if (Zoom > 1) rulerSteps = 5;
-            if (Zoom > 4) rulerSteps = 10;
-            if (Zoom > 10) rulerSteps = 20;
-
-            double startRulerPos = Math.Abs(StagePos.x/Zoom);
-            startRulerPos = (startRulerPos / frameRate) / rulerSteps;
-            startRulerPos = Math.Truncate(startRulerPos) * rulerSteps; // hier ist die stelle für die sekunden
-
-            double endRulerPos = ((this.Width + Math.Abs(StagePos.x))) / frameRate;
-
-            for (int i = Convert.ToInt32(startRulerPos); i < Convert.ToInt32(endRulerPos); i += rulerSteps)
-            {
-                int pos = (i * frameRate);
-                int size = 30;
-                int height = 5;
-                int y = 25;
-                int thickness = 1;
-                string timecode = Frames2Timecode(i * frameRate, frameRate, true);
-                string time = (i % 60).ToString() + "s";
-                if (time == "0s")
-                {
-                    time = timecode + "s";
-                    size = 200;
-                    height = 12;
-                    thickness = 3;
-                    y = 17;
-                }
-                stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
-
-
-                e.Graphics.DrawString(time, rulerFont, whiteBrush, new Rectangle(new Point(pos - Convert.ToInt32(stringSize.Width / 2) + 1, 5 - (int)StagePos.y), new Size(size, 50)), format); //draw seconds
-                e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point(pos - (thickness / 2), y - (int)StagePos.y), new Size(thickness, height)));
-            }
-
-            //FLogger.Log(LogType.Debug, countBars.ToString());
-            */
-
         }
 
         public void DrawMarker(PaintEventArgs e)
@@ -330,7 +287,7 @@ namespace Interpole
 
         public void DrawFooter(PaintEventArgs e)
         {
-            string Percentage = Convert.ToString(Convert.ToInt32(100/Zoom)) + "%";
+            string Percentage = Convert.ToString(Convert.ToInt32((100/Zoom))) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
             //zoom display rectangle
