@@ -6,13 +6,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Reflection;
 using System.Drawing;
+using System.Diagnostics;
+using System.IO;
 
 namespace Interpole
 {
     partial class InterpoleForm
     {
         string lastColorName = "Aqua";
-         
+        SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+
         public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName)
         {
             System.Drawing.Size size = new System.Drawing.Size(250, 248);
@@ -256,7 +259,188 @@ namespace Interpole
             return myresult;
         }
 
-        
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.Filter = "XML|*.xml";
+
+            saveFileDialog1.ShowDialog();
+
+
+            if (saveFileDialog1.FileName != "")
+            {
+                Debug.WriteLine(saveFileDialog1.FileName);
+                File.WriteAllText(saveFileDialog1.FileName, SerializeInterpoleData(ipD));
+
+            }
+        }
+
+        public void InitMenuToolStrip()
+        {
+
+            MenuStrip menuStrip1 = new MenuStrip();
+            ToolStripMenuItem menuToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem openToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem saveToolStripMenuItem = new ToolStripMenuItem();
+            //ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
+
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            menuToolStripMenuItem});
+            menuStrip1.Location = new System.Drawing.Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new System.Drawing.Size(284, 24);
+            menuStrip1.TabIndex = 0;
+            menuStrip1.Text = "menuStrip1";
+            menuStrip1.BackColor = Color.FromArgb(20, 20, 20);
+            menuStrip1.ForeColor = Color.FromArgb(200, 200, 200);
+            // 
+            // menuToolStripMenuItem
+            // 
+            menuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            openToolStripMenuItem,
+            saveToolStripMenuItem});
+            menuToolStripMenuItem.Name = "menuToolStripMenuItem";
+            menuToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            menuToolStripMenuItem.Text = "File";
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            openToolStripMenuItem.Text = "Import";
+            openToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            //openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+            // 
+            // saveToolStripMenuItem
+            // 
+            saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+            saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            saveToolStripMenuItem.Text = "Export";
+            saveToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+
+            // 
+            // Form1
+            //        
+
+            Controls.Add(menuStrip1);
+            MainMenuStrip = menuStrip1;
+            menuStrip1.Renderer = new ToolStripProfessionalRenderer(new MyColorTable());
+        }
+
+        public class MyColorTable : ProfessionalColorTable
+        {
+            public override Color ToolStripDropDownBackground
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientMiddle
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuBorder
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuItemBorder
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuItemSelected
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuStripGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuStripGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemSelectedGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemSelectedGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemPressedGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+
+
+            public override Color MenuItemPressedGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+        }
+
+
+
     }
 
 }
