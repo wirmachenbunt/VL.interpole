@@ -37,7 +37,7 @@ namespace Interpole
         Pen DarkPen = new Pen(Color.FromArgb(50, 50, 50), 1.0f);
 
         public Vector2D StagePos; //StagePosition
-        
+
         public float Zoom = 0.25f; // less means you see a greater range of time
 
         public int frameRate = 50;
@@ -96,14 +96,14 @@ namespace Interpole
 
         protected override void OnPaint(PaintEventArgs pe)
         {
-            
+
             pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             pe.Graphics.Clear(MyBackgroundColor);
 
             //transform free stuff//////////////////////////////////////////
 
-            DrawPlayBar(pe);
+            DrawPlayBar(pe, 20);
             DrawPlayHead(pe);
             DrawFooter(pe);
             DrawMarker(pe);
@@ -169,29 +169,29 @@ namespace Interpole
 
         }
 
-        public void DrawPlayBar(PaintEventArgs e)
+        public void DrawPlayBar(PaintEventArgs e, int VerticalPosition)
         {
 
             // playbar background
-            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y), new Size(this.Width, 30)); //update playbar bounds          
+            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y + VerticalPosition), new Size(this.Width, 30)); //update playbar bounds          
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
             //move playbar bounds for hittest
-            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y), new Size((int)(this.Width/Zoom), 30)); 
+            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y + VerticalPosition), new Size((int)(this.Width / Zoom), 30));
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(0, 30 - (int)StagePos.y, (int)(((this.Width/Zoom) - StagePos.x)), this.Height);
+            myworkspace.Bounds = new Rectangle(0, 30 - (int)StagePos.y + VerticalPosition, (int)(((this.Width / Zoom) - StagePos.x)), this.Height);
 
             // draw negativ workspace
-            e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0,30, (int)(StagePos.x*Zoom), this.Height)); // background
+            e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0, 30 + VerticalPosition, (int)(StagePos.x * Zoom), this.Height)); // background
 
             DrawLoopRegion(e);
 
-            DrawRuler(e);
+            DrawRuler(e, VerticalPosition);
 
-            DrawTimeCode(e);
+            DrawTimeCode(e, VerticalPosition);
         }
 
-        public void DrawRuler(PaintEventArgs e)
+        public void DrawRuler(PaintEventArgs e, int VerticalPosition)
         {
             int steps = 5; //seconds
             if (Zoom >= 1) steps = 1;
@@ -200,19 +200,19 @@ namespace Interpole
             if (Zoom < 0.25) steps = 10;
             if (Zoom < 0.1) steps = 30;
             if (Zoom < 0.034) steps = 120;
-            
+
 
 
             double startTime = -StagePos.x / frameRate / steps; //canvas starting at point in time in seconds
 
             double roundedTime = Math.Ceiling(startTime); //round seconds
 
-            double gap = steps *  Math.Abs((startTime - roundedTime) * (frameRate*Zoom)); 
+            double gap = steps * Math.Abs((startTime - roundedTime) * (frameRate * Zoom));
 
             string time = Convert.ToString(startTime);
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
 
-            
+
             int frames = 0;
 
             while (gap < this.Width)
@@ -221,14 +221,14 @@ namespace Interpole
 
                 if (frames >= 0)
                 {
-                    e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25), new Size(1, 5)));
-                    e.Graphics.DrawString(Frames2Timecode(frames,frameRate,true)+"s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y, 50, 50), format);
+                    e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25 + VerticalPosition), new Size(1, 5)));
+                    e.Graphics.DrawString(Frames2Timecode(frames, frameRate, true) + "s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y + VerticalPosition, 50, 50), format);
                 }
 
                 gap += frameRate * Zoom * steps;
-                             
+
             }
-            
+
         }
 
         public void DrawMarker(PaintEventArgs e)
@@ -252,12 +252,12 @@ namespace Interpole
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            int pos = Convert.ToInt32((playPosFrames  + StagePos.x) * Zoom);
+            int pos = Convert.ToInt32((playPosFrames + StagePos.x) * Zoom);
+            int VOffset = 20; ;
 
-
-            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y), new Point(7 + pos, 20 - (int)StagePos.y), new Point(0 + pos, 30 - (int)StagePos.y) }; //play head triangle
+            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y+ VOffset), new Point(7 + pos, VOffset +  20 - (int)StagePos.y), new Point(0 + pos, VOffset + 30 - (int)StagePos.y) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen, new Point(pos, 30 - (int)StagePos.y), new Point(pos, this.Height - (int)StagePos.y));
+            e.Graphics.DrawLine(GrayPen, new Point(pos, VOffset + 30 - (int)StagePos.y), new Point(pos, VOffset + this.Height - (int)StagePos.y));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
@@ -272,28 +272,28 @@ namespace Interpole
             */
         }
 
-        public void DrawTimeCode(PaintEventArgs e)
+        public void DrawTimeCode(PaintEventArgs e, int VerticalPosition)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(5, 60 - (int)StagePos.y),
+                new Point(5, 60 - (int)StagePos.y + VerticalPosition),
                 new Size(200, 30));
 
             e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
-            
+
             mytimecode.Bounds = new Rectangle(
-                new Point(2, 30 - (int)StagePos.y),
+                new Point(2, 30 - (int)StagePos.y + VerticalPosition),
                 new Size(200, 60));
 
             if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             //timecode bounds for hittest
-            mytimecode.Bounds = new Rectangle((int)-StagePos.x, 30 - (int)StagePos.y,(int)(200/Zoom), 60);
+            mytimecode.Bounds = new Rectangle((int)-StagePos.x, 30 - (int)StagePos.y + VerticalPosition, (int)(200 / Zoom), 60);
         }
 
         public void DrawFooter(PaintEventArgs e)
         {
-            string Percentage = Convert.ToString(Convert.ToInt32((100/Zoom))) + "%";
+            string Percentage = Convert.ToString(Convert.ToInt32((100 / Zoom))) + "%";
             var format = new StringFormat() { Alignment = StringAlignment.Far };
 
             //zoom display rectangle
@@ -408,7 +408,7 @@ namespace Interpole
             ToolStripMenuItem menuToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem openToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem saveToolStripMenuItem = new ToolStripMenuItem();
-            ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
+            //ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
 
             // 
             // menuStrip1
@@ -427,8 +427,7 @@ namespace Interpole
             // 
             menuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             openToolStripMenuItem,
-            saveToolStripMenuItem,
-            exitToolStripMenuItem});
+            saveToolStripMenuItem});
             menuToolStripMenuItem.Name = "menuToolStripMenuItem";
             menuToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             menuToolStripMenuItem.Text = "File";
@@ -437,25 +436,134 @@ namespace Interpole
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
             openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            openToolStripMenuItem.Text = "Open";
+            openToolStripMenuItem.Text = "Import";
+            openToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
             // 
             // saveToolStripMenuItem
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            saveToolStripMenuItem.Text = "Save";
-            // 
-            // exitToolStripMenuItem
-            // 
-            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            exitToolStripMenuItem.Text = "Exit";
+            saveToolStripMenuItem.Text = "Export";
+            saveToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+
             // 
             // Form1
             //        
+
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
+            menuStrip1.Renderer = new ToolStripProfessionalRenderer(new MyColorTable());
         }
+
+        public class MyColorTable : ProfessionalColorTable
+        {
+            public override Color ToolStripDropDownBackground
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientMiddle
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color ImageMarginGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuBorder
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuItemBorder
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuItemSelected
+            {
+                get
+                {
+                    return Color.FromArgb(90, 90, 90);
+                }
+            }
+
+            public override Color MenuStripGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuStripGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemSelectedGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemSelectedGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+            public override Color MenuItemPressedGradientBegin
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+
+
+
+            public override Color MenuItemPressedGradientEnd
+            {
+                get
+                {
+                    return Color.FromArgb(20, 20, 20);
+                }
+            }
+        }
+
 
 
         /*
@@ -479,27 +587,27 @@ namespace Interpole
 
         public void HideWindow()
         {
-           
+
             if(IsVisible)
             {
                 var myPath = FPluginHost.GetNodePath(false);
                 var selfAsNode = FHdeHost.GetNodeFromPath(myPath);
                 FHdeHost.SetComponentMode(selfAsNode, ComponentMode.Hidden);
             }
-            
+
 
         }
 
         public void ShowWindow()
         {
-           
+
             if(!IsVisible)
             {
                 var myPath = FPluginHost.GetNodePath(false);
                 var selfAsNode = FHdeHost.GetNodeFromPath(myPath);
                 FHdeHost.SetComponentMode(selfAsNode, ComponentMode.InAWindow);
             }
-            
+
 
         }
 
