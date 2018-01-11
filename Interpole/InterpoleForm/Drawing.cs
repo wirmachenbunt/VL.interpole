@@ -80,6 +80,8 @@ namespace Interpole
             this.DoubleBuffered = true;
             g = this.CreateGraphics();
 
+            InitMenuToolStrip();
+
             //bind events
             MouseMove += Form1_MouseMove; //mouse move event
             MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
@@ -397,6 +399,62 @@ namespace Interpole
             [DllImport("User32.dll", CharSet = CharSet.Auto)]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool PeekMessage(out Message message, IntPtr hWnd, uint filterMin, uint filterMax, uint flags);
+        }
+
+        public void InitMenuToolStrip()
+        {
+
+            MenuStrip menuStrip1 = new MenuStrip();
+            ToolStripMenuItem menuToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem openToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem saveToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
+
+            // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            menuToolStripMenuItem});
+            menuStrip1.Location = new System.Drawing.Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new System.Drawing.Size(284, 24);
+            menuStrip1.TabIndex = 0;
+            menuStrip1.Text = "menuStrip1";
+            menuStrip1.BackColor = Color.FromArgb(20, 20, 20);
+            menuStrip1.ForeColor = Color.FromArgb(200, 200, 200);
+            // 
+            // menuToolStripMenuItem
+            // 
+            menuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            openToolStripMenuItem,
+            saveToolStripMenuItem,
+            exitToolStripMenuItem});
+            menuToolStripMenuItem.Name = "menuToolStripMenuItem";
+            menuToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            menuToolStripMenuItem.Text = "File";
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            openToolStripMenuItem.Text = "Open";
+            // 
+            // saveToolStripMenuItem
+            // 
+            saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+            saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            saveToolStripMenuItem.Text = "Save";
+            // 
+            // exitToolStripMenuItem
+            // 
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            exitToolStripMenuItem.Text = "Exit";
+            // 
+            // Form1
+            //        
+            Controls.Add(menuStrip1);
+            MainMenuStrip = menuStrip1;
         }
 
 
