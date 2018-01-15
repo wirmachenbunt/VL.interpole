@@ -10,6 +10,7 @@ using VVVV.Utils.VMath;
 using Interpole;
 using VVVV.Core.Logging;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace VVVV.Nodes
 {
@@ -42,9 +43,15 @@ namespace VVVV.Nodes
         void InitializeForm()
         {
             interpoleForm = new InterpoleForm();
+            interpoleForm.ChangedInterpoleData += new InterpoleForm.ChangedInterpoleHandler(UpdateConfigs);
             
             // Use ShowDialog as it starts its own main loop - using Show alone the window just disappears
             interpoleForm.ShowDialog();
+        }
+
+        private void UpdateConfigs(InterpoleForm interpoleForm, EventArgs e)
+        {
+            Debug.WriteLine("Event raised");
         }
 
         void CleanupForm()

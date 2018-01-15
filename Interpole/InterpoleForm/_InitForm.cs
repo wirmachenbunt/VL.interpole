@@ -11,6 +11,7 @@ using VVVV.PluginInterfaces.V2;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Interpole
 {
@@ -19,6 +20,9 @@ namespace Interpole
         #region variables
 
         public InterpoleData ipD;
+
+        public event ChangedInterpoleHandler ChangedInterpoleData;
+        public delegate void ChangedInterpoleHandler(InterpoleForm interpoleForm, EventArgs e);
 
         //public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
@@ -41,7 +45,9 @@ namespace Interpole
         {
             InitObjects(); // init interpole data object with all infos
             InitializeComponent();
-            
+
+            this.ResizeEnd += Window_Resize;
+
         }
 
         public void InitObjects()
@@ -58,6 +64,13 @@ namespace Interpole
             ipD.UILock = false;
         }
 
+        void Window_Resize(object sender, EventArgs e)
+        {
+            ipD.WLocation = this.Location;
+            ipD.WSize = this.Size;
+            Debug.WriteLine("resize");
 
+            ChangedInterpoleData(this, e);
+        }
     }
 }
