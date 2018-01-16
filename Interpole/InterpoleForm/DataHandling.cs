@@ -222,19 +222,14 @@ namespace Interpole
             */
         }
 
+        //
+        //(De)Serialisation of clip list
+        //
         public static string SerializeClipList(List<Clip> myList)
         {
             StringWriter sw = new StringWriter();
             XmlSerializer s = new XmlSerializer(myList.GetType());
             s.Serialize(sw, myList);
-            return sw.ToString();
-        }
-
-        public static string SerializeInterpoleData(InterpoleData myipD)
-        {
-            StringWriter sw = new StringWriter();
-            XmlSerializer s = new XmlSerializer(myipD.GetType());
-            s.Serialize(sw, myipD);
             return sw.ToString();
         }
 
@@ -244,6 +239,26 @@ namespace Interpole
             List<Clip> newList = (List<Clip>)xs.Deserialize(new StringReader(data));
             return newList;
         }
+        //
+
+        //
+        //(De)Serialisation of interpole data
+        //
+        public static InterpoleData DeserializeInterpoleData(string data)
+        {
+            XmlSerializer xs = new XmlSerializer(typeof(InterpoleData));
+            InterpoleData newInterpoleData = (InterpoleData)xs.Deserialize(new StringReader(data));
+            return newInterpoleData;
+        }
+
+        public static string SerializeInterpoleData(InterpoleData myipD)
+        {
+            StringWriter sw = new StringWriter();
+            XmlSerializer s = new XmlSerializer(myipD.GetType());
+            s.Serialize(sw, myipD);
+            return sw.ToString();
+        }
+        //
 
         public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
         {

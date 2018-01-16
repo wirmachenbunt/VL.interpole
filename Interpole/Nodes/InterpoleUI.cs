@@ -11,6 +11,7 @@ using Interpole;
 using VVVV.Core.Logging;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace VVVV.Nodes
 {
@@ -21,6 +22,9 @@ namespace VVVV.Nodes
         Thread FUIThread;
         public InterpoleForm interpoleForm;
 
+        [Config("InterpoleData")]
+        ISpread<string> InterpoleXML;
+
         [Output("XML")]
         ISpread<string> FXMLOut;
 
@@ -30,8 +34,8 @@ namespace VVVV.Nodes
         public InterpoleUI()
         {
             FUIThread = new Thread(InitializeForm);
-            FUIThread.SetApartmentState(ApartmentState.STA);            
-            FUIThread.Start();          
+            FUIThread.SetApartmentState(ApartmentState.STA);
+            FUIThread.Start();
         }
 
         public void Dispose()
@@ -43,15 +47,27 @@ namespace VVVV.Nodes
         void InitializeForm()
         {
             interpoleForm = new InterpoleForm();
-            interpoleForm.ChangedInterpoleData += new InterpoleForm.ChangedInterpoleHandler(UpdateConfigs);
-            
+            interpoleForm.Changed += new InterpoleForm.ChangedHandler(UpdateConfigs);
+
+            //load saved interpole settings
+            if (InterpoleXML[0].Length > 10)
+            {
+                interpoleForm.ipD = InterpoleForm.DeserializeInterpoleData(InterpoleXML[0]);
+                interpoleForm.Location = interpoleForm.ipD.WLocation;
+                interpoleForm.Size = interpoleForm.ipD.WSize;
+                Debug.WriteLine("import sucessful");
+            }
+          
+
             // Use ShowDialog as it starts its own main loop - using Show alone the window just disappears
             interpoleForm.ShowDialog();
         }
 
+        //set vvvv config pins with fresh XML data
         private void UpdateConfigs(InterpoleForm interpoleForm, EventArgs e)
         {
-            Debug.WriteLine("Event raised");
+            //Debug.WriteLine("Event raised");
+            InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
         }
 
         void CleanupForm()
@@ -66,12 +82,12 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                FXMLOut[0] = interpoleForm.InterpoleXML;           
+                FXMLOut[0] = interpoleForm.InterpoleXML;
                 FInterpoleOut[0] = this;
             }
             //FMyForm.Invoke((Action)InvalidateForm);
             //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       
-            
+
         }
     }
 }

@@ -61,41 +61,6 @@ namespace Interpole
 
         #endregion
 
-        private void InitializeComponent()
-        {
-            Application.Idle += new EventHandler(Application_Idle);
-
-            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            this.SetStyle(ControlStyles.Opaque, true);
-            this.SetStyle(ControlStyles.ResizeRedraw, true);
-            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-
-            this.ShowIcon = false;
-
-            this.Name = "Interpole";
-            this.Text = "Interpole";
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-            this.ControlBox = false;
-
-            this.DoubleBuffered = true;
-            g = this.CreateGraphics();
-
-            InitMenuToolStrip();
-
-            //bind events
-            MouseMove += Form1_MouseMove; //mouse move event
-            MouseDoubleClick += Form1_MouseDoubleClick; //mouse click event
-            MouseDown += Form1_MouseDown; //mouse down event
-            MouseUp += Form1_MouseUp;
-            MouseWheel += Form1_MouseWheel;
-            KeyDown += Form_Keydown;
-
-            this.Location = ipD.WLocation;
-            this.Size = ipD.WSize;
-        }
-
         protected override void OnPaint(PaintEventArgs pe)
         {
 
