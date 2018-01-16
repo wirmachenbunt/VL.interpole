@@ -11,6 +11,7 @@ using VVVV.Nodes;
 using Interpole;
 
 using VVVV.Core.Logging;
+using System.Collections.Generic;
 #endregion usings
 
 namespace VVVV.Nodes
@@ -26,6 +27,9 @@ namespace VVVV.Nodes
     {
         #region fields & pins    
 
+        [Input("InterpoleUI")]
+        public Pin<InterpoleUI> FInterpoleIn;
+
         [Input("Play")]
         public IDiffSpread<bool> FPlay;
 
@@ -38,13 +42,15 @@ namespace VVVV.Nodes
         [Input("Set Frame Clock")]
         public IDiffSpread<bool> FSetExternalClock;
 
-        [Input("InterpoleIn")]
-        public Pin<InterpoleUI> FInterpoleIn;
+        [Output("PlayHead (f)")]
+        public ISpread<int> FPlayHead;
 
-        [Output("ClipXML")]
-        public ISpread<string> ClipXMLOut;
+        [Output("InterpoleData")]
+        public ISpread<InterpoleCoreNode> FInterpoleData;
 
         int PlayHead = 0;
+
+        public List<InterpoleForm.Clip> clipList = new List<InterpoleForm.Clip>();
 
         [Import()]
         public ILogger FLogger;
@@ -55,8 +61,6 @@ namespace VVVV.Nodes
         {
             FInterpoleIn.Connected += Input_Connected;
             FInterpoleIn.Disconnected += Input_Disconnected;
-
-
         }
 
         private void Input_Disconnected(object sender, PinConnectionEventArgs args)
@@ -66,24 +70,42 @@ namespace VVVV.Nodes
 
         private void Input_Connected(object sender, PinConnectionEventArgs args)
         {
-
             FLogger.Log(LogType.Debug, "connected");
+        }
+
+        private void UpdateOutput()
+        {
+            //publish playhead of core
+            FPlayHead[0] = PlayHead;
+
+            // get clip list from UI
+            clipList = FInterpoleIn[0].interpoleForm.ipD.ClipList;
+
+            //publish core data
+            FInterpoleData[0] = this; 
         }
 
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null) // only do this when there is a connection to the UI
+            // only do this when there is a connection to the UI
+            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null) 
             {
-                if (FInterpoleIn[0].interpoleForm.play) // UI is playing, get core playhead to UI
+                // if playing, set UI playhead
+                if (FInterpoleIn[0].interpoleForm.play)
                 {
+                    //iterate playhead
                     PlayHead++;
+
+                    //set playhead
                     FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead;
                 }
-                else PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead; //if UI is not playing, get UI playhead to core
+                //if not playing, get UI playhead position
+                else PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead; 
 
-                
+                //update all outputs
+                UpdateOutput();
             }
 
             //FLogger.Log(LogType.Debug, "nope"); 

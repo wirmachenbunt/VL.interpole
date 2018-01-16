@@ -10,6 +10,7 @@ using VVVV.Utils.VMath;
 
 
 using VVVV.Core.Logging;
+using Interpole;
 #endregion usings
 
 namespace VVVV.Nodes
@@ -26,8 +27,11 @@ namespace VVVV.Nodes
         #region fields & pins
 
         [Input("Interpole")]
-        public Pin<Interpole> InterpoleIn;
-                  
+        public ISpread<InterpoleCoreNode> InterpoleIn;
+
+        [Input("Update", IsBang = true)]
+        public IDiffSpread<bool> FUpdate;
+
         [Output("ClipNames")]
         public ISpread<string> FNames;
 
@@ -49,14 +53,14 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
-            if(InterpoleIn[0] != null)
+            if(InterpoleIn[0] != null && FUpdate.IsChanged && FUpdate[0])
             {
                 FNames.SliceCount = 0;
                 FStartFrame.SliceCount = 0;
                 FDuration.SliceCount = 0;
                 FColor.SliceCount = 0;
 
-                foreach (Interpole.Clip myclip in InterpoleIn[0].clipList)
+                foreach (InterpoleForm.Clip myclip in InterpoleIn[0].clipList)
                 {
                     FNames.Add(myclip.Name);
                     FStartFrame.Add(myclip.StartFrame);
@@ -65,10 +69,6 @@ namespace VVVV.Nodes
                 }
             }
 
-            
-
-
-            //FLogger.Log(LogType.Debug, "hi tty!");
         }
     }
 }

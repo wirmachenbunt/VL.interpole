@@ -15,6 +15,7 @@ namespace Interpole
     {
         string lastColorName = "Aqua";
         SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+        OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
         public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName)
         {
@@ -259,6 +260,7 @@ namespace Interpole
             return myresult;
         }
 
+        //export interpole data to xml file
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveFileDialog1.Filter = "XML|*.xml";
@@ -271,6 +273,25 @@ namespace Interpole
                 Debug.WriteLine(saveFileDialog1.FileName);
                 File.WriteAllText(saveFileDialog1.FileName, SerializeInterpoleData(ipD));
 
+            }
+        }
+
+        //import interpole data from xml file
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.Filter = "XML|*.xml";
+            DialogResult result = openFileDialog1.ShowDialog(); // Show the dialog.
+            if (result == DialogResult.OK) // Test result.
+            {
+                string file = openFileDialog1.FileName;
+                try
+                {
+                    //string text = File.ReadAllText(file);
+                    ipD = DeserializeInterpoleData(File.ReadAllText(file));
+                }
+                catch (IOException)
+                {
+                }
             }
         }
 
@@ -311,7 +332,7 @@ namespace Interpole
             openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             openToolStripMenuItem.Text = "Import";
             openToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
-            //openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+            openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 

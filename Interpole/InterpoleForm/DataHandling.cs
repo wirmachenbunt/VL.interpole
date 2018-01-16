@@ -145,6 +145,7 @@ namespace Interpole
                 ipD.PlayHead = TimeCode2Frames(input, tempFrameRate);
                 StagePos.x = 0 - ipD.PlayHead;
                 ipD.FrameRate = tempFrameRate;
+                Changed(this, EventArgs.Empty);
             }
 
         }

@@ -75,12 +75,12 @@ namespace VVVV.Nodes
         }
 
 
-        public string Frames2Timecode(int frameCount, int ipD.FrameRate, bool isruler)
+        public string Frames2Timecode(int PlayHead, int FrameRate, bool isruler)
         {
-            int Frames = frameCount % ipD.FrameRate;
-            int Seconds = (int)Math.Floor(frameCount / (double)ipD.FrameRate) % 60;
-            int Minutes = (int)Math.Floor(frameCount / (ipD.FrameRate * 60d)) % 60;
-            int Hours = (int)Math.Floor(frameCount / (ipD.FrameRate * 60 * 60d)) % 24;
+            int Frames = PlayHead % FrameRate;
+            int Seconds = (int)Math.Floor(PlayHead / (double)FrameRate) % 60;
+            int Minutes = (int)Math.Floor(PlayHead / (FrameRate * 60d)) % 60;
+            int Hours = (int)Math.Floor(PlayHead / (FrameRate * 60 * 60d)) % 24;
             if (isruler) return $"{Minutes:D2}:{Seconds:D2}";
             else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
 

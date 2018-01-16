@@ -25,9 +25,6 @@ namespace VVVV.Nodes
         [Config("InterpoleData")]
         ISpread<string> InterpoleXML;
 
-        [Output("XML")]
-        ISpread<string> FXMLOut;
-
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
 
@@ -83,12 +80,8 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                FXMLOut[0] = interpoleForm.InterpoleXML;
                 FInterpoleOut[0] = this;
             }
-            //FMyForm.Invoke((Action)InvalidateForm);
-            //FMyForm.Invoke((Action)(() => FMyLabel.Text = value));       
-
         }
     }
 }
