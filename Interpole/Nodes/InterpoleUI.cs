@@ -53,8 +53,10 @@ namespace VVVV.Nodes
             if (InterpoleXML[0].Length > 10)
             {
                 interpoleForm.ipD = InterpoleForm.DeserializeInterpoleData(InterpoleXML[0]);
+
                 interpoleForm.Location = interpoleForm.ipD.WLocation;
                 interpoleForm.Size = interpoleForm.ipD.WSize;
+                interpoleForm.playPosFrames = interpoleForm.ipD.PlayHead;
                 Debug.WriteLine("import sucessful");
             }
           

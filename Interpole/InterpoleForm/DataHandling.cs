@@ -147,7 +147,7 @@ namespace Interpole
                 playPosFrames = TimeCode2Frames(input, frameRate);
                 StagePos.x = 0 - playPosFrames;
                 frameRate = tempFrameRate;
-                //Invalidate();
+                ipD.FrameRate = frameRate;
             }
 
         }

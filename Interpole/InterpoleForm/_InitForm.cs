@@ -58,13 +58,15 @@ namespace Interpole
 
         public void InitObjects()
         {
-                ipD = new InterpoleData();
-                ipD.ClipList = new List<Clip>();
-                ipD.Loop = false;
-                ipD.MarkerList = new List<Marker>();
-                ipD.WLocation = new Point(10, 10); //window location
-                ipD.WSize = new Size(600, 400); // window size
-                ipD.UILock = false; 
+            ipD = new InterpoleData();
+            ipD.ClipList = new List<Clip>();
+            ipD.Loop = false;
+            ipD.MarkerList = new List<Marker>();
+            ipD.WLocation = new Point(10, 10); //window location
+            ipD.WSize = new Size(600, 400); // window size
+            ipD.UILock = false;
+            ipD.PlayHead = 0;
+            ipD.FrameRate = 60;
         }
 
         private void InitializeComponent()
@@ -102,7 +104,7 @@ namespace Interpole
             this.Size = ipD.WSize;
         }
 
-        void UpdateInterpoleString(object sender,EventArgs e) 
+        void UpdateInterpoleString(object sender, EventArgs e)
         {
             InterpoleDataSerialized = SerializeInterpoleData(ipD);
         }

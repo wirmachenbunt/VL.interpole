@@ -382,7 +382,7 @@ namespace Interpole
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
-                //Invalidate(); //redraw
+                ipD.PlayHead = playPosFrames;
             }
         }
 
