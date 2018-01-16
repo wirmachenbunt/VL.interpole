@@ -11,6 +11,7 @@ using VVVV.Nodes;
 
 
 using VVVV.Core.Logging;
+using Interpole;
 #endregion usings
 
 namespace VVVV.Nodes
@@ -27,7 +28,7 @@ namespace VVVV.Nodes
         #region fields & pins
         
         [Input("Interpole", IsSingle = true)]
-        protected Pin<Interpole> FInterpoleIn;
+        protected Pin<InterpoleCoreNode> FInterpoleIn;
 
         // clip name
         protected IDiffSpread<EnumEntry> FNameIn;
@@ -115,7 +116,7 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        public double CalcFade(Interpole.Clip clip, int clipPos)
+        public double CalcFade(InterpoleForm.Clip clip, int clipPos)
         {
             double value = 0.0;
             value = 1f / clip.FadeIn * clipPos;
@@ -148,12 +149,12 @@ namespace VVVV.Nodes
             {
                 ResetSliceCount();
 
-                int framePos = FInterpoleIn[0].ipD.PlayHead;
-                int ipD.FrameRate = FInterpoleIn[0].Framerate[0];
+                int framePos = FInterpoleIn[0].PlayHead;
+                int FrameRate = FInterpoleIn[0].FrameRate;
 
                 for (int i = 0; i < FNameIn.SliceCount; i++)
                 {
-                    Interpole.Clip clip = FInterpoleIn[0].clipList.Where(
+                    InterpoleForm.Clip clip = FInterpoleIn[0].clipList.Where(
                         c => c.Name == FNameIn[i] &&
                         c.StartFrame <= framePos &&
                         c.StartFrame + c.Duration > framePos)
@@ -170,7 +171,7 @@ namespace VVVV.Nodes
                     if(FIsActiveOut[i])
                     {
                         FNormalizedOut.Add((double)clipFramePos / clip.Duration);
-                        FSecondsOut.Add((double)clipFramePos / ipD.FrameRate);
+                        FSecondsOut.Add((double)clipFramePos / FrameRate);
                         FFadeOut.Add(CalcFade(clip, clipFramePos));
                         FPositionOut.Add(clipFramePos);
                     }
@@ -198,7 +199,7 @@ namespace VVVV.Nodes
         {
             if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                if (FInterpoleIn[0].needsUpdate || FNameIn.IsChanged || !FValid)
+                if (FNameIn.IsChanged || !FValid) //FInterpoleIn[0].needsUpdate needs new solution
                 {
                     UpdateEnum();
                     FValid = true;

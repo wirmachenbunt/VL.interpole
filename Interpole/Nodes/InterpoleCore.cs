@@ -51,6 +51,7 @@ namespace VVVV.Nodes
         public int PlayHead = 0;
         public bool Play = false;
         public int FrameRate;
+        public bool needsUpdate = false;
 
         public List<InterpoleForm.Clip> clipList = new List<InterpoleForm.Clip>();
 
@@ -75,6 +76,7 @@ namespace VVVV.Nodes
             FLogger.Log(LogType.Debug, "connected");
         }
 
+        
         private void UpdateOutput()
         {
             //publish playhead of core
