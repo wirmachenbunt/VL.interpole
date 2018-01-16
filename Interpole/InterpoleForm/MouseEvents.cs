@@ -49,7 +49,7 @@ namespace Interpole
         {
             if (hitObject is Clip && rememberLastFunction == "dragclip")
             {
-                UpdateClipXML();
+                UpdateXML();
             }
 
             InterpoleXML = SerializeInterpoleData(ipD);
@@ -382,7 +382,6 @@ namespace Interpole
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
-                ipD.PlayHead = ipD.PlayHead;
             }
         }
 

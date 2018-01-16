@@ -48,7 +48,7 @@ namespace Interpole
                 });
 
                 lastColorName = colorName;
-                UpdateClipXML();
+                UpdateXML();
             }
         }
 
@@ -75,7 +75,7 @@ namespace Interpole
                 clip.Variable = variable;
                 clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
                 lastColorName = colorName;
-                UpdateClipXML();
+                UpdateXML();
             }
         }
 
@@ -92,7 +92,6 @@ namespace Interpole
                     myclip.Bounds = new Rectangle(new Point(dragHorizontal, myclip.Bounds.Location.Y), myclip.Bounds.Size);
                     myclip.StartFrame = dragHorizontal;
                     rememberLastFunction = "dragclip";
-                    //Invalidate(); //redraw
                 }
             }
 
@@ -107,7 +106,6 @@ namespace Interpole
                     if (dragVertical < 0) dragVertical = 0;
                     myclip.Bounds = new Rectangle(new Point(myclip.Bounds.Location.X, dragVertical), myclip.Bounds.Size);
                     rememberLastFunction = "dragclip";
-                    //Invalidate(); //redraw
                 }
             }
 
@@ -134,7 +132,7 @@ namespace Interpole
         {
             PushUndoStep();
             ipD.ClipList.Remove(clip);
-            UpdateClipXML();
+            UpdateXML();
         }
 
         public void EditTimeCode()
@@ -144,10 +142,9 @@ namespace Interpole
 
             if (TimecodeDialog(ref input, "Edit Timecode",ref tempFrameRate) == DialogResult.OK)
             {
-                ipD.PlayHead = TimeCode2Frames(input, ipD.FrameRate);
+                ipD.PlayHead = TimeCode2Frames(input, tempFrameRate);
                 StagePos.x = 0 - ipD.PlayHead;
                 ipD.FrameRate = tempFrameRate;
-                ipD.FrameRate = ipD.FrameRate;
             }
 
         }
@@ -202,23 +199,17 @@ namespace Interpole
             undoXML.Push(tempXML); //add undo save point to stack
 
             Debug.WriteLine("undoSteps:" + undoXML.Count.ToString());
+            
         }
 
-        private void UpdateClipXML()
+        private void UpdateXML()
         {
-            /*
-            string tempXML = SerializeClipList(clipList); //convert list of objects to string
-
-            ClipXML[0] = tempXML; //save config
-
-            needsUpdate = true; //inform getclip about change
-            
+            Changed(this, EventArgs.Empty);
+            Debug.WriteLine("save data");
             rememberLastFunction = "updateXML"; //remember action
-
-            ClipXMLOut[0] = tempXML;
-
-            //tty messages
-            FLogger.Log(LogType.Debug, "Update XML");
+           
+            /*
+            needsUpdate = true; //inform getclip about change
             */
         }
 
@@ -328,7 +319,7 @@ namespace Interpole
                     Color = myclip.Color
                 });
             }
-            UpdateClipXML();
+            UpdateXML();
         }
 
         public void CopyClips()
@@ -347,7 +338,7 @@ namespace Interpole
             {
                 ipD.ClipList.Remove(myclip);
             }
-            UpdateClipXML();
+            UpdateXML();
         }
 
     }

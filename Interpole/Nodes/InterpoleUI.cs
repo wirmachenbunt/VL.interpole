@@ -56,7 +56,7 @@ namespace VVVV.Nodes
 
                 interpoleForm.Location = interpoleForm.ipD.WLocation;
                 interpoleForm.Size = interpoleForm.ipD.WSize;
-                interpoleForm.ipD.PlayHead = interpoleForm.ipD.PlayHead;
+
                 Debug.WriteLine("import sucessful");
             }
           
@@ -68,7 +68,6 @@ namespace VVVV.Nodes
         //set vvvv config pins with fresh XML data
         private void UpdateConfigs(InterpoleForm interpoleForm, EventArgs e)
         {
-            //Debug.WriteLine("Event raised");
             InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
         }
 
