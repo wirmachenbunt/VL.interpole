@@ -48,7 +48,9 @@ namespace VVVV.Nodes
         [Output("InterpoleData")]
         public ISpread<InterpoleCoreNode> FInterpoleData;
 
-        int PlayHead = 0;
+        public int PlayHead = 0;
+        public bool Play = false;
+        public int FrameRate;
 
         public List<InterpoleForm.Clip> clipList = new List<InterpoleForm.Clip>();
 
@@ -81,6 +83,8 @@ namespace VVVV.Nodes
             // get clip list from UI
             clipList = FInterpoleIn[0].interpoleForm.ipD.ClipList;
 
+            FrameRate = FInterpoleIn[0].interpoleForm.ipD.FrameRate;
+
             //publish core data
             FInterpoleData[0] = this; 
         }
@@ -97,12 +101,16 @@ namespace VVVV.Nodes
                 {
                     //iterate playhead
                     PlayHead++;
-
+                    Play = true;
                     //set playhead
                     FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead;
                 }
                 //if not playing, get UI playhead position
-                else PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead; 
+                else
+                {
+                    PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead;
+                    Play = false;
+                }
 
                 //update all outputs
                 UpdateOutput();

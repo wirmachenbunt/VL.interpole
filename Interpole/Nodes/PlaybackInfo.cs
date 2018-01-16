@@ -28,7 +28,7 @@ namespace VVVV.Nodes
         
 
         [Input("Interpole")]
-        public Pin<Interpole> InterpoleIn;
+        public Pin<InterpoleCoreNode> InterpoleIn;
 
         [Output("Play")]
         public ISpread<bool> FPlay;
@@ -39,11 +39,11 @@ namespace VVVV.Nodes
         [Output("TimeCodeString")]
         public ISpread<string> FTimeCodeString;
 
-        [Output("TimeJump")]
-        public ISpread<bool> FTimeJump;
+        //[Output("TimeJump")]
+        //public ISpread<bool> FTimeJump;
 
-        int tempPlayPosFrames = 0;
-        bool wasPlaying = false;
+        //int tempPlayPosFrames = 0;
+        //bool wasPlaying = false;
 
         [Import()]
         public ILogger FLogger;
@@ -91,19 +91,21 @@ namespace VVVV.Nodes
         {
             try // fixes missing clip bug, when deleting a choosen clip
             {
-                FPlay[0] = InterpoleIn[0].play;
-                FSeconds[0] = (double)InterpoleIn[0].ipD.PlayHead / InterpoleIn[0].Framerate[0];
+                FPlay[0] = InterpoleIn[0].Play;
+                FSeconds[0] = (double)InterpoleIn[0].PlayHead / InterpoleIn[0].FrameRate;
 
                 // Timejump when looping
                 
+                /*
                 if(!wasPlaying && FPlay[0] ||
                     !InterpoleIn[0].FSetTimecode[0] && InterpoleIn[0].FIsLoop[0] &&
                 InterpoleIn[0].ipD.PlayHead == InterpoleIn[0].FLoopRegion[0] ||
                 (Math.Abs(tempPlayPosFrames - InterpoleIn[0].ipD.PlayHead) > 10)) FTimeJump[0] = true;
                 else FTimeJump[0] = false;
+                */
 
-                wasPlaying = FPlay[0];
-                tempPlayPosFrames = InterpoleIn[0].ipD.PlayHead;
+                //wasPlaying = FPlay[0];
+                //tempPlayPosFrames = InterpoleIn[0].ipD.PlayHead;
                 //FLogger.Log(LogType.Debug, "GetClip");
             }
             catch { }
@@ -120,7 +122,7 @@ namespace VVVV.Nodes
                 if (InterpoleIn[0].clipList.Count > 0)
                 {            
                     UpdateOutputs();
-                    FTimeCodeString[0] = Frames2Timecode(InterpoleIn[0].ipD.PlayHead, InterpoleIn[0].Framerate[0], false);
+                    FTimeCodeString[0] = Frames2Timecode(InterpoleIn[0].PlayHead, InterpoleIn[0].FrameRate, false);
                 }
             }
         }
