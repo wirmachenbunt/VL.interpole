@@ -204,8 +204,8 @@ namespace VVVV.Nodes
 
         private void UpdateOutputs()
         {
-            int framePos = FInterpoleIn[0].playPosFrames;
-            int frameRate = FInterpoleIn[0].Framerate[0];
+            int framePos = FInterpoleIn[0].ipD.PlayHead;
+            int ipD.FrameRate = FInterpoleIn[0].Framerate[0];
 
             int count = 0;
 
@@ -220,7 +220,7 @@ namespace VVVV.Nodes
 
                     // TODO: try to find a way to iterate only on the relevant ones
                     FNormalizedOut[x + count] = (double)clipFramePos / clip.Duration;
-                    FSecondsOut[x + count] = (double)clipFramePos / frameRate;
+                    FSecondsOut[x + count] = (double)clipFramePos / ipD.FrameRate;
                     FFadeOut[x + count] = CalcFade(clip, clipFramePos);
                     FIsActiveOut[x + count] = clipFramePos > 0 && clipFramePos < clip.Duration ? true : false;
                     FPositionOut[x + count] = clipFramePos;

@@ -153,11 +153,11 @@ namespace VVVV.Nodes
 
             if (play && !FSetTimecode[0])
             {
-                playPosFrames += 1;
+                ipD.PlayHead += 1;
 
                 PlaybackMoveStage(); // scroll stage when playback
 
-                int pos = playPosFrames/timeZoom;
+                int pos = ipD.PlayHead/timeZoom;
 
                 //playHeadInvalidate = new Rectangle(new Point(pos-10 + StagePos.X, 0), new Size(20,this.Height)); //invalidate area for playhead
                 //Invalidate(new Rectangle(new Point(mytimecode.Bounds.X + StagePos.X, mytimecode.Bounds.Y + StagePos.Y),mytimecode.Bounds.Size)); // invalidate timecode display
@@ -166,16 +166,16 @@ namespace VVVV.Nodes
             } else if (FSetTimecode[0] && FTimecode[0] != null) // control playback by external timecode
             {
                 play = false;
-                playPosFrames = FTimecode[0].Frames + (FTimecode[0].Seconds * Framerate[0]) + (FTimecode[0].Minutes * 60 * Framerate[0]) + (FTimecode[0].Hours * 60 * 60 * Framerate[0]);
+                ipD.PlayHead = FTimecode[0].Frames + (FTimecode[0].Seconds * Framerate[0]) + (FTimecode[0].Minutes * 60 * Framerate[0]) + (FTimecode[0].Hours * 60 * 60 * Framerate[0]);
                 PlaybackMoveStage(); // scroll stage when playback
                 //Invalidate();
             }
 
             //activate loop region
             if (!FSetTimecode[0] && FIsLoop[0] && 
-                playPosFrames >= FLoopRegion[1] && 
+                ipD.PlayHead >= FLoopRegion[1] && 
                 play && FLoopRegion[1] > 0 &&
-                FLoopRegion[1] > FLoopRegion[0]) playPosFrames = FLoopRegion[0];
+                FLoopRegion[1] > FLoopRegion[0]) ipD.PlayHead = FLoopRegion[0];
         }
 
         //called when data for any output pin is requested

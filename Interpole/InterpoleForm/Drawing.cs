@@ -42,7 +42,7 @@ namespace Interpole
 
         public float Zoom = 0.25f; // less means you see a greater range of time
 
-        public int frameRate = 50;
+        //public int ipD.FrameRate = 50;
 
         Font clipFont = new Font("Segoe UI", 8, FontStyle.Regular);
         Font rulerFont = new Font("Segoe UI", 8, FontStyle.Regular);
@@ -170,11 +170,11 @@ namespace Interpole
 
 
 
-            double startTime = -StagePos.x / frameRate / steps; //canvas starting at point in time in seconds
+            double startTime = -StagePos.x / ipD.FrameRate / steps; //canvas starting at point in time in seconds
 
             double roundedTime = Math.Ceiling(startTime); //round seconds
 
-            double gap = steps * Math.Abs((startTime - roundedTime) * (frameRate * Zoom));
+            double gap = steps * Math.Abs((startTime - roundedTime) * (ipD.FrameRate * Zoom));
 
             string time = Convert.ToString(startTime);
             stringSize = e.Graphics.MeasureString(time, rulerFont, 1000);
@@ -189,10 +189,10 @@ namespace Interpole
                 if (frames >= 0)
                 {
                     e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25 + VerticalPosition), new Size(1, 5)));
-                    e.Graphics.DrawString(Frames2Timecode(frames, frameRate, true) + "s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y + VerticalPosition, 50, 50), format);
+                    e.Graphics.DrawString(Frames2Timecode(frames, ipD.FrameRate, true) + "s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y + VerticalPosition, 50, 50), format);
                 }
 
-                gap += frameRate * Zoom * steps;
+                gap += ipD.FrameRate * Zoom * steps;
 
             }
 
@@ -219,7 +219,7 @@ namespace Interpole
 
         public void DrawPlayHead(PaintEventArgs e)
         {
-            int pos = Convert.ToInt32((playPosFrames + StagePos.x) * Zoom);
+            int pos = Convert.ToInt32((ipD.PlayHead + StagePos.x) * Zoom);
             int VOffset = 20; ;
 
             Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y+ VOffset), new Point(7 + pos, VOffset +  20 - (int)StagePos.y), new Point(0 + pos, VOffset + 30 - (int)StagePos.y) }; //play head triangle
@@ -245,14 +245,14 @@ namespace Interpole
                 new Point(5, 60 - (int)StagePos.y + VerticalPosition),
                 new Size(200, 30));
 
-            e.Graphics.DrawString(playPosFrames.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            e.Graphics.DrawString(ipD.PlayHead.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             mytimecode.Bounds = new Rectangle(
                 new Point(2, 30 - (int)StagePos.y + VerticalPosition),
                 new Size(200, 60));
 
-            if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
-            else e.Graphics.DrawString(Frames2Timecode(playPosFrames, frameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
+            if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
+            else e.Graphics.DrawString(Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             //timecode bounds for hittest
             mytimecode.Bounds = new Rectangle((int)-StagePos.x, 30 - (int)StagePos.y + VerticalPosition, (int)(200 / Zoom), 60);
@@ -317,7 +317,7 @@ namespace Interpole
 
         public void PlaybackMoveStage()
         {
-            int pos = playPosFrames;
+            int pos = ipD.PlayHead;
 
             if (pos > this.Width - StagePos.x)
             {

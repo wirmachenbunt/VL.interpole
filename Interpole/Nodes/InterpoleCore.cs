@@ -44,7 +44,7 @@ namespace VVVV.Nodes
         [Output("ClipXML")]
         public ISpread<string> ClipXMLOut;
 
-        int playPosFrames = 0;
+        int PlayHead = 0;
 
         [Import()]
         public ILogger FLogger;
@@ -78,10 +78,10 @@ namespace VVVV.Nodes
             {
                 if (FInterpoleIn[0].interpoleForm.play) // UI is playing, get core playhead to UI
                 {
-                    this.playPosFrames++;
-                    FInterpoleIn[0].interpoleForm.playPosFrames = this.playPosFrames;
+                    PlayHead++;
+                    FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead;
                 }
-                else this.playPosFrames = FInterpoleIn[0].interpoleForm.playPosFrames; //if UI is not playing, get UI playhead to core
+                else PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead; //if UI is not playing, get UI playhead to core
 
                 
             }

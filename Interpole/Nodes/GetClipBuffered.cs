@@ -217,14 +217,14 @@ namespace VVVV.Nodes
 
                     try
                     {
-                        int pos = Clamp(InterpoleIn[0].playPosFrames - renderedClipList[i].startFrame, 0, renderedClipList[i].duration);
+                        int pos = Clamp(InterpoleIn[0].ipD.PlayHead - renderedClipList[i].startFrame, 0, renderedClipList[i].duration);
 
                     IsActive.Add(false);
 
                     if (pos < renderedClipList[0].IsActive.Count) IsActive[i] = renderedClipList[i].IsActive[pos];
 
-                    if (InterpoleIn[0].playPosFrames < renderedClipList[i].startFrame) IsActive[i] = false;
-                    else if (InterpoleIn[0].playPosFrames > renderedClipList[i].endFrame) IsActive[i] = false;
+                    if (InterpoleIn[0].ipD.PlayHead < renderedClipList[i].startFrame) IsActive[i] = false;
+                    else if (InterpoleIn[0].ipD.PlayHead > renderedClipList[i].endFrame) IsActive[i] = false;
 
                     FadeOut.Add(0);
 

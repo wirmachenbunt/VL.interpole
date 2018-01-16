@@ -34,8 +34,7 @@ namespace Interpole
         public Clip dragDurationClip = new Clip();
 
         Stack<string> undoXML = new Stack<string>();
-
-        public int playPosFrames = 100;
+        
         public bool play = false;
         public string rememberLastFunction = "idle";  // keep track of last command
 

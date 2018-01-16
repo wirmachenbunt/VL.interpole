@@ -115,7 +115,7 @@ namespace Interpole
             if (Form.ModifierKeys == Keys.Shift)
             {
                 Clip firstClip = selectionList.OrderBy(n => n.StartFrame).First();
-                int distance = firstClip.StartFrame - playPosFrames;
+                int distance = firstClip.StartFrame - ipD.PlayHead;
                 if (Math.Abs(distance) < (20/Zoom))
                 {
                     //FLogger.Log(LogType.Debug, "within distance");
@@ -139,15 +139,15 @@ namespace Interpole
 
         public void EditTimeCode()
         {
-            string input = Frames2Timecode(playPosFrames, frameRate, false);
-            int tempFrameRate = frameRate;
+            string input = Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false);
+            int tempFrameRate = ipD.FrameRate;
 
             if (TimecodeDialog(ref input, "Edit Timecode",ref tempFrameRate) == DialogResult.OK)
             {
-                playPosFrames = TimeCode2Frames(input, frameRate);
-                StagePos.x = 0 - playPosFrames;
-                frameRate = tempFrameRate;
-                ipD.FrameRate = frameRate;
+                ipD.PlayHead = TimeCode2Frames(input, ipD.FrameRate);
+                StagePos.x = 0 - ipD.PlayHead;
+                ipD.FrameRate = tempFrameRate;
+                ipD.FrameRate = ipD.FrameRate;
             }
 
         }
@@ -181,10 +181,10 @@ namespace Interpole
             if (Form.ModifierKeys == Keys.Shift && dragDurationClip != null)
             {
                 
-                int distance = (myclip.StartFrame + myclip.Duration) - playPosFrames;
+                int distance = (myclip.StartFrame + myclip.Duration) - ipD.PlayHead;
                 if (Math.Abs(distance) < 20)
                 {
-                    myclip.Duration = playPosFrames - myclip.StartFrame;
+                    myclip.Duration = ipD.PlayHead - myclip.StartFrame;
 
                     myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(myclip.Duration, myclip.Bounds.Height));
               
@@ -260,25 +260,25 @@ namespace Interpole
         }
         //
 
-        public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
+        public string Frames2Timecode(int frameCount, int FrameRate, bool isruler)
         {
-            int Frames = frameCount % frameRate;
-            int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
-            int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
-            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;
+            int Frames = frameCount % FrameRate;
+            int Seconds = (int)Math.Floor(frameCount / (double)FrameRate) % 60;
+            int Minutes = (int)Math.Floor(frameCount / (FrameRate * 60d)) % 60;
+            int Hours = (int)Math.Floor(frameCount / (FrameRate * 60 * 60d)) % 24;
             if (isruler) return $"{Minutes:D2}:{Seconds:D2}";
             else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
 
         }
 
-        public int TimeCode2Frames(string TimeCode, int frameRate)
+        public int TimeCode2Frames(string TimeCode, int FrameRate)
         {
             int frameCount = 0;
             var numbers = TimeCode.Split(':').Select(Int32.Parse).ToList();
 
             if (numbers.Count == 4)
             {
-                frameCount = numbers[3] + (numbers[2] * frameRate) + (numbers[1] * 60 * frameRate) + (numbers[0] * 60 * 60 * frameRate);
+                frameCount = numbers[3] + (numbers[2] * FrameRate) + (numbers[1] * 60 * FrameRate) + (numbers[0] * 60 * 60 * FrameRate);
             }
 
             return frameCount;
@@ -308,7 +308,7 @@ namespace Interpole
         public void PasteClips()
         {
             Clip firstClip = clipBoard.OrderBy(n => n.StartFrame).First();
-            int distance = firstClip.StartFrame - playPosFrames;
+            int distance = firstClip.StartFrame - ipD.PlayHead;
 
             PushUndoStep();
 

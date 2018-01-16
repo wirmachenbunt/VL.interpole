@@ -56,7 +56,7 @@ namespace VVVV.Nodes
 
                 interpoleForm.Location = interpoleForm.ipD.WLocation;
                 interpoleForm.Size = interpoleForm.ipD.WSize;
-                interpoleForm.playPosFrames = interpoleForm.ipD.PlayHead;
+                interpoleForm.ipD.PlayHead = interpoleForm.ipD.PlayHead;
                 Debug.WriteLine("import sucessful");
             }
           

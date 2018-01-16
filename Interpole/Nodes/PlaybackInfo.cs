@@ -75,12 +75,12 @@ namespace VVVV.Nodes
         }
 
 
-        public string Frames2Timecode(int frameCount, int frameRate, bool isruler)
+        public string Frames2Timecode(int frameCount, int ipD.FrameRate, bool isruler)
         {
-            int Frames = frameCount % frameRate;
-            int Seconds = (int)Math.Floor(frameCount / (double)frameRate) % 60;
-            int Minutes = (int)Math.Floor(frameCount / (frameRate * 60d)) % 60;
-            int Hours = (int)Math.Floor(frameCount / (frameRate * 60 * 60d)) % 24;
+            int Frames = frameCount % ipD.FrameRate;
+            int Seconds = (int)Math.Floor(frameCount / (double)ipD.FrameRate) % 60;
+            int Minutes = (int)Math.Floor(frameCount / (ipD.FrameRate * 60d)) % 60;
+            int Hours = (int)Math.Floor(frameCount / (ipD.FrameRate * 60 * 60d)) % 24;
             if (isruler) return $"{Minutes:D2}:{Seconds:D2}";
             else return $"{Hours:D2}:{Minutes:D2}:{Seconds:D2}{":"}{Frames:D2}";
 
@@ -92,18 +92,18 @@ namespace VVVV.Nodes
             try // fixes missing clip bug, when deleting a choosen clip
             {
                 FPlay[0] = InterpoleIn[0].play;
-                FSeconds[0] = (double)InterpoleIn[0].playPosFrames / InterpoleIn[0].Framerate[0];
+                FSeconds[0] = (double)InterpoleIn[0].ipD.PlayHead / InterpoleIn[0].Framerate[0];
 
                 // Timejump when looping
                 
                 if(!wasPlaying && FPlay[0] ||
                     !InterpoleIn[0].FSetTimecode[0] && InterpoleIn[0].FIsLoop[0] &&
-                InterpoleIn[0].playPosFrames == InterpoleIn[0].FLoopRegion[0] ||
-                (Math.Abs(tempPlayPosFrames - InterpoleIn[0].playPosFrames) > 10)) FTimeJump[0] = true;
+                InterpoleIn[0].ipD.PlayHead == InterpoleIn[0].FLoopRegion[0] ||
+                (Math.Abs(tempPlayPosFrames - InterpoleIn[0].ipD.PlayHead) > 10)) FTimeJump[0] = true;
                 else FTimeJump[0] = false;
 
                 wasPlaying = FPlay[0];
-                tempPlayPosFrames = InterpoleIn[0].playPosFrames;
+                tempPlayPosFrames = InterpoleIn[0].ipD.PlayHead;
                 //FLogger.Log(LogType.Debug, "GetClip");
             }
             catch { }
@@ -120,7 +120,7 @@ namespace VVVV.Nodes
                 if (InterpoleIn[0].clipList.Count > 0)
                 {            
                     UpdateOutputs();
-                    FTimeCodeString[0] = Frames2Timecode(InterpoleIn[0].playPosFrames, InterpoleIn[0].Framerate[0], false);
+                    FTimeCodeString[0] = Frames2Timecode(InterpoleIn[0].ipD.PlayHead, InterpoleIn[0].Framerate[0], false);
                 }
             }
         }

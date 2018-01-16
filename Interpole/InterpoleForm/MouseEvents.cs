@@ -184,7 +184,7 @@ namespace Interpole
             if (e.KeyCode == Keys.NumPad0)
             {
                 StagePos.x = 0;
-                playPosFrames = 0;
+                ipD.PlayHead = 0;
                 //Invalidate();
             }
 
@@ -214,11 +214,11 @@ namespace Interpole
             switch (e.KeyCode)
             {
                 case Keys.B:
-                    //FLoopRegion[0] = playPosFrames;
+                    //FLoopRegion[0] = ipD.PlayHead;
                     //Invalidate();
                     break;
                 case Keys.N:
-                    //FLoopRegion[1] = playPosFrames;
+                    //FLoopRegion[1] = ipD.PlayHead;
                     //Invalidate();
                     break;
             }
@@ -234,100 +234,100 @@ namespace Interpole
                 case Keys.NumPad1:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[0] = playPosFrames;
+                        FMarker[0] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[0] / timeZoom);
-                    playPosFrames = FMarker[0];
+                    ipD.PlayHead = FMarker[0];
                     //Invalidate();
                     break;
                 case Keys.NumPad2:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[1] = playPosFrames;
+                        FMarker[1] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[1] / timeZoom);
-                    playPosFrames = FMarker[1];
+                    ipD.PlayHead = FMarker[1];
                     //Invalidate();
                     break;
                 case Keys.NumPad3:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[2] = playPosFrames;
+                        FMarker[2] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[2] / timeZoom);
-                    playPosFrames = FMarker[2];
+                    ipD.PlayHead = FMarker[2];
                     //Invalidate();
                     break;
                 case Keys.NumPad4:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[3] = playPosFrames;
+                        FMarker[3] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[3] / timeZoom);
-                    playPosFrames = FMarker[3];
+                    ipD.PlayHead = FMarker[3];
                     //Invalidate();
                     break;
                 case Keys.NumPad5:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[4] = playPosFrames;
+                        FMarker[4] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[4] / timeZoom);
-                    playPosFrames = FMarker[4];
+                    ipD.PlayHead = FMarker[4];
                     //Invalidate();
                     break;
                 case Keys.NumPad6:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[5] = playPosFrames;
+                        FMarker[5] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[5] / timeZoom);
-                    playPosFrames = FMarker[5];
+                    ipD.PlayHead = FMarker[5];
                     //Invalidate();
                     break;
                 case Keys.NumPad7:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[6] = playPosFrames;
+                        FMarker[6] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[6] / timeZoom);
-                    playPosFrames = FMarker[6];
+                    ipD.PlayHead = FMarker[6];
                     //Invalidate();
                     break;
                 case Keys.NumPad8:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[7] = playPosFrames;
+                        FMarker[7] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[7] / timeZoom);
-                    playPosFrames = FMarker[7];
+                    ipD.PlayHead = FMarker[7];
                     //Invalidate();
                     break;
                 case Keys.NumPad9:
                     if (e.Modifiers == Keys.Control)
                     {
-                        FMarker[8] = playPosFrames;
+                        FMarker[8] = ipD.PlayHead;
                         //Invalidate();
                         break;
                     }
                     StagePos.X = 0 - (FMarker[8] / timeZoom);
-                    playPosFrames = FMarker[8];
+                    ipD.PlayHead = FMarker[8];
                     //Invalidate();
                     break;
             }
@@ -366,23 +366,23 @@ namespace Interpole
         {
             if (hitObject is Playbar)
             {
-                playPosFrames = Convert.ToInt32(mousePos.X);
+                ipD.PlayHead = Convert.ToInt32(mousePos.X);
 
-                if (mousePos.X < 0) playPosFrames = 0;
+                if (mousePos.X < 0) ipD.PlayHead = 0;
                 play = false;
 
                 // snap playhead to clip in out
                 if (Form.ModifierKeys == Keys.Shift)
                 {
-                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (playPosFrames ))).First();
+                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (ipD.PlayHead ))).First();
 
-                    int distance = Math.Abs(playPosFrames  - closest);
+                    int distance = Math.Abs(ipD.PlayHead  - closest);
 
-                    if (distance < 12/Zoom) playPosFrames = closest;
+                    if (distance < 12/Zoom) ipD.PlayHead = closest;
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
-                ipD.PlayHead = playPosFrames;
+                ipD.PlayHead = ipD.PlayHead;
             }
         }
 

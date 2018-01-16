@@ -148,8 +148,8 @@ namespace VVVV.Nodes
             {
                 ResetSliceCount();
 
-                int framePos = FInterpoleIn[0].playPosFrames;
-                int frameRate = FInterpoleIn[0].Framerate[0];
+                int framePos = FInterpoleIn[0].ipD.PlayHead;
+                int ipD.FrameRate = FInterpoleIn[0].Framerate[0];
 
                 for (int i = 0; i < FColorIn.SliceCount; i++)
                 {
@@ -170,7 +170,7 @@ namespace VVVV.Nodes
                     if(FIsActiveOut[i])
                     {
                         FNormalizedOut.Add((double)clipFramePos / clip.Duration);
-                        FSecondsOut.Add((double)clipFramePos / frameRate);
+                        FSecondsOut.Add((double)clipFramePos / ipD.FrameRate);
                         FFadeOut.Add(CalcFade(clip, clipFramePos));
                         FPositionOut.Add(clipFramePos);
                     }
