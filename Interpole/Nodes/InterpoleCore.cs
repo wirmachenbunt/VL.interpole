@@ -110,7 +110,7 @@ namespace VVVV.Nodes
                     //iterate playhead
                     PlayHead++;
                     Play = true;
-                    //set playhead
+                    //set UI playhead
                     FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead;
                 }
                 //if not playing, get UI playhead position
@@ -119,6 +119,14 @@ namespace VVVV.Nodes
                     PlayHead = FInterpoleIn[0].interpoleForm.ipD.PlayHead;
                     Play = false;
                 }
+
+                if(FSetTimecode[0] && FTimecode[0] != null)
+                {
+                    Play = false;
+                    PlayHead = FTimecode[0].Frames + (FTimecode[0].Seconds * FrameRate) + (FTimecode[0].Minutes * 60 * FrameRate) + (FTimecode[0].Hours * 60 * 60 * FrameRate);
+                    FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead; //set UI playhead
+                }
+
 
                 //update all outputs
                 UpdateOutput();

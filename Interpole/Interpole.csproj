@@ -95,7 +95,7 @@
     <Compile Include="Nodes\Info.cs" />
     <Compile Include="Nodes\InterpoleCore.cs" />
     <Compile Include="Nodes\InterpoleUI.cs" />
-    <None Include="Nodes\JoinTC.cs" />
+    <Compile Include="Nodes\JoinTC.cs" />
     <Compile Include="Nodes\PlaybackInfo.cs" />
     <None Include="Nodes\Reader.cs" />
     <None Include="Nodes\SplitTC.cs" />

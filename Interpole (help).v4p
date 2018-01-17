@@ -1,13 +1,13 @@
 <!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
    <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="-6">
-   <BOUNDS type="Window" left="15765" top="345" width="12705" height="13905">
+   <BOUNDS type="Window" left="15765" top="345" width="15300" height="16785">
    </BOUNDS>
    <PACK Name="addonpack" Version="35.0.0">
    </PACK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="2" systemname="IOBox (Value Advanced)">
-   <BOUNDS type="Box" left="3330" top="360" width="795" height="240">
+   <BOUNDS type="Box" left="3360" top="75" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="3330" top="360" width="0" height="0">
+   <BOUNDS type="Node" left="3360" top="75" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Y Input Value" slicecount="1" visible="1" values="120">
    </PIN>
@@ -21,7 +21,7 @@
    </PIN>
    </NODE>
    <NODE systemname="MainLoop (VVVV)" nodename="MainLoop (VVVV)" componentmode="Hidden" id="-6">
-   <BOUNDS type="Node" left="3300" top="915" width="100" height="100">
+   <BOUNDS type="Node" left="3345" top="450" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Time Mode" slicecount="1" values="Filtered">
    </PIN>
@@ -31,7 +31,7 @@
    <LINK srcnodeid="2" srcpinname="Y Output Value" dstnodeid="-6" dstpinname="Maximum Background FPS">
    </LINK>
    <NODE systemname="HSL (Color Join)" nodename="HSL (Color Join)" componentmode="Hidden" id="39">
-   <BOUNDS type="Node" left="4455" top="7575" width="100" height="100">
+   <BOUNDS type="Node" left="4290" top="9630" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Output" visible="1">
    </PIN>
@@ -39,7 +39,7 @@
    </PIN>
    </NODE>
    <NODE systemname="Transform (Transform 2d)" nodename="Transform (Transform 2d)" componentmode="Hidden" id="52">
-   <BOUNDS type="Node" left="3795" top="7230" width="100" height="100">
+   <BOUNDS type="Node" left="3630" top="9285" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Transform Out" visible="1">
    </PIN>
@@ -63,9 +63,9 @@
    </PIN>
    </NODE>
    <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InABox" id="63">
-   <BOUNDS type="Node" left="1395" top="9105" width="100" height="100">
+   <BOUNDS type="Node" left="1230" top="11160" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="1395" top="9105" width="6000" height="4500">
+   <BOUNDS type="Box" left="1230" top="11160" width="6000" height="4500">
    </BOUNDS>
    <BOUNDS type="Window" left="16080" top="0" width="12525" height="8850">
    </BOUNDS>
@@ -85,15 +85,15 @@
    </PIN>
    </NODE>
    <NODE systemname="PerfMeter (DX11.Debug)" filename="%VVVV%\packs\dx11\nodes\modules\PerfMeter (DX11.Debug).v4p" nodename="PerfMeter (DX11.Debug)" componentmode="Hidden" id="64">
-   <BOUNDS type="Node" left="5385" top="8130" width="100" height="100">
+   <BOUNDS type="Node" left="5220" top="10185" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Layer" visible="1">
    </PIN>
    </NODE>
    <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="65">
-   <BOUNDS type="Node" left="1905" top="8610" width="5295" height="270">
+   <BOUNDS type="Node" left="1740" top="10665" width="5295" height="270">
    </BOUNDS>
-   <BOUNDS type="Box" left="1905" top="8610" width="3000" height="3000">
+   <BOUNDS type="Box" left="1740" top="10665" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Layer Out" visible="1">
    </PIN>
@@ -105,9 +105,9 @@
    <LINK srcnodeid="65" srcpinname="Layer Out" dstnodeid="63" dstpinname="Layers">
    </LINK>
    <NODE systemname="Quad (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Quad (DX11.Layer)" componentmode="Hidden" id="66">
-   <BOUNDS type="Node" left="3645" top="7950" width="100" height="100">
+   <BOUNDS type="Node" left="3480" top="10005" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="3645" top="7950" width="3000" height="3000">
+   <BOUNDS type="Box" left="3480" top="10005" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Layer" visible="1">
    </PIN>
@@ -129,9 +129,9 @@
    <LINK srcnodeid="39" srcpinname="Output" dstnodeid="66" dstpinname="Color">
    </LINK>
    <NODE systemname="Blend (DX11.RenderState)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Blend (DX11.RenderState)" componentmode="Hidden" id="67">
-   <BOUNDS type="Node" left="3225" top="7275" width="100" height="100">
+   <BOUNDS type="Node" left="3060" top="9330" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="3225" top="7275" width="3000" height="3000">
+   <BOUNDS type="Box" left="3060" top="9330" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Render State" visible="1" slicecount="1" values="||">
    </PIN>
@@ -149,13 +149,13 @@
    </BOUNDS>
    </NODE>
    <NODE systemname="Timing (Debug)" nodename="Timing (Debug)" componentmode="Hidden" id="102">
-   <BOUNDS type="Node" left="4545" top="345" width="100" height="100">
+   <BOUNDS type="Node" left="4530" top="45" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Prepare Graph Time" visible="1">
    </PIN>
    </NODE>
    <NODE systemname="Multiply (Value)" nodename="Multiply (Value)" componentmode="Hidden" id="104">
-   <BOUNDS type="Node" left="5175" top="825" width="100" height="100">
+   <BOUNDS type="Node" left="5160" top="345" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Input 1" visible="1">
    </PIN>
@@ -165,9 +165,9 @@
    </PIN>
    </NODE>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="106">
-   <BOUNDS type="Box" left="5190" top="1755" width="1650" height="600">
+   <BOUNDS type="Box" left="5160" top="930" width="1575" height="495">
    </BOUNDS>
-   <BOUNDS type="Node" left="5190" top="1755" width="0" height="0">
+   <BOUNDS type="Node" left="5160" top="930" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -194,6 +194,10 @@
    <PIN pinname="PlayHead (f)" visible="1">
    </PIN>
    <PIN pinname="InterpoleData" visible="1">
+   </PIN>
+   <PIN pinname="Set Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Timecode" visible="1">
    </PIN>
    </NODE>
    <NODE id="107" systemname="Interpole UI (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Interpole UI (Interpole)" componentmode="Hidden">
@@ -229,7 +233,7 @@
    <LINK srcnodeid="102" srcpinname="Prepare Graph Time" dstnodeid="104" dstpinname="Input 1">
    </LINK>
    <NODE systemname="LinearFilter (Animation)" nodename="LinearFilter (Animation)" componentmode="Hidden" id="112">
-   <BOUNDS type="Node" left="5190" top="1275" width="100" height="100">
+   <BOUNDS type="Node" left="5160" top="645" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Go To Position" visible="1">
    </PIN>
@@ -415,9 +419,9 @@
    </LINKPOINT>
    </LINK>
    <NODE systemname="GetUnifiedClipByName (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="GetUnifiedClipByName (Interpole)" componentmode="Hidden" id="124">
-   <BOUNDS type="Node" left="4605" top="6645" width="100" height="100">
+   <BOUNDS type="Node" left="4440" top="8700" width="100" height="100">
    </BOUNDS>
-   <BOUNDS type="Box" left="4605" top="6645" width="3000" height="3000">
+   <BOUNDS type="Box" left="4440" top="8700" width="3000" height="3000">
    </BOUNDS>
    <PIN pinname="Interpole" visible="1">
    </PIN>
@@ -437,9 +441,9 @@
    <LINK srcnodeid="99" srcpinname="InterpoleData" dstnodeid="124" dstpinname="Interpole">
    </LINK>
    <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="130">
-   <BOUNDS type="Box" left="6090" top="6150" width="1590" height="270">
+   <BOUNDS type="Box" left="5955" top="8085" width="1590" height="270">
    </BOUNDS>
-   <BOUNDS type="Node" left="6090" top="6150" width="0" height="0">
+   <BOUNDS type="Node" left="5955" top="8085" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Input Enum" slicecount="1" visible="1" values="myenummmms">
    </PIN>
@@ -455,9 +459,9 @@
    <LINK srcnodeid="124" srcpinname="Normalized" dstnodeid="52" dstpinname="Rotate">
    </LINK>
    <NODE nodename="IOBox (String)" componentmode="InABox" id="131">
-   <BOUNDS type="Box" left="5745" top="7215" width="795" height="240">
+   <BOUNDS type="Box" left="5580" top="9270" width="795" height="240">
    </BOUNDS>
-   <BOUNDS type="Node" left="5745" top="7215" width="0" height="0">
+   <BOUNDS type="Node" left="5580" top="9270" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Default" slicecount="1" values="||">
    </PIN>
@@ -467,5 +471,73 @@
    </PIN>
    </NODE>
    <LINK srcnodeid="124" srcpinname="Variable" dstnodeid="131" dstpinname="Input String">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="132">
+   <BOUNDS type="Box" left="4965" top="2340" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="4965" top="2340" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="|Set Timecode|">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="132" srcpinname="Y Output Value" dstnodeid="99" dstpinname="Set Timecode">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="133">
+   <BOUNDS type="Box" left="4080" top="2355" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="4080" top="2355" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="Descriptive Name" slicecount="1" values="Play">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="133" srcpinname="Y Output Value" dstnodeid="99" dstpinname="Play">
+   </LINK>
+   <NODE systemname="Join TC (Interpole)" filename="Interpole\bin\Debug\Interpole.dll" nodename="Join TC (Interpole)" componentmode="Hidden" id="134">
+   <BOUNDS type="Node" left="5865" top="2790" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="5865" top="2790" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Timecode" visible="1">
+   </PIN>
+   <PIN pinname="Frames" slicecount="1" values="1708" visible="1">
+   </PIN>
+   <PIN pinname="Seconds" slicecount="1" values="4">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="134" srcpinname="Timecode" dstnodeid="99" dstpinname="Timecode">
+   </LINK>
+   <NODE systemname="LFO (Animation)" nodename="LFO (Animation)" componentmode="Hidden" id="135">
+   <BOUNDS type="Node" left="6660" top="2235" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Cycles" visible="1">
+   </PIN>
+   <PIN pinname="Period" slicecount="1" values="0.14">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="135" srcpinname="Cycles" dstnodeid="134" dstpinname="Frames">
    </LINK>
    </PATCH>
