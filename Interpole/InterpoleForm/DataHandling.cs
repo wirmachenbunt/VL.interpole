@@ -199,19 +199,15 @@ namespace Interpole
 
             undoXML.Push(tempXML); //add undo save point to stack
 
-            Debug.WriteLine("undoSteps:" + undoXML.Count.ToString());
+            //Debug.WriteLine("undoSteps:" + undoXML.Count.ToString());
             
         }
 
         private void UpdateXML()
         {
-            Changed(this, EventArgs.Empty);
-            Debug.WriteLine("save data");
+            Changed(this, EventArgs.Empty);      
             rememberLastFunction = "updateXML"; //remember action
            
-            /*
-            needsUpdate = true; //inform getclip about change
-            */
         }
 
         //

@@ -199,7 +199,7 @@ namespace VVVV.Nodes
         {
             if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                if (FNameIn.IsChanged || !FValid) //FInterpoleIn[0].needsUpdate needs new solution
+                if (FInterpoleIn[0].needsUpdate || FNameIn.IsChanged || !FValid) //FInterpoleIn[0].needsUpdate needs new solution
                 {
                     UpdateEnum();
                     FValid = true;

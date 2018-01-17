@@ -28,6 +28,12 @@ namespace VVVV.Nodes
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
 
+        public bool needsUpdate = false; //inform connected nodes something changed
+        int counter = 0;
+
+        [Import()]
+        public ILogger FLogger;
+
         public InterpoleUI()
         {
             FUIThread = new Thread(InitializeForm);
@@ -66,6 +72,7 @@ namespace VVVV.Nodes
         private void UpdateConfigs(InterpoleForm interpoleForm, EventArgs e)
         {
             InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
+            needsUpdate = true;
         }
 
         void CleanupForm()
@@ -80,6 +87,20 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
+                
+                //handle update variable
+                if(needsUpdate)
+                {
+                    //FLogger.Log(LogType.Debug, "needsUpdate InterpoleUI");
+                    counter++;
+                    if(counter >= 2)
+                    {
+                        counter = 0;
+                        needsUpdate = false;
+                    }
+                }
+
+                //output everything
                 FInterpoleOut[0] = this;
             }
         }

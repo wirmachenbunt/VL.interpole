@@ -82,6 +82,9 @@ namespace VVVV.Nodes
             //publish playhead of core
             FPlayHead[0] = PlayHead;
 
+            //update enums
+            needsUpdate = FInterpoleIn[0].needsUpdate;
+
             // get clip list from UI
             clipList = FInterpoleIn[0].interpoleForm.ipD.ClipList;
 
