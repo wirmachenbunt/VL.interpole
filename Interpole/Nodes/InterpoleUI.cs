@@ -20,7 +20,7 @@ namespace VVVV.Nodes
     public class InterpoleUI : IPluginEvaluate, IDisposable
     {
         Thread FUIThread;
-        public InterpoleForm interpoleForm;
+        public InterpoleBase interpoleForm;
 
         [Config("InterpoleData")]
         ISpread<string> InterpoleXML;
@@ -49,13 +49,13 @@ namespace VVVV.Nodes
 
         void InitializeForm()
         {
-            interpoleForm = new InterpoleForm();
-            interpoleForm.Changed += new InterpoleForm.ChangedHandler(UpdateConfigs);
+            interpoleForm = new InterpoleBase();
+            interpoleForm.Changed += new InterpoleBase.ChangedHandler(UpdateConfigs);
 
             //load saved interpole settings
             if (InterpoleXML[0].Length > 10)
             {
-                interpoleForm.ipD = InterpoleForm.DeserializeInterpoleData(InterpoleXML[0]);
+                interpoleForm.ipD = InterpoleBase.DeserializeInterpoleData(InterpoleXML[0]);
 
                 interpoleForm.Location = interpoleForm.ipD.WLocation;
                 interpoleForm.Size = interpoleForm.ipD.WSize;
@@ -69,7 +69,7 @@ namespace VVVV.Nodes
         }
 
         //set vvvv config pins with fresh XML data
-        private void UpdateConfigs(InterpoleForm interpoleForm, EventArgs e)
+        private void UpdateConfigs(InterpoleBase interpoleForm, EventArgs e)
         {
             InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
             needsUpdate = true;

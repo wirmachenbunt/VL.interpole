@@ -14,7 +14,7 @@ using System.Diagnostics;
 
 namespace Interpole
 {
-    partial class InterpoleForm
+    partial class InterpoleBase
     {
         
         public void AddClip()

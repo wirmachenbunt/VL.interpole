@@ -37,7 +37,7 @@ namespace VVVV.Nodes
         public IDiffSpread<bool> FSetTimecode;
 
         [Input("Timecode")]
-        public ISpread<InterpoleForm.TimeCode> FTimecode;
+        public ISpread<InterpoleBase.TimeCode> FTimecode;
 
         [Input("Frame Clock", IsSingle = true)]
         public IDiffSpread<int> FExternalClock;
@@ -56,7 +56,7 @@ namespace VVVV.Nodes
         public int FrameRate;
         public bool needsUpdate = false;
 
-        public List<InterpoleForm.Clip> clipList = new List<InterpoleForm.Clip>();
+        public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>();
 
         [Import()]
         public ILogger FLogger;

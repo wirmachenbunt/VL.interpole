@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace Interpole
 {
-    partial class InterpoleForm : Form
+    partial class InterpoleBase : Form
     {
         #region variables
 
@@ -26,7 +26,7 @@ namespace Interpole
 
         //Event in case something changed
         public event ChangedHandler Changed;
-        public delegate void ChangedHandler(InterpoleForm interpoleForm, EventArgs e);
+        public delegate void ChangedHandler(InterpoleBase interpoleForm, EventArgs e);
 
         //public List<Clip> clipList; //master clip list
         public List<Clip> clipBoard = new List<Clip>(); // copy paste clips
@@ -42,7 +42,7 @@ namespace Interpole
 
         #endregion
 
-        public InterpoleForm()
+        public InterpoleBase()
         {
             InitObjects(); // init interpole data object with all infos
             InitializeComponent();

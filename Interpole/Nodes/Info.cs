@@ -60,7 +60,7 @@ namespace VVVV.Nodes
                 FDuration.SliceCount = 0;
                 FColor.SliceCount = 0;
 
-                foreach (InterpoleForm.Clip myclip in InterpoleIn[0].clipList)
+                foreach (InterpoleBase.Clip myclip in InterpoleIn[0].clipList)
                 {
                     FNames.Add(myclip.Name);
                     FStartFrame.Add(myclip.StartFrame);

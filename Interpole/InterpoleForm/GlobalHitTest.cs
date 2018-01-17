@@ -10,7 +10,7 @@ using VVVV.Core.Logging;
 
 namespace Interpole
 {
-    partial class InterpoleForm
+    partial class InterpoleBase
     {
         List<UIelement> hitTestList = new List<UIelement>();
         List<Clip> selectionList = new List<Clip>();

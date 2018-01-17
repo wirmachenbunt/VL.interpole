@@ -9,7 +9,7 @@ using VVVV.Core.Logging;
 
 namespace Interpole
 {
-    partial class InterpoleForm
+    partial class InterpoleBase
     {
         public Point mousePos; //current Mouse Pos
         public Point prevMousePos; //previous Mouse Pos

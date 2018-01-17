@@ -7,7 +7,7 @@ using System.Drawing;
 
 namespace Interpole
 {
-    public partial class InterpoleForm
+    public partial class InterpoleBase
     {
         public class InterpoleData
         {

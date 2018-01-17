@@ -11,7 +11,7 @@ using System.IO;
 
 namespace Interpole
 {
-    partial class InterpoleForm
+    partial class InterpoleBase
     {
         string lastColorName = "Aqua";
         SaveFileDialog saveFileDialog1 = new SaveFileDialog();

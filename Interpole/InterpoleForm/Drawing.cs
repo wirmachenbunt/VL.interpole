@@ -18,7 +18,7 @@ using System.ComponentModel;
 
 namespace Interpole
 {
-    partial class InterpoleForm : Form
+    partial class InterpoleBase : Form
     {
         #region variables
 

@@ -116,7 +116,7 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        public double CalcFade(InterpoleForm.Clip clip, int clipPos)
+        public double CalcFade(InterpoleBase.Clip clip, int clipPos)
         {
             double value = 0.0;
             value = 1f / clip.FadeIn * clipPos;
@@ -154,7 +154,7 @@ namespace VVVV.Nodes
 
                 for (int i = 0; i < FNameIn.SliceCount; i++)
                 {
-                    InterpoleForm.Clip clip = FInterpoleIn[0].clipList.Where(
+                    InterpoleBase.Clip clip = FInterpoleIn[0].clipList.Where(
                         c => c.Name == FNameIn[i] &&
                         c.StartFrame <= framePos &&
                         c.StartFrame + c.Duration > framePos)
