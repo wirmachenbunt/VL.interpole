@@ -36,6 +36,9 @@ namespace VVVV.Nodes
         [Input("Set Timecode")]
         public IDiffSpread<bool> FSetTimecode;
 
+        [Input("Timecode")]
+        public ISpread<InterpoleForm.TimeCode> FTimecode;
+
         [Input("Frame Clock", IsSingle = true)]
         public IDiffSpread<int> FExternalClock;
 
@@ -102,7 +105,7 @@ namespace VVVV.Nodes
             if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null) 
             {
                 // if playing, set UI playhead
-                if (FInterpoleIn[0].interpoleForm.play)
+                if (FInterpoleIn[0].interpoleForm.play || FPlay[0])
                 {
                     //iterate playhead
                     PlayHead++;
