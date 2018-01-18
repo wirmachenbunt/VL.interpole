@@ -63,9 +63,7 @@ namespace Interpole
 
         protected override void OnPaint(PaintEventArgs pe)
         {
-            Debug.WriteLine("playhead:" + ((ipD.PlayHead + StagePos.x)*Zoom).ToString());
-            Debug.WriteLine("width:" + this.Width.ToString());
-
+            PlaybackMoveStage();
 
             pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -320,18 +318,9 @@ namespace Interpole
 
         public void PlaybackMoveStage()
         {
-            int pos = ipD.PlayHead;
-
-            if (pos > this.Width - StagePos.x)
+            if(play && (ipD.PlayHead + StagePos.x) * Zoom > this.Width/2 || play && (ipD.PlayHead + StagePos.x) * Zoom < 0)
             {
-                StagePos.x = (StagePos.x) - this.Width / 2;
-                Invalidate();
-            }
-
-            if (pos < Math.Abs(StagePos.x))
-            {
-                StagePos.x = 0 - pos;
-                Invalidate();
+                StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
             }
 
         }
