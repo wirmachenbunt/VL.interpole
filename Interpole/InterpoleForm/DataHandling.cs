@@ -143,9 +143,14 @@ namespace Interpole
             if (TimecodeDialog(ref input, "Edit Timecode",ref tempFrameRate) == DialogResult.OK)
             {
                 ipD.PlayHead = TimeCode2Frames(input, tempFrameRate);
-                StagePos.x = 0 - ipD.PlayHead;
+                
                 ipD.FrameRate = tempFrameRate;
+                
+                //move stage to playhead if out of sight
+                if((ipD.PlayHead + StagePos.x) * Zoom > this.Width) StagePos.x = 0 - ipD.PlayHead + (this.Width/2 / Zoom);
+
                 Changed(this, EventArgs.Empty);
+
             }
 
         }

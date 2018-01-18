@@ -63,6 +63,9 @@ namespace Interpole
 
         protected override void OnPaint(PaintEventArgs pe)
         {
+            Debug.WriteLine("playhead:" + ((ipD.PlayHead + StagePos.x)*Zoom).ToString());
+            Debug.WriteLine("width:" + this.Width.ToString());
+
 
             pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
