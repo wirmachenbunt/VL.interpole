@@ -155,8 +155,6 @@ namespace Interpole
             int start = myclip.Bounds.X + myclip.Bounds.Width - (int)(10 / Zoom);
             int end = myclip.Bounds.X + myclip.Bounds.Width + (int)(5/Zoom);
 
-            
-
             if (mousePos.X > start && mousePos.X < end)
             {
                 if (rememberLastFunction == "idle") PushUndoStep();
@@ -167,6 +165,8 @@ namespace Interpole
             {
                 this.Cursor = Cursors.SizeWE;
                 int dragHorizontal = myclip.Bounds.Width + (mousePos.X - deltaMousePos.X);
+                if (dragHorizontal <= 10) dragHorizontal = 10;
+
                 myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
 
 
