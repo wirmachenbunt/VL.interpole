@@ -344,13 +344,14 @@ namespace Interpole
                 
             }
 
+            /*
             if (click && !(hitObject is Clip) && Form.ModifierKeys == Keys.Control)
             {
                 int deltaY = mousePos.Y - prevMousePos.Y;
                 prevMousePos = mousePos;
                 StagePos.y += deltaY/Zoom;          
             }
-
+            */
 
         }
 

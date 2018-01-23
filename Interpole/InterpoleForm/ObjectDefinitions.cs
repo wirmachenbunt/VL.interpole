@@ -26,7 +26,17 @@ namespace Interpole
             public List<Clip> ClipList { get; set; } // the most important part
         }
 
-// UI OBJECTS //////////////////////////////////////////////////////////////////////////////////////////////////////
+        //
+        //timeline markers
+        //
+        public class Marker
+        {
+            public string Name { get; set; }
+            public int FramePosition { get; set; }
+        }
+
+
+        // UI OBJECTS //////////////////////////////////////////////////////////////////////////////////////////////////////
         public abstract class UIelement //all UI Elements should be based upon this to make the hittest work
         {
             public string ID { get; set; }          
@@ -44,10 +54,6 @@ namespace Interpole
             public string Variable { get; set; }            
         }
 
-        public class Marker : UIelement //timeline markers
-        {
-            public int Position { get; set; }
-        }
         public class Playbar : UIelement
         {
 

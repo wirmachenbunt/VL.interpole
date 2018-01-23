@@ -315,6 +315,14 @@ namespace Interpole
             }
         }
 
+        private void AddMarker(object sender, EventArgs e)
+        {
+            ipD.MarkerList.Add(new Marker()
+            {
+                FramePosition = ipD.PlayHead        
+            });
+        }
+
         public void InitMenuToolStrip()
         {
 
@@ -324,11 +332,18 @@ namespace Interpole
             ToolStripMenuItem saveToolStripMenuItem = new ToolStripMenuItem();
             //ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
 
+            ToolStripMenuItem markerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            ToolStripMenuItem addMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            ToolStripMenuItem editMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            ToolStripMenuItem deleteMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+
             // 
             // menuStrip1
             // 
             menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            menuToolStripMenuItem});
+            menuToolStripMenuItem,
+            markerToolStripMenuItem});
+
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new System.Drawing.Size(284, 24);
@@ -361,6 +376,39 @@ namespace Interpole
             saveToolStripMenuItem.Text = "Export";
             saveToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
             saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+
+
+            #region Marker
+            markerToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            addMarkerToolStripMenuItem,
+            editMarkerToolStripMenuItem,
+            deleteMarkerToolStripMenuItem});
+            markerToolStripMenuItem.Name = "markerToolStripMenuItem";
+            markerToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            markerToolStripMenuItem.Text = "Marker";
+            // 
+            // addMarkerToolStripMenuItem
+            // 
+            addMarkerToolStripMenuItem.Name = "addMarkerToolStripMenuItem";
+            addMarkerToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            addMarkerToolStripMenuItem.Text = "Add Marker";
+            addMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            addMarkerToolStripMenuItem.Click += new System.EventHandler(AddMarker);
+            // 
+            // editMarkerToolStripMenuItem
+            // 
+            editMarkerToolStripMenuItem.Name = "editMarkerToolStripMenuItem";
+            editMarkerToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            editMarkerToolStripMenuItem.Text = "Edit Marker";
+            editMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            // 
+            // deleteMarkerToolStripMenuItem
+            // 
+            deleteMarkerToolStripMenuItem.Name = "deleteMarkerToolStripMenuItem";
+            deleteMarkerToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            deleteMarkerToolStripMenuItem.Text = "Delete Marker";
+            deleteMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            #endregion
 
             // 
             // Form1

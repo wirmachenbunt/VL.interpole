@@ -89,6 +89,7 @@ namespace Interpole
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
             DrawLoopRegion(pe);
+            
 
             //transformed stage ///////////////////////////////////////////
 
@@ -202,21 +203,19 @@ namespace Interpole
 
         public void DrawMarker(PaintEventArgs e)
         {
-            /*
-
-            for (int i = 0; i < FMarker.SliceCount;i++)
+            
+            for (int i = 0; i < ipD.MarkerList.Count; i++)
             {
-               if(FMarker[i] != 0)
-                {
-                    DarkPen.DashStyle = DashStyle.Dash;
-                    Int32 pos = FMarker[i] / timeZoom;
-                    Point[] mypoints = { new Point(-3 + pos, 30 - StagePos.Y), new Point(3 + pos, 30 - StagePos.Y), new Point(0 + pos, 34 - StagePos.Y) }; //play head triangle
-                    e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
-                    e.Graphics.DrawString((i+1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50 - StagePos.Y), new Size(20, 50)), format); //draw seconds
-                    e.Graphics.DrawLine(DarkPen, new Point(pos, 34 - StagePos.Y), new Point(pos, 3000 - StagePos.Y));
-                }                         
+
+                DarkPen.DashStyle = DashStyle.Dash;
+                int pos = Convert.ToInt32((ipD.MarkerList[i].FramePosition + StagePos.x) * Zoom);
+                Point[] mypoints = { new Point(-3 + pos, 45), new Point(3 + pos, 45), new Point(0 + pos, 49) }; //play head triangle
+                e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                e.Graphics.DrawString((i + 1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50), new Size(20, 50)), format); //draw seconds
+                e.Graphics.DrawLine(DarkPen, new Point(pos, 50), new Point(pos, this.Height ));
+
             }
-            */
+
         }
 
         public void DrawPlayHead(PaintEventArgs e)
@@ -224,18 +223,18 @@ namespace Interpole
             int pos = Convert.ToInt32((ipD.PlayHead + StagePos.x) * Zoom);
             int VOffset = 20; ;
 
-            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y+ VOffset), new Point(7 + pos, VOffset +  20 - (int)StagePos.y), new Point(0 + pos, VOffset + 30 - (int)StagePos.y) }; //play head triangle
+            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y + VOffset), new Point(7 + pos, VOffset + 20 - (int)StagePos.y), new Point(0 + pos, VOffset + 30 - (int)StagePos.y) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
             e.Graphics.DrawLine(GrayPen, new Point(pos, VOffset + 30 - (int)StagePos.y), new Point(pos, VOffset + this.Height - (int)StagePos.y));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
-            
+
             if (ipD.Loop)
             {
-                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(ipD.LoopStart, 48,ipD.LoopEnd - ipD.LoopStart, 2));         
-            }         
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(ipD.LoopStart, 48, ipD.LoopEnd - ipD.LoopStart, 2));
+            }
         }
 
         public void DrawTimeCode(PaintEventArgs e, int VerticalPosition)
@@ -316,7 +315,7 @@ namespace Interpole
 
         public void PlaybackMoveStage()
         {
-            if(play && (ipD.PlayHead + StagePos.x) * Zoom > this.Width/2 || play && (ipD.PlayHead + StagePos.x) * Zoom < 0)
+            if (play && (ipD.PlayHead + StagePos.x) * Zoom > this.Width / 2 || play && (ipD.PlayHead + StagePos.x) * Zoom < 0)
             {
                 StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
             }
@@ -338,7 +337,7 @@ namespace Interpole
         {
             this.Invalidate();
         }
-        
+
         static class NativeMethods
         {
             [StructLayout(LayoutKind.Sequential)]
