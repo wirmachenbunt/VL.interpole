@@ -389,16 +389,14 @@ namespace Interpole
             snapPosList.Clear();
             List<Clip> snapClipList = ipD.ClipList.Where(x => x.Bounds.IntersectsWith(myworkspace.Bounds)).ToList();
 
-            //snapPosList.Add(FLoopRegion[0] / timeZoom);
-            //snapPosList.Add(FLoopRegion[1] / timeZoom);
-
-            /*
-            foreach (int pos in FMarker)
+            snapPosList.Add(ipD.LoopStart);
+            snapPosList.Add(ipD.LoopEnd);
+       
+            foreach (Marker m in ipD.MarkerList)
             {
-                snapPosList.Add(pos / timeZoom);
+                snapPosList.Add(m.FramePosition);
             }
-            */
-
+            
             foreach (Clip myclip in snapClipList)
             {
                 snapPosList.Add(myclip.Bounds.X);

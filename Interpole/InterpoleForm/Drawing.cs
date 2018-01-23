@@ -89,7 +89,7 @@ namespace Interpole
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
             DrawLoopRegion(pe);
-            
+
 
             //transformed stage ///////////////////////////////////////////
 
@@ -120,7 +120,7 @@ namespace Interpole
 
 
                     string text = clip.Name; // create text
-                    SizeF stringSize = new SizeF();
+                    
                     stringSize = e.Graphics.MeasureString(text, clipFont, 400);
 
                     Point center = new Point(Convert.ToInt32(clip.Bounds.Location.X * Zoom), clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
@@ -203,19 +203,18 @@ namespace Interpole
 
         public void DrawMarker(PaintEventArgs e)
         {
+            DarkPen.DashStyle = DashStyle.Dash;
             
-            for (int i = 0; i < ipD.MarkerList.Count; i++)
-            {
 
-                DarkPen.DashStyle = DashStyle.Dash;
-                int pos = Convert.ToInt32((ipD.MarkerList[i].FramePosition + StagePos.x) * Zoom);
+            foreach (Marker m in ipD.MarkerList)
+            {
+                int pos = Convert.ToInt32((m.FramePosition + StagePos.x) * Zoom);
                 Point[] mypoints = { new Point(-3 + pos, 45), new Point(3 + pos, 45), new Point(0 + pos, 49) }; //play head triangle
                 e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
-                e.Graphics.DrawString((i + 1).ToString(), rulerFont, whiteBrush, new Rectangle(new Point(pos, 50), new Size(20, 50)), format); //draw seconds
-                e.Graphics.DrawLine(DarkPen, new Point(pos, 50), new Point(pos, this.Height ));
-
+                stringSize = e.Graphics.MeasureString(m.Name, rulerFont, 400);
+                e.Graphics.DrawString(m.Name, rulerFont, whiteBrush, new Rectangle(pos, 50, (int)stringSize.Width+10,(int)stringSize.Height), format); //draw seconds
+                e.Graphics.DrawLine(DarkPen, new Point(pos, 50), new Point(pos, this.Height));
             }
-
         }
 
         public void DrawPlayHead(PaintEventArgs e)

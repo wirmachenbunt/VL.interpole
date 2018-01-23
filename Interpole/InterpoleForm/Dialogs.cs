@@ -17,7 +17,7 @@ namespace Interpole
         SaveFileDialog saveFileDialog1 = new SaveFileDialog();
         OpenFileDialog openFileDialog1 = new OpenFileDialog();
 
-        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration,ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName)
+        public static DialogResult ClipDialog(ref string input, ref int startFrame, ref int duration, ref int fadeIn, ref int fadeOut, ref string colorName, ref string varInput, string DialogName)
         {
             System.Drawing.Size size = new System.Drawing.Size(250, 248);
 
@@ -108,7 +108,7 @@ namespace Interpole
             fadeOutLabel.Size = new System.Drawing.Size(100, 15);
             fadeOutLabel.Text = "FadeOut in frames";
             fadeOutLabel.ForeColor = Color.FromArgb(110, 110, 110);
-            inputBox.Controls.Add(fadeOutLabel); 
+            inputBox.Controls.Add(fadeOutLabel);
             #endregion
 
             System.Windows.Forms.TextBox varTextBox = new System.Windows.Forms.TextBox();
@@ -125,15 +125,15 @@ namespace Interpole
             cmbboxClr.ItemHeight = 20;
             cmbboxClr.Location = new System.Drawing.Point(10, 183);
             cmbboxClr.Name = "cmbboxClr";
-            cmbboxClr.Size = new System.Drawing.Size(size.Width - 20, 20); 
+            cmbboxClr.Size = new System.Drawing.Size(size.Width - 20, 20);
             Type colorType = typeof(System.Drawing.Color);
-            
+
             PropertyInfo[] propInfoList = colorType.GetProperties(BindingFlags.Static | BindingFlags.DeclaredOnly | BindingFlags.Public);
             foreach (PropertyInfo c in propInfoList)
             {
                 cmbboxClr.Items.Add(c.Name);
-            } 
-            
+            }
+
             cmbboxClr.SelectedItem = colorName;
 
             #region buttons
@@ -166,7 +166,7 @@ namespace Interpole
             inputBox.Controls.Add(cancelButton);
             inputBox.Controls.Add(cmbboxClr);
             inputBox.AcceptButton = okButton;
-            inputBox.CancelButton = cancelButton; 
+            inputBox.CancelButton = cancelButton;
             #endregion
 
             inputBox.Scale(1);
@@ -203,7 +203,7 @@ namespace Interpole
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
             textBox.TabStop = false;
-            textBox.Text = TimeCode;         
+            textBox.Text = TimeCode;
             timecodeWindow.Controls.Add(textBox);
 
             Label timeCodeLabel = new System.Windows.Forms.Label();
@@ -270,13 +270,84 @@ namespace Interpole
             timecodeWindow.AcceptButton = okButton;
             timecodeWindow.CancelButton = cancelButton;
 
-            
+
 
             DialogResult myresult = timecodeWindow.ShowDialog();
 
             TimeCode = textBox.Text;
             fps = Convert.ToInt32(frameBase.Value);
             Loop = loopCheck.Checked;
+            return myresult;
+        }
+
+        public static DialogResult MarkerDialog(string DialogName, ref string TimeCode, ref string MarkerName, int XPos)
+        {
+            Size size = new System.Drawing.Size(190, 120);
+
+            Form markerWindow = new Form();
+
+            markerWindow.StartPosition = FormStartPosition.Manual;
+
+            markerWindow.Location = new Point(XPos, Cursor.Position.Y);
+
+            markerWindow.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            markerWindow.BackColor = Color.FromArgb(50, 50, 50);
+            markerWindow.ClientSize = size;
+            markerWindow.Text = DialogName;
+
+            TextBox textBox = new TextBox();
+            textBox.Size = new System.Drawing.Size(size.Width - 10, 70);
+            textBox.Location = new System.Drawing.Point(5, 50);
+            textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
+            textBox.TabStop = false;
+            textBox.Text = TimeCode;
+            markerWindow.Controls.Add(textBox);
+
+            System.Windows.Forms.TextBox varTextBox = new System.Windows.Forms.TextBox();
+            varTextBox.Size = new System.Drawing.Size(size.Width - 10, 15);
+            varTextBox.Location = new System.Drawing.Point(5, 10);
+            varTextBox.Font = new Font("Consolas", 11, FontStyle.Regular);
+            varTextBox.Text = MarkerName;
+            varTextBox.TabStop = false;
+            markerWindow.Controls.Add(varTextBox);
+
+
+            #region buttons
+            Button okButton = new Button();
+            okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(90, 23);
+            okButton.Text = "&OK";
+            okButton.Location = new System.Drawing.Point(5, 93);
+            okButton.FlatStyle = FlatStyle.Flat;
+            okButton.FlatAppearance.BorderSize = 0;
+            okButton.ForeColor = Color.FromArgb(200, 200, 200);
+            okButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            markerWindow.Controls.Add(okButton);
+
+            Button cancelButton = new Button();
+            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(90, 23);
+            cancelButton.Text = "&Cancel";
+            cancelButton.Location = new System.Drawing.Point(size.Width - 95, 93);
+            cancelButton.FlatStyle = FlatStyle.Flat;
+            cancelButton.FlatAppearance.BorderSize = 0;
+            cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
+            cancelButton.ForeColor = Color.FromArgb(200, 200, 200);
+            #endregion
+
+
+            markerWindow.Controls.Add(cancelButton);
+            markerWindow.AcceptButton = okButton;
+            markerWindow.CancelButton = cancelButton;
+
+
+
+            DialogResult myresult = markerWindow.ShowDialog();
+
+            TimeCode = textBox.Text;
+            MarkerName = varTextBox.Text;
             return myresult;
         }
 
@@ -317,10 +388,20 @@ namespace Interpole
 
         private void AddMarker(object sender, EventArgs e)
         {
-            ipD.MarkerList.Add(new Marker()
-            {
-                FramePosition = ipD.PlayHead        
-            });
+            string pos = Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false);
+            string name = "empty";
+            int XPos = this.Location.X + (int)((StagePos.x + ipD.PlayHead )* Zoom)+20;
+            
+            if (MarkerDialog("Create Marker", ref pos, ref name,XPos) == DialogResult.OK)
+            {          
+                ipD.MarkerList.Add(new Marker()
+                {
+                    FramePosition = TimeCode2Frames(pos, ipD.FrameRate),
+                    Name = name
+                });
+
+                Changed(this, EventArgs.Empty);
+            }
         }
 
         public void InitMenuToolStrip()
