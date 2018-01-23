@@ -110,6 +110,10 @@ namespace VVVV.Nodes
                     //iterate playhead
                     PlayHead++;
                     Play = true;
+
+                    //handle Looping
+                    if (FInterpoleIn[0].interpoleForm.ipD.Loop && PlayHead > FInterpoleIn[0].interpoleForm.ipD.LoopEnd) PlayHead = FInterpoleIn[0].interpoleForm.ipD.LoopStart;
+
                     //set UI playhead
                     FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead;
                 }

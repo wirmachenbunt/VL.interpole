@@ -184,9 +184,9 @@ namespace Interpole
             return result;
         }
 
-        public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName, ref int fps)
+        public static DialogResult TimecodeDialog(ref string TimeCode, string DialogName, ref int fps, ref bool Loop)
         {
-            System.Drawing.Size size = new System.Drawing.Size(190, 120);
+            Size size = new System.Drawing.Size(190, 120);
 
             Form timecodeWindow = new Form();
 
@@ -198,7 +198,7 @@ namespace Interpole
             timecodeWindow.ClientSize = size;
             timecodeWindow.Text = DialogName;
 
-            System.Windows.Forms.TextBox textBox = new TextBox();
+            TextBox textBox = new TextBox();
             textBox.Size = new System.Drawing.Size(size.Width - 10, 23);
             textBox.Location = new System.Drawing.Point(5, 5);
             textBox.Font = new Font("Consolas", 20, FontStyle.Regular);
@@ -206,14 +206,14 @@ namespace Interpole
             textBox.Text = TimeCode;         
             timecodeWindow.Controls.Add(textBox);
 
-            System.Windows.Forms.Label timeCodeLabel = new System.Windows.Forms.Label();
+            Label timeCodeLabel = new System.Windows.Forms.Label();
             timeCodeLabel.Location = new System.Drawing.Point(60, 59);
-            timeCodeLabel.Size = new System.Drawing.Size(200, 15);
+            timeCodeLabel.Size = new System.Drawing.Size(30, 15);
             timeCodeLabel.Text = "FPS";
             timeCodeLabel.ForeColor = Color.FromArgb(110, 110, 110);
             timecodeWindow.Controls.Add(timeCodeLabel);
 
-            System.Windows.Forms.NumericUpDown frameBase = new System.Windows.Forms.NumericUpDown();
+            NumericUpDown frameBase = new System.Windows.Forms.NumericUpDown();
             frameBase.Name = "FrameBase";
             frameBase.Location = new System.Drawing.Point(6, 56);
             frameBase.Size = new System.Drawing.Size(50, 20);
@@ -222,6 +222,23 @@ namespace Interpole
             frameBase.Value = fps;
             timecodeWindow.Controls.Add(frameBase);
 
+            // 
+            // checkBox1
+            //
+            CheckBox loopCheck = new System.Windows.Forms.CheckBox();
+            loopCheck.Checked = Loop;
+            loopCheck.Appearance = System.Windows.Forms.Appearance.Button;
+            loopCheck.AutoSize = true;
+            //loopCheck.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            loopCheck.BackColor = Color.FromArgb(100, 100, 100);
+            loopCheck.FlatAppearance.CheckedBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
+            loopCheck.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            loopCheck.Location = new System.Drawing.Point(100, 54);
+            loopCheck.Name = "checkBox1";
+            loopCheck.Size = new System.Drawing.Size(41, 23);
+            loopCheck.TabIndex = 1;
+            loopCheck.Text = "Loop";
+            loopCheck.UseVisualStyleBackColor = true;
 
             #region buttons
             Button okButton = new Button();
@@ -246,17 +263,20 @@ namespace Interpole
             cancelButton.FlatAppearance.BorderSize = 0;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(0, 255, 255, 255);
             cancelButton.ForeColor = Color.FromArgb(200, 200, 200);
+            #endregion
 
-
+            timecodeWindow.Controls.Add(loopCheck);
             timecodeWindow.Controls.Add(cancelButton);
             timecodeWindow.AcceptButton = okButton;
             timecodeWindow.CancelButton = cancelButton;
-            #endregion
+
+            
 
             DialogResult myresult = timecodeWindow.ShowDialog();
 
             TimeCode = textBox.Text;
             fps = Convert.ToInt32(frameBase.Value);
+            Loop = loopCheck.Checked;
             return myresult;
         }
 

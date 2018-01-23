@@ -214,12 +214,10 @@ namespace Interpole
             switch (e.KeyCode)
             {
                 case Keys.B:
-                    //FLoopRegion[0] = ipD.PlayHead;
-                    //Invalidate();
+                    ipD.LoopStart = ipD.PlayHead;               
                     break;
                 case Keys.N:
-                    //FLoopRegion[1] = ipD.PlayHead;
-                    //Invalidate();
+                    ipD.LoopEnd = ipD.PlayHead;
                     break;
             }
 

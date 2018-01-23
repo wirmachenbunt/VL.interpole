@@ -88,6 +88,7 @@ namespace Interpole
             DrawClips(pe);
             DrawSelectedClips(pe);
             DrawSelectionRect(pe);
+            DrawLoopRegion(pe);
 
             //transformed stage ///////////////////////////////////////////
 
@@ -230,14 +231,11 @@ namespace Interpole
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
-            /*
-            if (FIsLoop[0])
-            {
-                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 28 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2)));
-                e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(new Point(FLoopRegion[0] / timeZoom, 30 - StagePos.Y), new Size((FLoopRegion[1] - FLoopRegion[0]) / timeZoom, 2000)));
-            }
             
-            */
+            if (ipD.Loop)
+            {
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(ipD.LoopStart, 48,ipD.LoopEnd - ipD.LoopStart, 2));         
+            }         
         }
 
         public void DrawTimeCode(PaintEventArgs e, int VerticalPosition)
