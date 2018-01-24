@@ -386,6 +386,53 @@ namespace Interpole
             }
         }
 
+        //merge interpole data from xml file
+        private void mergeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.Filter = "XML|*.xml";
+            DialogResult result = openFileDialog1.ShowDialog(); // Show the dialog.
+            if (result == DialogResult.OK) // Test result.
+            {
+                PushUndoStep();
+                string file = openFileDialog1.FileName;
+                try
+                {
+                    InterpoleData tempIPD = DeserializeInterpoleData(File.ReadAllText(file));
+                    foreach(Clip clip in tempIPD.ClipList)
+                    {
+                        //add clips
+                        ipD.ClipList.Add(new Clip()
+                        {
+                            ID = RNGCharacterMask(), //make sure new clips have a unique id
+                            Name = clip.Name,
+                            StartFrame = clip.StartFrame,
+                            Duration = clip.Duration,
+                            FadeIn = clip.FadeIn,
+                            FadeOut = clip.FadeOut,
+                            Bounds = clip.Bounds,
+                            Color = clip.Color,
+                            Variable = clip.Variable
+                        });
+                    }
+
+                    //add Marker
+                    foreach(Marker marker in tempIPD.MarkerList)
+                    {
+                        ipD.MarkerList.Add(new Marker()
+                        {
+                            FramePosition = marker.FramePosition,
+                            Name = marker.Name
+                        });
+                    }
+
+                    UpdateXML();
+                }
+                catch (IOException)
+                {
+                }
+            }
+        }
+
         private void AddMarker(object sender, EventArgs e)
         {
             var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
@@ -447,7 +494,7 @@ namespace Interpole
             ToolStripMenuItem menuToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem openToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem saveToolStripMenuItem = new ToolStripMenuItem();
-            //ToolStripMenuItem exitToolStripMenuItem = new ToolStripMenuItem();
+            ToolStripMenuItem mergeToolStripMenuItem = new ToolStripMenuItem();
 
             ToolStripMenuItem markerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ToolStripMenuItem addMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -473,7 +520,8 @@ namespace Interpole
             // 
             menuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             openToolStripMenuItem,
-            saveToolStripMenuItem});
+            saveToolStripMenuItem,
+            mergeToolStripMenuItem});
             menuToolStripMenuItem.Name = "menuToolStripMenuItem";
             menuToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             menuToolStripMenuItem.Text = "File";
@@ -493,6 +541,15 @@ namespace Interpole
             saveToolStripMenuItem.Text = "Export";
             saveToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
             saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            // 
+            // mergeToolStripMenuItem
+            // 
+            mergeToolStripMenuItem.Name = "saveToolStripMenuItem";
+            mergeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            mergeToolStripMenuItem.Text = "Merge";
+            mergeToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            mergeToolStripMenuItem.Click += new System.EventHandler(mergeToolStripMenuItem_Click);
+
 
 
             #region Marker

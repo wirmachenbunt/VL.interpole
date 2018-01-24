@@ -210,7 +210,6 @@ namespace Interpole
         {
             DarkPen.DashStyle = DashStyle.Dash;
 
-
             foreach (Marker m in ipD.MarkerList)
             {
                 int pos = Convert.ToInt32((m.FramePosition + StagePos.x) * Zoom);
@@ -219,16 +218,17 @@ namespace Interpole
                 {
                     Point[] mypoints = { new Point(-7 + pos, 40), new Point(7 + pos, 40), new Point(0 + pos, 50) }; //play head triangle
                     e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                    stringSize = e.Graphics.MeasureString(m.Name, rulerFont, 400);
+                    e.Graphics.DrawString(m.Name, rulerFont, OrangeBrush, new Rectangle(pos, 50, (int)stringSize.Width + 10, (int)stringSize.Height), format); //draw seconds
                 }
                 else
                 {
                     Point[] mypoints = { new Point(-3 + pos, 45), new Point(3 + pos, 45), new Point(0 + pos, 49) }; //play head triangle
                     e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                    stringSize = e.Graphics.MeasureString(m.Name, rulerFont, 400);
+                    e.Graphics.DrawString(m.Name, rulerFont, whiteBrush, new Rectangle(pos, 50, (int)stringSize.Width + 10, (int)stringSize.Height), format); //draw seconds
                 }
-
-
-                stringSize = e.Graphics.MeasureString(m.Name, rulerFont, 400);
-                e.Graphics.DrawString(m.Name, rulerFont, whiteBrush, new Rectangle(pos, 50, (int)stringSize.Width + 10, (int)stringSize.Height), format); //draw seconds
+         
                 e.Graphics.DrawLine(DarkPen, new Point(pos, 50), new Point(pos, this.Height));
             }
         }

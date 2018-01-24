@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
 using VVVV.Core.Logging;
+using System.Diagnostics;
 
 namespace Interpole
 {
@@ -23,10 +24,10 @@ namespace Interpole
             holdMousePos = mousePos; //keep last Mouseposition for rectangle selection
 
             //global hittest for everything
-            hittest(); 
+            hittest();
 
             // update snap positions
-            UpdateSnapList(); 
+            UpdateSnapList();
 
             // set playhead
             SetPlayPosition();
@@ -42,7 +43,7 @@ namespace Interpole
 
             //DragDuration
             if (e.Button == MouseButtons.Left && hitObject is Clip && selectionList.Count == 0 && !ipD.UILock) DragDuration(hitObject);
-          
+
         }
 
         private void Form1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -64,7 +65,7 @@ namespace Interpole
 
             selectionRectangle.Size = new Size(0, 0);
 
-            
+
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -72,7 +73,7 @@ namespace Interpole
             if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !ipD.UILock) AddClip(); //ADD CLIP
             if (hitObject is Clip && e.Button == MouseButtons.Left && !ipD.UILock) EditClip(hitObject); // EDIT CLIP
             if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !ipD.UILock) EditTimeCode(); // EDIT TIMECODE
-            
+
         }
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -85,9 +86,9 @@ namespace Interpole
             }
             if (e.Delta < 0)
             {
-                Zoom = Math.Max(Zoom - 0.025F, 0.01F);        
+                Zoom = Math.Max(Zoom - 0.025F, 0.01F);
             }
-     
+
             float oldimagex = e.X / oldzoom;
             float newimagex = e.X / Zoom;
             StagePos.x = newimagex - oldimagex + StagePos.x;
@@ -102,11 +103,11 @@ namespace Interpole
 
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 
-            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right,e); // calculate delta on rightclick
+            CalcStagePosition(MousePosition, e.Button == MouseButtons.Right, e); // calculate delta on rightclick
 
             SetPlayPosition(); // set playhead
 
-            if(!ipD.UILock) SetSelectionRectangle(e); // selection rectangle
+            if (!ipD.UILock) SetSelectionRectangle(e); // selection rectangle
 
             //dragging multiselection
             if (selectionList.Count > 0 && hitObject is Clip && !ipD.UILock)
@@ -130,25 +131,25 @@ namespace Interpole
             if (e.KeyCode == Keys.Z && e.Modifiers == Keys.Control && !ipD.UILock)
             {
                 if (undoXML.Count > 0)
-                {                  
+                {
                     string tempXML = undoXML.Pop();
 
                     ipD.ClipList.Clear();
 
                     selectionList.Clear();
 
-                    ipD.ClipList = DeserializeClipList(tempXML);        
-                    
+                    ipD.ClipList = DeserializeClipList(tempXML);
+
                     rememberLastFunction = "updateXML"; //remember action
                     Invalidate();
                 }
-            } 
+            }
             #endregion
 
             //PLAYBACK
             if (e.KeyCode == Keys.Space) play = !play; // invert bool play
 
-            //COPY
+            //copy Clips
             #region copy
             if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control && !ipD.UILock)
             {
@@ -157,13 +158,13 @@ namespace Interpole
             }
             #endregion
 
-            //Paste
+            //Paste Clips
             #region paste
             if (e.KeyCode == Keys.V && e.Modifiers == Keys.Control && !ipD.UILock)
             {
                 PasteClips();
                 Invalidate();
-            } 
+            }
             #endregion
 
             //LOOP
@@ -191,7 +192,7 @@ namespace Interpole
             //SET TO ZERO
             if (e.KeyCode == Keys.R)
             {
-                StagePos.y = 0;     
+                StagePos.y = 0;
                 //Invalidate();
             }
 
@@ -214,7 +215,7 @@ namespace Interpole
             switch (e.KeyCode)
             {
                 case Keys.B:
-                    ipD.LoopStart = ipD.PlayHead;               
+                    ipD.LoopStart = ipD.PlayHead;
                     break;
                 case Keys.N:
                     ipD.LoopEnd = ipD.PlayHead;
@@ -225,112 +226,29 @@ namespace Interpole
 
         public void HandleMarker(object sender, KeyEventArgs e)
         {
-            /*
-
-            switch (e.KeyCode)
+            //find next marker
+            if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Right)
             {
-                case Keys.NumPad1:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[0] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[0] / timeZoom);
-                    ipD.PlayHead = FMarker[0];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad2:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[1] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[1] / timeZoom);
-                    ipD.PlayHead = FMarker[1];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad3:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[2] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[2] / timeZoom);
-                    ipD.PlayHead = FMarker[2];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad4:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[3] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[3] / timeZoom);
-                    ipD.PlayHead = FMarker[3];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad5:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[4] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[4] / timeZoom);
-                    ipD.PlayHead = FMarker[4];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad6:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[5] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[5] / timeZoom);
-                    ipD.PlayHead = FMarker[5];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad7:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[6] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[6] / timeZoom);
-                    ipD.PlayHead = FMarker[6];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad8:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[7] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[7] / timeZoom);
-                    ipD.PlayHead = FMarker[7];
-                    //Invalidate();
-                    break;
-                case Keys.NumPad9:
-                    if (e.Modifiers == Keys.Control)
-                    {
-                        FMarker[8] = ipD.PlayHead;
-                        //Invalidate();
-                        break;
-                    }
-                    StagePos.X = 0 - (FMarker[8] / timeZoom);
-                    ipD.PlayHead = FMarker[8];
-                    //Invalidate();
-                    break;
+                var marker = ipD.MarkerList.OrderBy(w => w.FramePosition).FirstOrDefault(w => w.FramePosition > ipD.PlayHead);
+                if (marker != null)
+                {
+                    ipD.PlayHead = marker.FramePosition;
+                    StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+                }
             }
 
-    */
+            //find previous marker
+            if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Left)
+            {
+                var marker = ipD.MarkerList.OrderByDescending(w => w.FramePosition).FirstOrDefault(w => w.FramePosition < ipD.PlayHead);
+
+                if(marker != null)
+                {     
+                    ipD.PlayHead = marker.FramePosition;
+                    StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+                }
+                
+            }
         }
 
         public void CalcStagePosition(Point mousePos, bool click, System.Windows.Forms.MouseEventArgs e)
@@ -339,9 +257,9 @@ namespace Interpole
             {
                 int deltaX = mousePos.X - prevMousePos.X;
                 prevMousePos = mousePos;
-                StagePos.x += deltaX/Zoom;
+                StagePos.x += deltaX / Zoom;
                 //if (StagePos.x > 0) StagePos.x = 0;
-                
+
             }
 
             /*
@@ -357,7 +275,7 @@ namespace Interpole
 
         public void SetGlobalMousePos(MouseEventArgs e)
         {
-            mousePos.X = Convert.ToInt32((e.X / Zoom)-StagePos.x);
+            mousePos.X = Convert.ToInt32((e.X / Zoom) - StagePos.x);
             mousePos.Y = Convert.ToInt32(e.Y - StagePos.y);
         }
 
@@ -373,11 +291,11 @@ namespace Interpole
                 // snap playhead to clip in out
                 if (Form.ModifierKeys == Keys.Shift)
                 {
-                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (ipD.PlayHead ))).First();
+                    int closest = snapPosList.OrderBy(n => Math.Abs(n - (ipD.PlayHead))).First();
 
-                    int distance = Math.Abs(ipD.PlayHead  - closest);
+                    int distance = Math.Abs(ipD.PlayHead - closest);
 
-                    if (distance < 12/Zoom) ipD.PlayHead = closest;
+                    if (distance < 12 / Zoom) ipD.PlayHead = closest;
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
@@ -391,12 +309,12 @@ namespace Interpole
 
             snapPosList.Add(ipD.LoopStart);
             snapPosList.Add(ipD.LoopEnd);
-       
+
             foreach (Marker m in ipD.MarkerList)
             {
                 snapPosList.Add(m.FramePosition);
             }
-            
+
             foreach (Clip myclip in snapClipList)
             {
                 snapPosList.Add(myclip.Bounds.X);
