@@ -51,6 +51,7 @@ namespace Interpole
             if (hitObject is Clip && rememberLastFunction == "dragclip")
             {
                 UpdateXML();
+                hitObject = null;
             }
 
             InterpoleXML = SerializeInterpoleData(ipD);
@@ -59,13 +60,14 @@ namespace Interpole
 
             this.Cursor = Cursors.Default;
 
-            hitObject = null; //clear hitObject in case there is no button pressed
+            if (hitObject is Clip && selectionList.Count == 0) selectionList.Add(hitObject);
+            else hitObject = null; //clear hitObject in case there is no button pressed
 
             dragDurationClip = null;
 
             selectionRectangle.Size = new Size(0, 0);
 
-
+            
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
