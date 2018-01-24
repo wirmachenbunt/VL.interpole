@@ -172,13 +172,25 @@ namespace Interpole
             if (dragDurationClip != null)
             {
                 this.Cursor = Cursors.SizeWE;
+
+                
                 int dragHorizontal = myclip.Bounds.Width + (mousePos.X - deltaMousePos.X);
+                
+                //don't allow negative duration    
                 if (dragHorizontal <= 10) dragHorizontal = 10;
+                myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
+                myclip.Duration = dragHorizontal;
+
+                //safety net for fadeIn fadeOut, no negative scaling
+                if (myclip.StartFrame + myclip.Duration - myclip.FadeOut < myclip.StartFrame + myclip.FadeIn)
+                {
+                    Debug.WriteLine("too short " + (myclip.StartFrame + myclip.Duration - myclip.FadeOut).ToString() + " " + (myclip.StartFrame + myclip.FadeIn).ToString());
+                    dragHorizontal = myclip.FadeIn + myclip.FadeOut + 1;
+                }
 
                 myclip.Bounds = new Rectangle(myclip.Bounds.Location, new Size(dragHorizontal, myclip.Bounds.Height));
-
-
                 myclip.Duration = dragHorizontal;
+
                 rememberLastFunction = "dragclip";          
             }
 
