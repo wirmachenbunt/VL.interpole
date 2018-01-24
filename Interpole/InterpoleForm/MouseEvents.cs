@@ -60,7 +60,7 @@ namespace Interpole
 
             this.Cursor = Cursors.Default;
 
-            if (hitObject is Clip && selectionList.Count == 0) selectionList.Add(hitObject);
+            if (hitObject is Clip && selectionList.Count == 0 && e.Button == MouseButtons.Left) selectionList.Add(hitObject);
             else hitObject = null; //clear hitObject in case there is no button pressed
 
             dragDurationClip = null;

@@ -35,6 +35,13 @@ namespace Interpole
             public int FramePosition { get; set; }
         }
 
+        public enum InterpoleMode
+        {
+            ClipEditor,
+            KeyframeEditor,
+            AutomataEditor,
+        };
+
 
         // UI OBJECTS //////////////////////////////////////////////////////////////////////////////////////////////////////
         public abstract class UIelement //all UI Elements should be based upon this to make the hittest work

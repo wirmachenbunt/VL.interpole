@@ -22,6 +22,7 @@ namespace Interpole
         //Interpole Object keeping all data like clips and window settings
         public InterpoleData ipD;
         public string InterpoleDataSerialized;
+        public InterpoleMode ipMode = InterpoleMode.ClipEditor;
 
 
         //Event in case something changed

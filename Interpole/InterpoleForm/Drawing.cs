@@ -84,14 +84,15 @@ namespace Interpole
             pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
             pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
-            //pe.Graphics.FillRectangle(OrangeBrush, myworkspace.Bounds); // debug rectangle workspace
-
-            DrawClips(pe);
-            DrawSelectedClips(pe);
-            DrawSelectionRect(pe);
             DrawLoopRegion(pe);
 
+            if (ipMode == InterpoleMode.ClipEditor)
+            {
+                DrawClips(pe);
+                DrawSelectedClips(pe);                       
+            }
 
+            DrawSelectionRect(pe);
             //transformed stage ///////////////////////////////////////////
 
         }
