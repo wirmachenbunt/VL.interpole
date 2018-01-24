@@ -388,20 +388,56 @@ namespace Interpole
 
         private void AddMarker(object sender, EventArgs e)
         {
-            string pos = Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false);
-            string name = "empty";
-            int XPos = this.Location.X + (int)((StagePos.x + ipD.PlayHead )* Zoom)+20;
-            
-            if (MarkerDialog("Create Marker", ref pos, ref name,XPos) == DialogResult.OK)
-            {          
-                ipD.MarkerList.Add(new Marker()
-                {
-                    FramePosition = TimeCode2Frames(pos, ipD.FrameRate),
-                    Name = name
-                });
+            var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
+            if(item == null)
+            {
+                string pos = Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false);
+                string name = "empty";
+                int XPos = this.Location.X + (int)((StagePos.x + ipD.PlayHead) * Zoom) + 20;
 
+                if (MarkerDialog("Create Marker", ref pos, ref name, XPos) == DialogResult.OK)
+                {
+                    ipD.MarkerList.Add(new Marker()
+                    {
+                        FramePosition = TimeCode2Frames(pos, ipD.FrameRate),
+                        Name = name
+                    });
+
+                    Changed(this, EventArgs.Empty);
+                }
+            }  else MessageBox.Show("Oops, there is a marker.");
+        }
+
+        private void EditMarker(object sender, EventArgs e)
+        {
+            var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
+
+            if(item != null)
+            {
+                string pos = Frames2Timecode(item.FramePosition, ipD.FrameRate, false);
+                string name = item.Name;
+                int XPos = this.Location.X + (int)((StagePos.x + ipD.PlayHead) * Zoom) + 20;
+
+                if (MarkerDialog("Edit Marker", ref pos, ref name, XPos) == DialogResult.OK)
+                {
+                    item.FramePosition = TimeCode2Frames(pos, ipD.FrameRate);
+                    item.Name = name;
+                    Changed(this, EventArgs.Empty);
+                }
+            } 
+            else MessageBox.Show("No marker found.");
+        }
+
+        private void RemoveMarker(object sender, EventArgs e)
+        {
+            var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
+
+            if (item != null)
+            {
+                ipD.MarkerList.Remove(item);
                 Changed(this, EventArgs.Empty);
             }
+            else MessageBox.Show("No marker found.");
         }
 
         public void InitMenuToolStrip()
@@ -482,6 +518,7 @@ namespace Interpole
             editMarkerToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             editMarkerToolStripMenuItem.Text = "Edit Marker";
             editMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            editMarkerToolStripMenuItem.Click += new System.EventHandler(EditMarker);
             // 
             // deleteMarkerToolStripMenuItem
             // 
@@ -489,6 +526,7 @@ namespace Interpole
             deleteMarkerToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             deleteMarkerToolStripMenuItem.Text = "Delete Marker";
             deleteMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            deleteMarkerToolStripMenuItem.Click += new System.EventHandler(RemoveMarker);
             #endregion
 
             // 

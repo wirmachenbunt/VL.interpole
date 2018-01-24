@@ -54,6 +54,7 @@ namespace Interpole
         Playbar myplaybar = new Playbar();  // playbar
         TimeCodeDisplay mytimecode = new TimeCodeDisplay();
         Rectangle footer = new Rectangle();
+        Rectangle clippingRegion = new Rectangle();
         WorkSpace myworkspace = new WorkSpace();
         SizeF stringSize = new SizeF();
 
@@ -96,43 +97,47 @@ namespace Interpole
         }
 
         public void DrawClips(PaintEventArgs e)
-        {
-
+        {     
+            //update region to render just clips in view   
+            clippingRegion = new Rectangle(-(int)(StagePos.x), (int)StagePos.y, (int)(this.Width / Zoom), this.Height);
+      
             if (ipD.ClipList.Count > 0)
             {
                 foreach (Clip clip in ipD.ClipList)
                 {
-                    Color ClipColor = Color.FromName(clip.Color);
-                    SolidBrush ClipBrush = new SolidBrush(ClipColor);
+                    if (clip.Bounds.IntersectsWith(clippingRegion))
+                    {                 
+                        Color ClipColor = Color.FromName(clip.Color);
+                        SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
-                    e.Graphics.FillRectangle(grayBrush, clip.Bounds);
+                        e.Graphics.FillRectangle(grayBrush, clip.Bounds);
 
-                    int fadeIn = clip.FadeIn;
-                    int fadeOut = clip.FadeOut;
+                        int fadeIn = clip.FadeIn;
+                        int fadeOut = clip.FadeOut;
 
-                    Point[] points = {
+                        Point[] points = {
                     new Point(clip.Bounds.X, clip.Bounds.Y+20),
                     new Point(clip.Bounds.X+fadeIn, clip.Bounds.Y),
                     new Point(clip.Bounds.Width - fadeOut + clip.Bounds.X, clip.Bounds.Y),
                     new Point(clip.Bounds.Width + clip.Bounds.X, clip.Bounds.Y+20) };
 
-                    e.Graphics.FillPolygon(ClipBrush, points);
+                        e.Graphics.FillPolygon(ClipBrush, points);
 
+                        string text = clip.Name; // create text
 
-                    string text = clip.Name; // create text
-                    
-                    stringSize = e.Graphics.MeasureString(text, clipFont, 400);
+                        stringSize = e.Graphics.MeasureString(text, clipFont, 400);
 
-                    Point center = new Point(Convert.ToInt32(clip.Bounds.Location.X * Zoom), clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
+                        Point center = new Point(Convert.ToInt32(clip.Bounds.Location.X * Zoom), clip.Bounds.Y - Convert.ToInt16(stringSize.Height));
 
-                    Rectangle Bounds = new Rectangle(
-                    center,
-                    new Size(Convert.ToInt32(stringSize.Width + 1),
-                    Convert.ToInt32(stringSize.Height + 1)));
+                        Rectangle Bounds = new Rectangle(
+                        center,
+                        new Size(Convert.ToInt32(stringSize.Width + 1),
+                        Convert.ToInt32(stringSize.Height + 1)));
 
-                    e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
-                    e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
-                    e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
+                        e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
+                        e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
+                        e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
+                    }
                 }
             }
 
@@ -204,15 +209,26 @@ namespace Interpole
         public void DrawMarker(PaintEventArgs e)
         {
             DarkPen.DashStyle = DashStyle.Dash;
-            
+
 
             foreach (Marker m in ipD.MarkerList)
             {
                 int pos = Convert.ToInt32((m.FramePosition + StagePos.x) * Zoom);
-                Point[] mypoints = { new Point(-3 + pos, 45), new Point(3 + pos, 45), new Point(0 + pos, 49) }; //play head triangle
-                e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+
+                if (m.FramePosition == ipD.PlayHead)
+                {
+                    Point[] mypoints = { new Point(-7 + pos, 40), new Point(7 + pos, 40), new Point(0 + pos, 50) }; //play head triangle
+                    e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                }
+                else
+                {
+                    Point[] mypoints = { new Point(-3 + pos, 45), new Point(3 + pos, 45), new Point(0 + pos, 49) }; //play head triangle
+                    e.Graphics.FillPolygon(new SolidBrush(Color.Aqua), mypoints);
+                }
+
+
                 stringSize = e.Graphics.MeasureString(m.Name, rulerFont, 400);
-                e.Graphics.DrawString(m.Name, rulerFont, whiteBrush, new Rectangle(pos, 50, (int)stringSize.Width+10,(int)stringSize.Height), format); //draw seconds
+                e.Graphics.DrawString(m.Name, rulerFont, whiteBrush, new Rectangle(pos, 50, (int)stringSize.Width + 10, (int)stringSize.Height), format); //draw seconds
                 e.Graphics.DrawLine(DarkPen, new Point(pos, 50), new Point(pos, this.Height));
             }
         }
@@ -328,7 +344,9 @@ namespace Interpole
             while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
             {
                 Render();
-                Thread.Sleep(5);
+                if(play) Thread.Sleep(30);
+                else Thread.Sleep(5);
+
             }
         }
 
