@@ -52,7 +52,7 @@ namespace Interpole
 
             //Register Update Event to export all Settings
             this.Changed += UpdateInterpoleString;
-
+            
         }
 
         public void InitObjects()
@@ -66,6 +66,7 @@ namespace Interpole
             ipD.UILock = false;
             ipD.PlayHead = 0;
             ipD.FrameRate = 60;
+            
         }
 
         private void InitializeComponent()

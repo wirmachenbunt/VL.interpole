@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Interpole.Keyframes
 {
-    class KeyframeDrawing
+    class KFDrawing
     {
     }
 }
