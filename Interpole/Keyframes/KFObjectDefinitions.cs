@@ -17,17 +17,20 @@ namespace Interpole
             public TrackType Type { get; set; }
             public List<IOBox> IOBox { get; set; } 
             public List<Keyframe> KeyframeList { get; set; }
+            public bool CatmullRom { get; set; }
         }
 
         public class IOBox:UIelement
         {
-            public double value { get; set; }
+            public double Value { get; set; }
         }
 
 
         public class Keyframe : UIelement
         {
-            dynamic value { get; set; }
+            dynamic Value { get; set; }
+            Interpolation In { get; set; }
+            Interpolation Out { get; set; }
         }
         
         public enum TrackType
@@ -36,9 +39,16 @@ namespace Interpole
             Vector2D,
             Vector3D,
             Vector4D,
-            Color
+            Color,
+            String
         }
         
+        public enum Interpolation
+        {
+            Linear,
+            Ease
+        }
+
         //
         // just a demo to test the track object
         //
@@ -51,13 +61,8 @@ namespace Interpole
             myTrack.IOBox.Add(new IOBox()
             {
                 Bounds = new Rectangle(0,0,10,10),
-                value = 0
+                Value = 0
             });
-
-            
-
-
-
         }
     }
 }
