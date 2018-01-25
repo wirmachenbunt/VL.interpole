@@ -10,48 +10,53 @@ namespace Interpole
 {
     public partial class InterpoleBase
     {
-        /*
+        
         public class Track : UIelement
         {
+            public string Name { get; set;}
+            public TrackType Type { get; set; }
+            public List<IOBox> IOBox { get; set; } 
             public List<Keyframe> KeyframeList { get; set; }
         }
+
+        public class IOBox:UIelement
+        {
+            public double value { get; set; }
+        }
+
 
         public class Keyframe : UIelement
         {
             dynamic value { get; set; }
         }
-        */
-
-
-        class Keyframe1D : IKeyFrame
+        
+        public enum TrackType
         {
-            public float value { get; set; }
+            Single,
+            Vector2D,
+            Vector3D,
+            Vector4D,
+            Color
         }
-
-        class Keyframe2D : IKeyFrame
-        {
-            public Vector2D value { get; set; }
-        }
-
-        public interface IKeyFrame { }
-
-        public class Track
-        {
-            public List<IKeyFrame> Frames { get; set; }
-
-        }
-
+        
         //
         // just a demo to test the track object
         //
         public static void demo()
         {
-            Track mytrack = new Track();
+            Track myTrack = new Track();
+            myTrack.Name = "meiner erster Track";
+            myTrack.Type = TrackType.Single;
 
-            var frame = new Keyframe1D();
-            frame.value = 100;
+            myTrack.IOBox.Add(new IOBox()
+            {
+                Bounds = new Rectangle(0,0,10,10),
+                value = 0
+            });
 
-            mytrack.Frames.Add(frame);
+            
+
+
 
         }
     }

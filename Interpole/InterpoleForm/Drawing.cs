@@ -160,8 +160,6 @@ namespace Interpole
             // draw negativ workspace
             e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0, 30 + VerticalPosition, (int)(StagePos.x * Zoom), this.Height)); // background
 
-            DrawLoopRegion(e);
-
             DrawRuler(e, VerticalPosition);
 
             DrawTimeCode(e, VerticalPosition);
@@ -246,7 +244,6 @@ namespace Interpole
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
-
             if (ipD.Loop)
             {
                 e.Graphics.FillRectangle(OrangeBrush, new Rectangle(ipD.LoopStart, 48, ipD.LoopEnd - ipD.LoopStart, 2));

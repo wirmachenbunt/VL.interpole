@@ -46,20 +46,20 @@ namespace Interpole
         // UI OBJECTS //////////////////////////////////////////////////////////////////////////////////////////////////////
         public abstract class UIelement //all UI Elements should be based upon this to make the hittest work
         {
-            public string ID { get; set; }
-            public string Name { get; set; }
-            public Rectangle Bounds { get; set; }
+           public Rectangle Bounds { get; set; }
         }
 
         public class Clip : UIelement
         {
+            public string Name { get; set; }
+            public string ID { get; set; }
             public int StartFrame { get; set; }
             public int Duration { get; set; }
             public int FadeIn { get; set; }
             public int FadeOut { get; set; }
             public string Color { get; set; }
             public string Variable { get; set; }
-            //public List<Track> Tracks { get; set; }
+            public List<Track> Tracks { get; set; }
         }
 
         public class Playbar : UIelement
