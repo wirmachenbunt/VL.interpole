@@ -72,10 +72,45 @@ namespace Interpole
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !ipD.UILock) AddClip(); //ADD CLIP
-            if (hitObject is Clip && e.Button == MouseButtons.Left && !ipD.UILock) EditClip(hitObject); // EDIT CLIP
-            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !ipD.UILock) EditTimeCode(); // EDIT TIMECODE
+            //ADD CLIP
+            if (hitObject is WorkSpace && e.Button == MouseButtons.Left && !ipD.UILock && ipMode == InterpoleMode.ClipEditor) AddClip();
 
+            // EDIT CLIP
+            if (hitObject is Clip && e.Button == MouseButtons.Left && !ipD.UILock) EditClip(hitObject);
+
+            // EDIT TIMECODE
+            if (hitObject is TimeCodeDisplay && e.Button == MouseButtons.Left && !ipD.UILock) EditTimeCode();
+
+            // Switch between Modes Clip Editor, Keyframeeditor
+            if (hitObject is Clip && e.Button == MouseButtons.Right) SwitchClipKeyframeView();
+           
+        }
+
+
+        private void SwitchClipKeyframeView()
+        {
+            if (ipMode == InterpoleMode.ClipEditor)
+            {
+                ipMode = InterpoleMode.KeyframeEditor;
+
+                //select editable clip
+                KeyframeEditorClip = new Clip()
+                {
+                    ID = RNGCharacterMask(),
+                    Name = hitObject.Name,
+                    StartFrame = hitObject.StartFrame,
+                    Duration = hitObject.Duration,
+                    FadeIn = hitObject.FadeIn,
+                    FadeOut = hitObject.FadeOut,
+                    Bounds = new Rectangle(new Point(hitObject.StartFrame, 80), hitObject.Bounds.Size),
+                    Color = hitObject.Color,
+                    Variable = hitObject.Variable
+                };
+            }
+            else if (ipMode == InterpoleMode.KeyframeEditor)
+            {
+                ipMode = InterpoleMode.ClipEditor;
+            }
         }
 
         private void Form1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -101,7 +136,6 @@ namespace Interpole
 
         private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            //hittestRollover();
 
             SetGlobalMousePos(e); // get Mouse Position and calibrate with stagepos and dpi
 

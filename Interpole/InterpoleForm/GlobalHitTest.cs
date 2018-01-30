@@ -17,6 +17,7 @@ namespace Interpole
         Rectangle selectionRectangle = new Rectangle(); //multiselection rectangle
         dynamic hitObject;
         dynamic rollOverObject;
+        Clip KeyframeEditorClip;
 
 
 
@@ -29,17 +30,25 @@ namespace Interpole
             hitTestList.Add(mytimecode); //add timecode
 
 
-            foreach (Clip myclip in ipD.ClipList)
+            if (ipMode == InterpoleMode.ClipEditor)
             {
-                hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
+                foreach (Clip myclip in ipD.ClipList)
+                {
+                    hitTestList.Add(myclip); //add all clips, this needs to be culled at some point
+                }
             }
+            else if (ipMode == InterpoleMode.KeyframeEditor)
+            {
+                hitTestList.Add(KeyframeEditorClip);
+            }
+
 
             hitTestList.Add(myworkspace); // workspace 
             #endregion
 
             // the actual hitTest
-            hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X,mousePos.Y))); 
-            //FLogger.Log(LogType.Debug, hitObject.GetType().ToString());
+            hitObject = hitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X, mousePos.Y)));
+
         }
 
         public void hittestRollover()
@@ -53,7 +62,7 @@ namespace Interpole
             // the actual hitTest
             rollOverObject = myhitTestList.FirstOrDefault(x => x.Bounds.Contains(new Point(mousePos.X, mousePos.Y)));
 
-            if(rollOverObject is Clip && hitObject == null)
+            if (rollOverObject is Clip && hitObject == null)
             {
                 int start = (rollOverObject.Bounds.X + rollOverObject.Bounds.Width) - (5);
                 int end = rollOverObject.Bounds.X + rollOverObject.Bounds.Width;
@@ -63,7 +72,7 @@ namespace Interpole
                     this.Cursor = Cursors.SizeWE;
                 }
             }
-            
+
         }
 
         public void MultiSelectionClips()
