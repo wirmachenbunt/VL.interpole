@@ -50,6 +50,8 @@ namespace Interpole
         WorkSpace myworkspace = new WorkSpace();
         SizeF stringSize = new SizeF();
 
+        bool Animation = false;
+
         // WINDOWS FORMS VARIABLES ///////////////////////////////////////////////////////////////
 
         #endregion
@@ -255,6 +257,9 @@ namespace Interpole
                 new Point(5, 60 + VerticalPosition),
                 new Size(200, 30));
 
+            // background rectangle
+            //e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(20, 20, 20)), new Rectangle(0,50,180,50));
+
             e.Graphics.DrawString(ipD.PlayHead.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             mytimecode.Bounds = new Rectangle(
@@ -341,15 +346,31 @@ namespace Interpole
             while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
             {
                 Render();
-                if(play) Thread.Sleep(30);
-                else Thread.Sleep(5);
-
+                Thread.Sleep(5);
             }
         }
 
         void Render()
         {
+            RenderAnimations();
             this.Invalidate();
+        }
+
+        void RenderAnimations()
+        {
+            if (ipMode == InterpoleMode.KeyframeEditor && StagePos.y >= 0 - KeyframeEditorClip.Bounds.Y + 80)
+            {
+                StagePos.y -= (StagePos.y + KeyframeEditorClip.Bounds.Y) / 10;
+                Animation = true;
+            }
+            else Animation = false;
+
+            if (ipMode == InterpoleMode.ClipEditor && StagePos.y < 0)
+            {
+                StagePos.y -= StagePos.y / 5;
+                Animation = true;
+            }
+            else Animation = false;
         }
 
         static class NativeMethods

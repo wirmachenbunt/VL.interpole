@@ -95,13 +95,11 @@ namespace Interpole
                 //select editable clip
                 KeyframeEditorClip = hitObject;
 
-                StagePos.y = 0 - KeyframeEditorClip.Bounds.Y + 80;
-
             }
             else if (ipMode == InterpoleMode.KeyframeEditor)
             {
                 ipMode = InterpoleMode.ClipEditor;
-                StagePos.y = 0;
+                //StagePos.y = 0;
             }
         }
 
