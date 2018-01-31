@@ -21,7 +21,9 @@ namespace Interpole
     partial class InterpoleBase : Form
     {
         #region variables
-       
+
+        int TargetStagePosY = 0;
+
         #endregion
 
     
@@ -31,7 +33,7 @@ namespace Interpole
 
             Color ClipColor = Color.FromName(KeyframeEditorClip.Color);
             SolidBrush ClipBrush = new SolidBrush(ClipColor);
-            
+
             e.Graphics.FillRectangle(ClipBrush, KeyframeEditorClip.Bounds);
 
             string text = KeyframeEditorClip.Name; // create text
@@ -48,11 +50,10 @@ namespace Interpole
             e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
             e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
             e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
-
-
+            
         }
 
-
+       
 
     }
 }

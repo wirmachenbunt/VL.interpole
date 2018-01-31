@@ -86,7 +86,6 @@ namespace Interpole
            
         }
 
-
         private void SwitchClipKeyframeView()
         {
             if (ipMode == InterpoleMode.ClipEditor)
@@ -94,22 +93,15 @@ namespace Interpole
                 ipMode = InterpoleMode.KeyframeEditor;
 
                 //select editable clip
-                KeyframeEditorClip = new Clip()
-                {
-                    ID = RNGCharacterMask(),
-                    Name = hitObject.Name,
-                    StartFrame = hitObject.StartFrame,
-                    Duration = hitObject.Duration,
-                    FadeIn = hitObject.FadeIn,
-                    FadeOut = hitObject.FadeOut,
-                    Bounds = new Rectangle(new Point(hitObject.StartFrame, 80), hitObject.Bounds.Size),
-                    Color = hitObject.Color,
-                    Variable = hitObject.Variable
-                };
+                KeyframeEditorClip = hitObject;
+
+                StagePos.y = 0 - KeyframeEditorClip.Bounds.Y + 80;
+
             }
             else if (ipMode == InterpoleMode.KeyframeEditor)
             {
                 ipMode = InterpoleMode.ClipEditor;
+                StagePos.y = 0;
             }
         }
 

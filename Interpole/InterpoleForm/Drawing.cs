@@ -74,9 +74,7 @@ namespace Interpole
             //Transformed Stuff
             //
             pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
-            pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
-
-            DrawLoopRegion(pe);
+            pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage          
 
             if (ipMode == InterpoleMode.ClipEditor)
             {
@@ -147,13 +145,14 @@ namespace Interpole
         {
 
             // playbar background
-            myplaybar.Bounds = new Rectangle(new Point(0, 0 - (int)StagePos.y + VerticalPosition), new Size(this.Width, 30)); //update playbar bounds          
+            myplaybar.Bounds = new Rectangle(new Point(0, VerticalPosition), new Size(this.Width, 30)); //update playbar bounds          
             e.Graphics.FillRectangle(grayBrush, myplaybar.Bounds); // background
+
             //move playbar bounds for hittest
-            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x, 0 - (int)StagePos.y + VerticalPosition), new Size((int)(this.Width / Zoom), 30));
+            myplaybar.Bounds = new Rectangle(new Point((int)-StagePos.x,(int)(VerticalPosition -StagePos.y)), new Size((int)(this.Width / Zoom), 30));
 
             // for workspace hittest
-            myworkspace.Bounds = new Rectangle(0, 30 - (int)StagePos.y + VerticalPosition, (int)(((this.Width / Zoom) - StagePos.x)), this.Height);
+            myworkspace.Bounds = new Rectangle(0, 30 + VerticalPosition, (int)(((this.Width / Zoom) - StagePos.x)), this.Height);
 
             // draw negativ workspace
             e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0, 30 + VerticalPosition, (int)(StagePos.x * Zoom), this.Height)); // background
@@ -161,6 +160,8 @@ namespace Interpole
             DrawRuler(e, VerticalPosition);
 
             DrawTimeCode(e, VerticalPosition);
+
+            DrawLoopRegion(e);
         }
 
         public void DrawRuler(PaintEventArgs e, int VerticalPosition)
@@ -194,7 +195,7 @@ namespace Interpole
                 if (frames >= 0)
                 {
                     e.Graphics.FillRectangle(brightGrayBrush, new Rectangle(new Point((int)gap - 1, 25 + VerticalPosition), new Size(1, 5)));
-                    e.Graphics.DrawString(Frames2Timecode(frames, ipD.FrameRate, true) + "s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 - (int)StagePos.y + VerticalPosition, 50, 50), format);
+                    e.Graphics.DrawString(Frames2Timecode(frames, ipD.FrameRate, true) + "s", rulerFont, whiteBrush, new Rectangle((int)gap - 15, 7 + VerticalPosition, 50, 50), format);
                 }
 
                 gap += ipD.FrameRate * Zoom * steps;
@@ -235,36 +236,36 @@ namespace Interpole
             int pos = Convert.ToInt32((ipD.PlayHead + StagePos.x) * Zoom);
             int VOffset = 20; ;
 
-            Point[] points = { new Point(-7 + pos, 20 - (int)StagePos.y + VOffset), new Point(7 + pos, VOffset + 20 - (int)StagePos.y), new Point(0 + pos, VOffset + 30 - (int)StagePos.y) }; //play head triangle
+            Point[] points = { new Point(-7 + pos, 20 + VOffset), new Point(7 + pos, VOffset + 20), new Point(0 + pos, VOffset + 30) }; //play head triangle
             e.Graphics.FillPolygon(new SolidBrush(Color.Orange), points);
-            e.Graphics.DrawLine(GrayPen, new Point(pos, VOffset + 30 - (int)StagePos.y), new Point(pos, VOffset + this.Height - (int)StagePos.y));
+            e.Graphics.DrawLine(GrayPen, new Point(pos, VOffset + 30 ), new Point(pos, VOffset + this.Height));
         }
 
         public void DrawLoopRegion(PaintEventArgs e)
         {
             if (ipD.Loop)
             {
-                e.Graphics.FillRectangle(OrangeBrush, new Rectangle(ipD.LoopStart, 48, ipD.LoopEnd - ipD.LoopStart, 2));
+                e.Graphics.FillRectangle(OrangeBrush, new Rectangle((int)((ipD.LoopStart+StagePos.x)*Zoom), 48, (int)((ipD.LoopEnd - ipD.LoopStart)*Zoom), 2));
             }
         }
 
         public void DrawTimeCode(PaintEventArgs e, int VerticalPosition)
         {
             mytimecode.Bounds = new Rectangle(
-                new Point(5, 60 - (int)StagePos.y + VerticalPosition),
+                new Point(5, 60 + VerticalPosition),
                 new Size(200, 30));
 
             e.Graphics.DrawString(ipD.PlayHead.ToString("D10"), framesfont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             mytimecode.Bounds = new Rectangle(
-                new Point(2, 30 - (int)StagePos.y + VerticalPosition),
+                new Point(2, 30 + VerticalPosition),
                 new Size(200, 60));
 
             if (ipD.Loop) e.Graphics.DrawString(Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false), timeCodefont, OrangeBrush, mytimecode.Bounds, format); //draw frameCount
             else e.Graphics.DrawString(Frames2Timecode(ipD.PlayHead, ipD.FrameRate, false), timeCodefont, textBrush, mytimecode.Bounds, format); //draw frameCount
 
             //timecode bounds for hittest
-            mytimecode.Bounds = new Rectangle((int)-StagePos.x, 30 - (int)StagePos.y + VerticalPosition, (int)(200 / Zoom), 60);
+            mytimecode.Bounds = new Rectangle((int)-StagePos.x,(int)(30 + VerticalPosition -StagePos.y), (int)(200 / Zoom), 60);
         }
 
         public void DrawFooter(PaintEventArgs e)
@@ -274,7 +275,7 @@ namespace Interpole
 
             //zoom display rectangle
 
-            footer = new Rectangle(new Point(this.Width - 70, this.Height - 55 - (int)StagePos.y), new Size(50, 20)); //update playbar bounds
+            footer = new Rectangle(new Point(this.Width - 70, this.Height - 55), new Size(50, 20)); //update playbar bounds
             e.Graphics.DrawString(Percentage, clipFont, textBrush, footer, format); //text
 
             /*
