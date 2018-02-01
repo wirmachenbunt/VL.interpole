@@ -71,7 +71,9 @@ namespace Interpole
             DrawPlayHead(pe);
             DrawFooter(pe);
             DrawMarker(pe);
+
             
+
             //
             //Transformed Stuff
             //

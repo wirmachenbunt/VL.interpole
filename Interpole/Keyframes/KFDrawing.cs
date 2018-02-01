@@ -22,15 +22,26 @@ namespace Interpole
     {
         #region variables
 
-        int TargetStagePosY = 0;
+        int TargetStagePosY = 0; //for moving stage down to KF Clip
+        Rectangle KFinspectorBounds;
+
 
         #endregion
 
-    
+
 
         public void DrawKFWorkspace(PaintEventArgs e)
         {
+            DrawKFClip(e);
+        }
 
+        private void DrawKFinspector(PaintEventArgs e)
+        {
+            KFinspectorBounds = new Rectangle(0, 0, 200, 200);
+        }
+
+        public void DrawKFClip(PaintEventArgs e)
+        {
             Color ClipColor = Color.FromName(KeyframeEditorClip.Color);
             SolidBrush ClipBrush = new SolidBrush(ClipColor);
 
@@ -50,10 +61,28 @@ namespace Interpole
             e.Graphics.ScaleTransform(1 / Zoom, 1); //unscale stage to display proper text
             e.Graphics.DrawString(text, clipFont, textBrush, Bounds, format); //text
             e.Graphics.ScaleTransform(Zoom, 1); //rescale stage
-            
         }
 
-       
+        void DrawInsideRegion()
+        {
+            /*
+            Rectangle myregionRect = new Rectangle(0, 0, 500, 500);
+            pe.Graphics.DrawRectangle(GrayPen, myregionRect);
+
+            Region viewRegion = new Region(myregionRect);
+            Matrix transformMatrix = new Matrix();
+            transformMatrix.Translate(50, 70);
+
+            viewRegion.Transform(transformMatrix);
+
+            pe.Graphics.SetClip(viewRegion, CombineMode.Replace);
+            pe.Graphics.FillRectangle(OrangeBrush, new Rectangle(0, 0, 100, 100));
+            pe.Graphics.ResetClip();
+            */
+
+
+        }
+
 
     }
 }
