@@ -38,6 +38,7 @@ namespace VVVV.Nodes
         {
             FUIThread = new Thread(InitializeForm);
             FUIThread.SetApartmentState(ApartmentState.STA);
+            FUIThread.Priority = ThreadPriority.Lowest;
             FUIThread.Start();
         }
 
@@ -87,7 +88,7 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                
+                interpoleForm.Invalidate();
                 //handle update variable
                 if(needsUpdate)
                 {

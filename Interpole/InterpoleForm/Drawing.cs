@@ -60,25 +60,26 @@ namespace Interpole
         {
             PlaybackMoveStage();
 
-            pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            //pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             pe.Graphics.Clear(MyBackgroundColor);
 
             //
-            //no Transform
+            //UnTransformed Stuff
             //
+
+            if (ipMode == InterpoleMode.KeyframeEditor) DrawKFUntransformed(pe);
             DrawPlayBar(pe, 20);
             DrawPlayHead(pe);
             DrawFooter(pe);
             DrawMarker(pe);
-
             
-
+         
             //
             //Transformed Stuff
             //
             pe.Graphics.ScaleTransform(Zoom, 1); //ScaleStage
-            pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage          
+            pe.Graphics.TranslateTransform((float)StagePos.x, (float)StagePos.y); //Move stage
 
             if (ipMode == InterpoleMode.ClipEditor)
             {
@@ -86,15 +87,9 @@ namespace Interpole
                 DrawSelectedClips(pe);                       
             }
 
-            if(ipMode == InterpoleMode.KeyframeEditor)
-            {
-                DrawKFWorkspace(pe);
-            }
-
+            if(ipMode == InterpoleMode.KeyframeEditor) DrawKFTransformed(pe);
 
             DrawSelectionRect(pe);
-            //transformed stage ///////////////////////////////////////////
-
         }
 
         public void DrawClips(PaintEventArgs e)
@@ -159,7 +154,7 @@ namespace Interpole
             myworkspace.Bounds = new Rectangle(0, 30 + VerticalPosition, (int)(((this.Width / Zoom) - StagePos.x)), this.Height);
 
             // draw negativ workspace
-            e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0, 30 + VerticalPosition, (int)(StagePos.x * Zoom), this.Height)); // background
+            if(ipMode == InterpoleMode.ClipEditor)  e.Graphics.FillRectangle(myHatchBrush, new Rectangle(0, 30 + VerticalPosition, (int)(StagePos.x * Zoom), this.Height)); // background
 
             DrawRuler(e, VerticalPosition);
 
@@ -348,14 +343,17 @@ namespace Interpole
             while (!NativeMethods.PeekMessage(out message, IntPtr.Zero, 0, 0, 0))
             {
                 Render();
-                Thread.Sleep(5);
+                
+                if(this.Focused) Thread.Sleep(5);
+                else Thread.Sleep(25);
+                
             }
         }
 
         void Render()
         {
             RenderAnimations();
-            this.Invalidate();
+            //this.Invalidate();
         }
 
         void RenderAnimations()

@@ -76,7 +76,7 @@ namespace Interpole
             this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             this.SetStyle(ControlStyles.Opaque, true);
             this.SetStyle(ControlStyles.ResizeRedraw, true);
-            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            //this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
             this.ShowIcon = false;
 
@@ -102,6 +102,7 @@ namespace Interpole
 
             this.Location = ipD.WLocation;
             this.Size = ipD.WSize;
+            this.MaximumSize = new Size(2000, 1000);
         }
 
         void UpdateInterpoleString(object sender, EventArgs e)

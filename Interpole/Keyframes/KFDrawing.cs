@@ -24,20 +24,31 @@ namespace Interpole
 
         int TargetStagePosY = 0; //for moving stage down to KF Clip
         Rectangle KFinspectorBounds;
-
+        Rectangle KFWorkspaceBounds;
 
         #endregion
 
+        public void DrawKFUntransformed(PaintEventArgs e)
+        {
+            DrawKFinspector(e);
+        }
 
-
-        public void DrawKFWorkspace(PaintEventArgs e)
+        public void DrawKFTransformed(PaintEventArgs e)
         {
             DrawKFClip(e);
+            DrawKFWorkspace(e);
         }
 
         private void DrawKFinspector(PaintEventArgs e)
         {
-            KFinspectorBounds = new Rectangle(0, 0, 200, 200);
+            KFinspectorBounds = new Rectangle(0, 100,200, this.Height);
+            e.Graphics.FillRectangle(grayBrush, KFinspectorBounds);
+            //e.Graphics.FillRectangle(darkgrayBrush, new Rectangle(200, 100, this.Width, this.Height)); // keyframe area background
+        }
+
+        public void DrawKFWorkspace(PaintEventArgs e)
+        {
+            
         }
 
         public void DrawKFClip(PaintEventArgs e)
