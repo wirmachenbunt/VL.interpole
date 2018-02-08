@@ -90,7 +90,9 @@
     <None Include="Nodes\GetClipBuffered.cs" />
     <None Include="Nodes\GetClipByName.cs" />
     <None Include="Nodes\GetClipByColor.cs" />
-    <Compile Include="Keyframes\KFDrawing.cs" />
+    <Compile Include="Keyframes\KFDrawing.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Keyframes\KFObjectDefinitions.cs">
       <SubType>Form</SubType>
     </Compile>

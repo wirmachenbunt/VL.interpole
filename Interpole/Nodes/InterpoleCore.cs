@@ -45,6 +45,9 @@ namespace VVVV.Nodes
         [Input("Set Frame Clock")]
         public IDiffSpread<bool> FSetExternalClock;
 
+        [Input("XML")]
+        public IDiffSpread<string> FXMLIn;
+
         [Output("PlayHead (f)")]
         public ISpread<int> FPlayHead;
 
@@ -56,7 +59,9 @@ namespace VVVV.Nodes
         public int FrameRate;
         public bool needsUpdate = false;
 
-        public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>();
+        public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>(); //just send the clips to getclip
+
+        InterpoleBase.InterpoleData ipD = new InterpoleBase.InterpoleData(); // boygroup case, no access to UI interpole data
 
         [Import()]
         public ILogger FLogger;
@@ -101,8 +106,10 @@ namespace VVVV.Nodes
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
+
+            #region UI Case
             // only do this when there is a connection to the UI
-            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null) 
+            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null && FXMLIn[0].Length < 10)
             {
                 // if playing, set UI playhead
                 if (FInterpoleIn[0].interpoleForm.play || FPlay[0])
@@ -124,7 +131,7 @@ namespace VVVV.Nodes
                     Play = false;
                 }
 
-                if(FSetTimecode[0] && FTimecode[0] != null)
+                if (FSetTimecode[0] && FTimecode[0] != null)
                 {
                     Play = false;
                     PlayHead = FTimecode[0].Frames + (FTimecode[0].Seconds * FrameRate) + (FTimecode[0].Minutes * 60 * FrameRate) + (FTimecode[0].Hours * 60 * 60 * FrameRate);
@@ -135,9 +142,49 @@ namespace VVVV.Nodes
                 //update all outputs
                 UpdateOutput();
             }
+            #endregion
 
-            //FLogger.Log(LogType.Debug, "nope"); 
+            #region Boygroup Case
 
+            if(FXMLIn.IsChanged)
+            {
+                ipD = InterpoleBase.DeserializeInterpoleData(FXMLIn[0]);
+                needsUpdate = true;
+            }
+
+            if (FXMLIn[0].Length > 10)
+            {
+                // if playing, set UI playhead
+                if (FPlay[0])
+                {
+                    //iterate playhead
+                    PlayHead++;
+                    Play = true;            
+                }
+                //if not playing, get UI playhead position
+                else
+                {
+                    Play = false;
+                }
+
+                if (FSetTimecode[0] && FTimecode[0] != null)
+                {
+                    Play = false;
+                    PlayHead = FTimecode[0].Frames + (FTimecode[0].Seconds * FrameRate) + (FTimecode[0].Minutes * 60 * FrameRate) + (FTimecode[0].Hours * 60 * 60 * FrameRate);
+                }
+
+                //publish playhead of core
+                FPlayHead[0] = PlayHead;
+
+                // get clip list from UI
+                clipList = ipD.ClipList;
+
+                FrameRate = ipD.FrameRate;
+
+                //publish core data
+                FInterpoleData[0] = this;
+            }
+            #endregion
 
         }
 

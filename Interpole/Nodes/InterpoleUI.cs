@@ -23,10 +23,13 @@ namespace VVVV.Nodes
         public InterpoleBase interpoleForm;
 
         [Config("InterpoleData")]
-        ISpread<string> InterpoleXML;
+        public ISpread<string> InterpoleXML;
 
         [Output("Out")]
         ISpread<InterpoleUI> FInterpoleOut;
+
+        [Output("XML", Visibility = PinVisibility.Hidden)]
+        ISpread<string> FXMLOut;
 
         public bool needsUpdate = false; //inform connected nodes something changed
         int counter = 0;
@@ -57,7 +60,7 @@ namespace VVVV.Nodes
             if (InterpoleXML[0].Length > 10)
             {
                 interpoleForm.ipD = InterpoleBase.DeserializeInterpoleData(InterpoleXML[0]);
-
+                FXMLOut[0] = InterpoleXML[0]; //update XML Output
                 interpoleForm.Location = interpoleForm.ipD.WLocation;
                 interpoleForm.Size = interpoleForm.ipD.WSize;
 
@@ -73,6 +76,7 @@ namespace VVVV.Nodes
         private void UpdateConfigs(InterpoleBase interpoleForm, EventArgs e)
         {
             InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
+            FXMLOut[0] = InterpoleXML[0];
             needsUpdate = true;
         }
 
@@ -88,7 +92,8 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                interpoleForm.Invalidate();
+                interpoleForm.Invalidate(); //redraw UI from here, not sure if this makes sense
+
                 //handle update variable
                 if(needsUpdate)
                 {
