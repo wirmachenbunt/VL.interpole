@@ -254,9 +254,14 @@ namespace Interpole
         //
         public static InterpoleData DeserializeInterpoleData(string data)
         {
-            XmlSerializer xs = new XmlSerializer(typeof(InterpoleData));
-            InterpoleData newInterpoleData = (InterpoleData)xs.Deserialize(new StringReader(data));
-            return newInterpoleData;
+            try
+            {
+                XmlSerializer xs = new XmlSerializer(typeof(InterpoleData));
+                InterpoleData newInterpoleData = (InterpoleData)xs.Deserialize(new StringReader(data));
+                return newInterpoleData;
+            }
+            catch { return null; }
+            
         }
 
         public static string SerializeInterpoleData(InterpoleData myipD)
