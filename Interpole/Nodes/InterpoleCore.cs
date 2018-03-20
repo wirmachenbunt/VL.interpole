@@ -54,10 +54,13 @@ namespace VVVV.Nodes
         [Output("InterpoleData")]
         public ISpread<InterpoleCoreNode> FInterpoleData;
 
+        public string myGUID = Guid.NewGuid().ToString();
+
         public int PlayHead = 0;
         public bool Play = false;
         public int FrameRate;
-        public bool needsUpdate = false;
+        bool init = true;
+        bool updateEnums = true;
 
         public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>(); //just send the clips to getclip
 
@@ -77,6 +80,7 @@ namespace VVVV.Nodes
         private void Input_Disconnected(object sender, PinConnectionEventArgs args)
         {
             FLogger.Log(LogType.Debug, "DisConnected");
+            init = true;
         }
 
         private void Input_Connected(object sender, PinConnectionEventArgs args)
@@ -84,14 +88,40 @@ namespace VVVV.Nodes
             FLogger.Log(LogType.Debug, "connected");
         }
 
-        
+        private void InterpoleChanged(InterpoleBase interpoleForm, EventArgs e)
+        {
+            //FLogger.Log(LogType.Debug, "Interpole Changed");
+            updateEnums = true;  
+        }
+
+        void UpdateEnums()
+        {
+            //update Clip Enums
+            if (clipList.Count > 0 && updateEnums)
+            {
+                EnumManager.UpdateEnum(myGUID + "_ClipsName",
+                    clipList[0].Name,
+                    clipList.Select(x => x.Name).Distinct().ToArray());
+
+                updateEnums = false;
+            }
+
+        }
+
+        void Initialize()
+        {
+            if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null && FXMLIn[0].Length < 10 && init)
+            {
+                FInterpoleIn[0].interpoleForm.Changed -= new InterpoleBase.ChangedHandler(InterpoleChanged);
+                FInterpoleIn[0].interpoleForm.Changed += new InterpoleBase.ChangedHandler(InterpoleChanged);
+                init = false;
+            }
+        }
+
         private void UpdateOutput()
         {
             //publish playhead of core
             FPlayHead[0] = PlayHead;
-
-            //update enums
-            needsUpdate = FInterpoleIn[0].needsUpdate;
 
             // get clip list from UI
             clipList = FInterpoleIn[0].interpoleForm.ipD.ClipList;
@@ -99,18 +129,20 @@ namespace VVVV.Nodes
             FrameRate = FInterpoleIn[0].interpoleForm.ipD.FrameRate;
 
             //publish core data
-            FInterpoleData[0] = this; 
+            FInterpoleData[0] = this;
         }
-
 
         //called when data for any output pin is requested
         public void Evaluate(int SpreadMax)
         {
+            Initialize();
+            UpdateEnums();
 
             #region UI Case
             // only do this when there is a connection to the UI
             if (FInterpoleIn.IsConnected && FInterpoleIn[0] != null && FXMLIn[0].Length < 10)
             {
+
                 // if playing, set UI playhead
                 if (FInterpoleIn[0].interpoleForm.play || FPlay[0])
                 {
@@ -146,10 +178,9 @@ namespace VVVV.Nodes
 
             #region Boygroup Case
 
-            if(FXMLIn.IsChanged)
+            if (FXMLIn.IsChanged)
             {
                 ipD = InterpoleBase.DeserializeInterpoleData(FXMLIn[0]);
-                needsUpdate = true;
             }
 
             if (FXMLIn[0].Length > 10)
@@ -159,7 +190,7 @@ namespace VVVV.Nodes
                 {
                     //iterate playhead
                     PlayHead++;
-                    Play = true;            
+                    Play = true;
                 }
                 //if not playing, get UI playhead position
                 else

@@ -22,6 +22,9 @@ namespace VVVV.Nodes
         Thread FUIThread;
         public InterpoleBase interpoleForm;
 
+        [Input("Hide Window")]
+        public IDiffSpread<bool> FHideWindow;
+
         [Config("InterpoleData")]
         public ISpread<string> InterpoleXML;
 
@@ -30,9 +33,6 @@ namespace VVVV.Nodes
 
         [Output("XML", Visibility = PinVisibility.Hidden)]
         ISpread<string> FXMLOut;
-
-        public bool needsUpdate = false; //inform connected nodes something changed
-        int counter = 0;
 
         [Import()]
         public ILogger FLogger;
@@ -67,7 +67,6 @@ namespace VVVV.Nodes
                 Debug.WriteLine("import sucessful");
             }
           
-
             // Use ShowDialog as it starts its own main loop - using Show alone the window just disappears
             interpoleForm.ShowDialog();
         }
@@ -77,12 +76,27 @@ namespace VVVV.Nodes
         {
             InterpoleXML[0] = interpoleForm.InterpoleDataSerialized;
             FXMLOut[0] = InterpoleXML[0];
-            needsUpdate = true;
         }
 
         void CleanupForm()
         {
             interpoleForm.Dispose();
+        }
+
+        void HideShowWindow()
+        {
+            if (FHideWindow.IsChanged && FHideWindow[0])
+            {
+                interpoleForm.Invoke((Action)(() => interpoleForm.Size = new Size(0, 0)));
+                interpoleForm.Invoke((Action)(() => interpoleForm.Location = new Point(1000000, 1000000)));
+            }
+
+
+            if (FHideWindow.IsChanged && !FHideWindow[0])
+            {
+                interpoleForm.Invoke((Action)(() => interpoleForm.Size = interpoleForm.ipD.WSize));
+                interpoleForm.Invoke((Action)(() => interpoleForm.Location = interpoleForm.ipD.WLocation));
+            }
         }
 
         //called when data for any output pin is requested
@@ -92,19 +106,9 @@ namespace VVVV.Nodes
                 return; // Form not created yet
             else
             {
-                interpoleForm.Invalidate(); //redraw UI from here, not sure if this makes sense
+                if(!FHideWindow[0])  interpoleForm.Invalidate(); //redraw UI from here, not sure if this makes sense
 
-                //handle update variable
-                if(needsUpdate)
-                {
-                    //FLogger.Log(LogType.Debug, "needsUpdate InterpoleUI");
-                    counter++;
-                    if(counter >= 2)
-                    {
-                        counter = 0;
-                        needsUpdate = false;
-                    }
-                }
+                HideShowWindow();
 
                 //output everything
                 FInterpoleOut[0] = this;

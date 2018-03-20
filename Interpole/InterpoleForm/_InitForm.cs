@@ -84,6 +84,7 @@ namespace Interpole
             this.Text = "Interpole";
             this.ResumeLayout(false);
             this.PerformLayout();
+            
 
             this.ControlBox = false;
 
