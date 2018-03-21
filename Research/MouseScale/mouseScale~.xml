@@ -1,0 +1,243 @@
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
+   <PATCH nodename="C:\interpole\Research\MouseScale\mouseScale.v4p" scrollx="225" scrolly="675" systemname="mouseScale" filename="C:\Users\Chris\Desktop\mouseScale.v4p">
+   <BOUNDS type="Window" left="7350" top="2385" width="9975" height="9795">
+   </BOUNDS>
+   <NODE systemname="Renderer (DX11)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Renderer (DX11)" componentmode="InAWindow" id="0">
+   <BOUNDS type="Node" left="2820" top="9240" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2820" top="9240" width="6000" height="4500">
+   </BOUNDS>
+   <BOUNDS type="Window" left="18045" top="1920" width="14715" height="11490">
+   </BOUNDS>
+   <PIN pinname="Layers" visible="1">
+   </PIN>
+   <PIN pinname="View" visible="1" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Projection" visible="1" slicecount="1" values="||">
+   </PIN>
+   </NODE>
+   <NODE systemname="Quad (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Quad (DX11.Layer)" componentmode="Hidden" id="1">
+   <BOUNDS type="Node" left="3165" top="7995" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="3165" top="7995" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   <PIN pinname="Transform" visible="1" slicecount="1" values="||">
+   </PIN>
+   </NODE>
+   <NODE systemname="Mouse (Devices Window)" filename="%VVVV%\lib\nodes\plugins\VVVV.Nodes.dll" nodename="Mouse (Devices Window)" componentmode="Hidden" id="2">
+   <BOUNDS type="Node" left="3480" top="1995" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="3480" top="1995" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Mouse Wheel" visible="1">
+   </PIN>
+   <PIN pinname="Device" visible="1">
+   </PIN>
+   <PIN pinname="PositionXY" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Group (DX11.Layer)" filename="%VVVV%\packs\dx11\nodes\plugins\base\VVVV.DX11.Nodes.dll" nodename="Group (DX11.Layer)" componentmode="Hidden" id="9">
+   <BOUNDS type="Node" left="2970" top="8430" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="2970" top="8430" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="Layer 1" visible="1">
+   </PIN>
+   <PIN pinname="Layer Out" visible="1">
+   </PIN>
+   <PIN pinname="Layer 2" visible="1" slicecount="1" values="||">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="1" srcpinname="Layer" dstnodeid="9" dstpinname="Layer 1">
+   </LINK>
+   <LINK srcnodeid="9" srcpinname="Layer Out" dstnodeid="0" dstpinname="Layers">
+   </LINK>
+   <PACK Name="addonpack" Version="35.0.0">
+   </PACK>
+   <NODE systemname="FrameDifference (Animation)" nodename="FrameDifference (Animation)" componentmode="Hidden" id="23">
+   <BOUNDS type="Node" left="6900" top="3555" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Input" visible="1" slicecount="1" values="1082">
+   </PIN>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="32">
+   <BOUNDS type="Box" left="6225" top="1905" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="6225" top="1905" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <NODE systemname="IOBox (Value Advanced)" nodename="IOBox (Value Advanced)" componentmode="InABox" id="33">
+   <BOUNDS type="Node" left="4500" top="3900" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="4500" top="3900" width="480" height="480">
+   </BOUNDS>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Bang">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   <PIN pinname="X Input Value" slicecount="1" values="0">
+   </PIN>
+   <PIN pinname="Y Input Value" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <NODE systemname="Template (Value)" filename="%VVVV%\lib\nodes\plugins\Template\Template.csproj" nodename="Template (Value)" componentmode="Hidden" id="34">
+   <BOUNDS type="Node" left="6780" top="855" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="6780" top="855" width="3000" height="3000">
+   </BOUNDS>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="41">
+   <BOUNDS type="Box" left="7320" top="2985" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="7320" top="2985" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="-161">
+   </PIN>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="2" srcpinname="Mouse Wheel" dstnodeid="23" dstpinname="Input">
+   </LINK>
+   <NODE systemname="Renderer (TTY)" nodename="Renderer (TTY)" componentmode="InAWindow" id="51">
+   <BOUNDS type="Node" left="8655" top="7185" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="8655" top="7185" width="2400" height="1800">
+   </BOUNDS>
+   <BOUNDS type="Window" left="17040" top="10785" width="6240" height="5085">
+   </BOUNDS>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="52">
+   <BOUNDS type="Box" left="5535" top="3495" width="795" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="5535" top="3495" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Vector Size" slicecount="1" values="2">
+   </PIN>
+   <PIN pinname="Rows" slicecount="1" values="2">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="2" srcpinname="PositionXY" dstnodeid="52" dstpinname="Y Input Value">
+   </LINK>
+   <NODE systemname="Cursor (DX11)" filename="%VVVV%\packs\dx11\nodes\modules\Cursor (DX11).v4p" nodename="Cursor (DX11)" componentmode="Hidden" id="55">
+   <BOUNDS type="Node" left="2040" top="6540" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Layer" visible="1">
+   </PIN>
+   <PIN pinname="Mouse" visible="1">
+   </PIN>
+   <PIN pinname="Color" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="55" srcpinname="Layer" dstnodeid="9" dstpinname="Layer 2">
+   </LINK>
+   <LINK srcnodeid="2" srcpinname="Device" dstnodeid="55" dstpinname="Mouse">
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="59">
+   <BOUNDS type="Box" left="6135" top="6255" width="2055" height="270">
+   </BOUNDS>
+   <BOUNDS type="Node" left="6135" top="6255" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Vector Size" slicecount="1" values="2">
+   </PIN>
+   <PIN pinname="Rows" slicecount="1" values="2">
+   </PIN>
+   <PIN pinname="Y Output Value" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="mouseScaleTest (Value)" filename="plugins\ValuemouseScaleTest\ValuemouseScaleTest.csproj" nodename="mouseScaleTest (Value)" componentmode="Hidden" id="60">
+   <BOUNDS type="Node" left="5190" top="4860" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="5190" top="4860" width="3000" height="3000">
+   </BOUNDS>
+   <PIN pinname="ScaleOut" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="33" srcpinname="Y Output Value" dstnodeid="60" dstpinname="Reset">
+   </LINK>
+   <LINK srcnodeid="52" srcpinname="Y Output Value" dstnodeid="60" dstpinname="MouseXY">
+   </LINK>
+   <LINK srcnodeid="23" srcpinname="Output" dstnodeid="60" dstpinname="Wheel">
+   </LINK>
+   <LINK srcnodeid="60" srcpinname="PosOutXY" dstnodeid="59" dstpinname="Y Input Value">
+   </LINK>
+   <NODE systemname="Multiply (Transform)" nodename="Multiply (Transform)" componentmode="Hidden" id="61">
+   <BOUNDS type="Node" left="4725" top="7035" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Transform In 2" visible="1" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Transform In 1" visible="1">
+   </PIN>
+   <PIN pinname="Transform Out" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="Translate (Transform Vector)" nodename="Translate (Transform Vector)" componentmode="Hidden" id="62">
+   <BOUNDS type="Node" left="4560" top="6570" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="XYZ" visible="1">
+   </PIN>
+   <PIN pinname="Transform Out" visible="1">
+   </PIN>
+   </NODE>
+   <NODE systemname="xyZ (3d XY)" nodename="xyZ (3d XY)" componentmode="Hidden" id="63">
+   <BOUNDS type="Node" left="7395" top="6765" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="XY" visible="1">
+   </PIN>
+   <PIN pinname="XYZ" visible="1">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="59" srcpinname="Y Output Value" dstnodeid="63" dstpinname="XY">
+   </LINK>
+   <LINK srcnodeid="63" srcpinname="XYZ" dstnodeid="62" dstpinname="XYZ">
+   </LINK>
+   <LINK srcnodeid="61" srcpinname="Transform Out" dstnodeid="1" dstpinname="Transform">
+   </LINK>
+   <LINK srcnodeid="62" srcpinname="Transform Out" dstnodeid="61" dstpinname="Transform In 1">
+   </LINK>
+   <LINK srcnodeid="60" srcpinname="ScaleOut" dstnodeid="61" dstpinname="Transform In 2">
+   </LINK>
+   <NODE systemname="HSL (Color Join)" nodename="HSL (Color Join)" componentmode="Hidden" id="64">
+   <BOUNDS type="Node" left="2790" top="5865" width="100" height="100">
+   </BOUNDS>
+   <PIN pinname="Output" visible="1">
+   </PIN>
+   <PIN pinname="Lightness" slicecount="1" values="0.5">
+   </PIN>
+   <PIN pinname="Hue" slicecount="1" values="0">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="64" srcpinname="Output" dstnodeid="55" dstpinname="Color">
+   </LINK>
+   </PATCH>

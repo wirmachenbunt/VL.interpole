@@ -8,7 +8,7 @@ using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 using System.Linq;
 using VVVV.Nodes;
-
+using Interpole;
 
 using VVVV.Core.Logging;
 #endregion usings
@@ -39,12 +39,12 @@ namespace VVVV.Nodes
         public IDiffSpread<int> FFrames;
 
         [Output("Timecode")]
-        public ISpread<Interpole.TimeCode> FTimeCode;
+        public ISpread<InterpoleBase.TimeCode> FTimeCode;
 
         [Import()]
         public ILogger FLogger;
 
-        Interpole.TimeCode mytimecode = new Interpole.TimeCode();
+        InterpoleBase.TimeCode mytimecode = new InterpoleBase.TimeCode();
 
         #endregion fields & pins
 

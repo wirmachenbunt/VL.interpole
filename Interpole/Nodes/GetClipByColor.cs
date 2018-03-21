@@ -9,12 +9,13 @@ using VVVV.PluginInterfaces.V2;
 using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 using VVVV.Nodes;
+using Interpole;
 
 using VVVV.Core.Logging;
 #endregion usings
 
 namespace VVVV.Nodes
-{    
+{
     #region PluginInfo
     [PluginInfo(Name = "GetClipByColor",
                 Category = "Interpole",
@@ -27,10 +28,9 @@ namespace VVVV.Nodes
         #region fields & pins
 
         [Input("Interpole", IsSingle = true)]
-        protected Pin<Interpole> FInterpoleIn;
+        protected Pin<InterpoleCoreNode> FInterpoleIn;
 
-        // Clip Name
-        protected IDiffSpread<EnumEntry> FColorIn;
+        IIOContainer<IDiffSpread<EnumEntry>> ClipColorEnum;
 
         [Output("Normalized")]
         protected ISpread<double> FNormalizedOut;
@@ -69,34 +69,25 @@ namespace VVVV.Nodes
         [Import()]
         private IIOFactory FIOFactory;
 
-        private List<List<Interpole.Clip>> FClipList;
-        private string FEnumName;
+        private List<List<InterpoleBase.Clip>> FClipList;
         private int FLastFramePos;
-        private bool FValid;
+        bool init = true;
 
         #endregion fields & pins
-        
+
         public void OnImportsSatisfied()
         {
             FInterpoleIn.Connected += OnInterpoleConnected;
             FInterpoleIn.Disconnected += OnInterpoleDisconnected;
 
-            FHost.GetNodePath(true, out FEnumName); //get unique node path
-            FEnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Color"); // name of pin
-            attr.EnumName = FEnumName;
-            FColorIn = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
+            //new way of enums
+            InputAttribute attr = new InputAttribute("Color");
+            ClipColorEnum = FIOFactory.CreateIOContainer<IDiffSpread<EnumEntry>>(attr, true);
         }
 
         private void OnInterpoleConnected(object sender, PinConnectionEventArgs args)
         {
-            FValid = false;
-
-            // TODO: ??? find out why we can't update enum and list here -> needs to be auto evaluated
-            // // if (FInterpoleIn[0].clipList != null) {
-            //     UpdateEnum();
-            //     UpdateClipList();
-            // // }
+            init = true;
         }
 
         private void OnInterpoleDisconnected(object sender, PinConnectionEventArgs args)
@@ -105,19 +96,14 @@ namespace VVVV.Nodes
             FClipList = null;
         }
 
-        private void UpdateEnum()
+        //get connected enum for states
+        public void Initialize()
         {
-            try
+            if (init)
             {
-                EnumManager.UpdateEnum(
-                    FEnumName,
-                    FInterpoleIn[0].clipList[0].Color,
-                    FInterpoleIn[0].clipList.Select(x => x.Color).Distinct().ToArray()
-                );
-            }
-            catch (Exception e)
-            {
-                FLogger.Log(LogType.Error, "updating enum failed: " + e);
+                var pin = ClipColorEnum.GetPluginIO() as IPin;
+                (pin as IEnumIn).SetSubType(FInterpoleIn[0].myGUID + "_ClipsColor");
+                init = false;
             }
 
         }
@@ -127,7 +113,7 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        private double CalcFade(Interpole.Clip clip, int clipPos)
+        private double CalcFade(InterpoleBase.Clip clip, int clipPos)
         {
             double value = 0.0;
             value = 1f / clip.FadeIn * clipPos;
@@ -142,7 +128,8 @@ namespace VVVV.Nodes
             return value;
         }
 
-        private void ResetSliceCount() {
+        private void ResetSliceCount()
+        {
             FNormalizedOut.SliceCount = 0;
             FSecondsOut.SliceCount = 0;
             FFadeOut.SliceCount = 0;
@@ -159,17 +146,18 @@ namespace VVVV.Nodes
         {
             ResetSliceCount();
 
-            try {
+            try
+            {
                 FClipList = null;
-                FClipList = new List<List<Interpole.Clip>>();
+                FClipList = new List<List<InterpoleBase.Clip>>();
 
-                for (int i = 0; i < FColorIn.SliceCount; i++)
+                for (int i = 0; i < ClipColorEnum.IOObject.SliceCount; i++)
                 {
-                    FClipList.Add(new List<Interpole.Clip>());
+                    FClipList.Add(new List<InterpoleBase.Clip>());
 
                     FClipList[i].AddRange(
                         from clip in FInterpoleIn[0].clipList
-                        where clip.Color == FColorIn[i]
+                        where clip.Color == ClipColorEnum.IOObject[i]
                         orderby clip.StartFrame
                         select clip
                     );
@@ -178,7 +166,7 @@ namespace VVVV.Nodes
 
                     for (int x = 0; x < FClipList[i].Count; x++) // get the static infos
                     {
-                        Interpole.Clip clip = FClipList[i][x];
+                        InterpoleBase.Clip clip = FClipList[i][x];
 
                         FVariableOut.Add(clip.Variable);
                         FNameOut.Add(clip.Name);
@@ -202,8 +190,8 @@ namespace VVVV.Nodes
 
         private void UpdateOutputs()
         {
-            int framePos = FInterpoleIn[0].playPosFrames;
-            int frameRate = FInterpoleIn[0].Framerate[0];
+            int framePos = FInterpoleIn[0].PlayHead;
+            int FrameRate = FInterpoleIn[0].FrameRate;
 
             int count = 0;
 
@@ -211,14 +199,14 @@ namespace VVVV.Nodes
             {
                 for (int x = 0; x < FClipList[i].Count; x++)
                 {
-                    Interpole.Clip clip = FClipList[i][x];
+                    InterpoleBase.Clip clip = FClipList[i][x];
                     int clipFramePos = framePos - clip.StartFrame;
-                    if (clipFramePos < 0 ) clipFramePos = 0;
+                    if (clipFramePos < 0) clipFramePos = 0;
                     if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
 
                     // TODO: try to find a way to iterate only on the relevant ones
                     FNormalizedOut[x + count] = (double)clipFramePos / clip.Duration;
-                    FSecondsOut[x + count] = (double)clipFramePos / frameRate;
+                    FSecondsOut[x + count] = (double)clipFramePos / FrameRate;
                     FFadeOut[x + count] = CalcFade(clip, clipFramePos);
                     FIsActiveOut[x + count] = clipFramePos > 0 && clipFramePos < clip.Duration ? true : false;
                     FPositionOut[x + count] = clipFramePos;
@@ -231,16 +219,8 @@ namespace VVVV.Nodes
         {
             if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                 // update everything
-                if (FInterpoleIn[0].needsUpdate || FColorIn.IsChanged || !FValid)
-                {
-                    UpdateEnum();
-                    UpdateClipList();
-                    FValid = true;
-                }
-
-                // needs to be updated every frame to have instant feedback while editing clips
-                // TODO?: another possibilty would be firing needsUpdate while clips are getting edited
+                Initialize();
+                UpdateClipList();
                 if (FInterpoleIn[0].clipList.Count > 0) UpdateOutputs();
             }
         }
