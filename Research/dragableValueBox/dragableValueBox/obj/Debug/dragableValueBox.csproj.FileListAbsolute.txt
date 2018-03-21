@@ -1,0 +1,9 @@
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\bin\Debug\dragableValueBox.exe.config
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\bin\Debug\dragableValueBox.exe
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\bin\Debug\dragableValueBox.pdb
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.csprojResolveAssemblyReference.cache
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.Form1.resources
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.Properties.Resources.resources
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.csproj.GenerateResource.Cache
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.exe
+C:\TrianglePatternMatch\dragableValueBox\dragableValueBox\obj\Debug\dragableValueBox.pdb
