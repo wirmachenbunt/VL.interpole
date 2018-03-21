@@ -30,9 +30,6 @@ namespace VVVV.Nodes
         [Input("Interpole", IsSingle = true)]
         protected Pin<InterpoleCoreNode> FInterpoleIn;
 
-        // clip name
-        //protected IDiffSpread<EnumEntry> FNameIn;
-
         IIOContainer<IDiffSpread<EnumEntry>> ClipNameEnum;
 
         [Output("Normalized")]

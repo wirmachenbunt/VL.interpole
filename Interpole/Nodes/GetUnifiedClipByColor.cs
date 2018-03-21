@@ -9,7 +9,7 @@ using VVVV.Utils.VMath;
 using System.Linq;
 using VVVV.Nodes;
 
-
+using Interpole;
 using VVVV.Core.Logging;
 #endregion usings
 
@@ -27,10 +27,9 @@ namespace VVVV.Nodes
         #region fields & pins
         
         [Input("Interpole", IsSingle = true)]
-        protected Pin<Interpole> FInterpoleIn;
+        protected Pin<InterpoleCoreNode> FInterpoleIn;
 
-        // clip name
-        protected IDiffSpread<EnumEntry> FColorIn;
+        IIOContainer<IDiffSpread<EnumEntry>> ClipColorEnum;
 
         [Output("Normalized")]
         protected ISpread<double> FNormalizedOut;
@@ -66,9 +65,9 @@ namespace VVVV.Nodes
         [Import()]
         private IIOFactory FIOFactory;
 
-        private string FEnumName;
-        private bool FValid;
+
         private int FLastFramePos;
+        bool init = true;
 
         #endregion fields & pins
 
@@ -77,16 +76,14 @@ namespace VVVV.Nodes
             FInterpoleIn.Connected += OnInterpoleConnected;
             FInterpoleIn.Disconnected += OnInterpoleDisconnected;
 
-            FHost.GetNodePath(true, out FEnumName); //get unique node path
-            FEnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Clip"); //name of pin
-            attr.EnumName = FEnumName;
-            FColorIn = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
+            //new way of enums
+            InputAttribute attr = new InputAttribute("Color");
+            ClipColorEnum = FIOFactory.CreateIOContainer<IDiffSpread<EnumEntry>>(attr, true);
         }
 
         private void OnInterpoleConnected(object sender, PinConnectionEventArgs args)
         {
-            FValid = false;
+            init = true;
         }
 
         private void OnInterpoleDisconnected(object sender, PinConnectionEventArgs args)
@@ -94,20 +91,16 @@ namespace VVVV.Nodes
             ResetSliceCount();
         }
 
-        public void UpdateEnum()
+        //get connected enum for states
+        public void Initialize()
         {
-            try
+            if (init)
             {
-                EnumManager.UpdateEnum(
-                    FEnumName,
-                    FInterpoleIn[0].clipList[0].Color,
-                    FInterpoleIn[0].clipList.Select(x => x.Color).Distinct().ToArray()
-                );
+                var pin = ClipColorEnum.GetPluginIO() as IPin;
+                (pin as IEnumIn).SetSubType(FInterpoleIn[0].myGUID + "_ClipsColor");
+                init = false;
             }
-            catch (Exception e)
-            {
-                FLogger.Log(LogType.Error, "updating enum failed: " + e);
-            }
+
         }
 
         public static double Clamp(double value, double min, double max)
@@ -115,7 +108,7 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        public double CalcFade(Interpole.Clip clip, int clipPos)
+        public double CalcFade(InterpoleBase.Clip clip, int clipPos)
         {
             double value = 0.0;
             value = 1f / clip.FadeIn * clipPos;
@@ -148,44 +141,48 @@ namespace VVVV.Nodes
             {
                 ResetSliceCount();
 
-                int framePos = FInterpoleIn[0].ipD.PlayHead;
-                int ipD.FrameRate = FInterpoleIn[0].Framerate[0];
+                int framePos = FInterpoleIn[0].PlayHead;
+                int FrameRate = FInterpoleIn[0].FrameRate;
 
-                for (int i = 0; i < FColorIn.SliceCount; i++)
+                for (int i = 0; i < ClipColorEnum.IOObject.SliceCount; i++)
                 {
-                    Interpole.Clip clip = FInterpoleIn[0].clipList.Where(
-                        c => c.Color == FColorIn[i] &&
+                    InterpoleBase.Clip clip = FInterpoleIn[0].clipList.Where(
+                        c => c.Color == ClipColorEnum.IOObject[i] &&
                         c.StartFrame <= framePos &&
                         c.StartFrame + c.Duration > framePos)
                         .FirstOrDefault();
 
-                    if (clip == null) clip = FInterpoleIn[0].clipList.FirstOrDefault(x => x.Color == FColorIn[i]);
-                    
-                    int clipFramePos = framePos - clip.StartFrame;
-                    if (clipFramePos < 0 ) clipFramePos = 0;
-                    if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
+                    if (clip == null) clip = FInterpoleIn[0].clipList.FirstOrDefault(x => x.Color == ClipColorEnum.IOObject[i]);
 
-                    FIsActiveOut.Add(clipFramePos > 0 && clipFramePos < clip.Duration ? true : false);
-
-                    if(FIsActiveOut[i])
+                    if (clip != null) //fix exception
                     {
-                        FNormalizedOut.Add((double)clipFramePos / clip.Duration);
-                        FSecondsOut.Add((double)clipFramePos / ipD.FrameRate);
-                        FFadeOut.Add(CalcFade(clip, clipFramePos));
-                        FPositionOut.Add(clipFramePos);
-                    }
-                    else // reset values to 0 if theres no clip on current time
-                    {
-                        FFadeOut.Add(0);
-                        FNormalizedOut.Add(0);
-                        FSecondsOut.Add(0);
-                        FPositionOut.Add(0);
-                    }
+                        int clipFramePos = framePos - clip.StartFrame;
+                        if (clipFramePos < 0) clipFramePos = 0;
+                        if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
 
-                    FVariableOut.Add(clip.Variable);
-                    FNameOut.Add(clip.Name);
-                    FColorOut.Add(clip.Color);
-                    FDurationOut.Add(clip.Duration);
+                        FIsActiveOut.Add(clipFramePos > 0 && clipFramePos < clip.Duration ? true : false);
+
+                        if (FIsActiveOut[i])
+                        {
+                            FNormalizedOut.Add((double)clipFramePos / clip.Duration);
+                            FSecondsOut.Add((double)clipFramePos / FrameRate);
+                            FFadeOut.Add(CalcFade(clip, clipFramePos));
+                            FPositionOut.Add(clipFramePos);
+                        }
+                        else // reset values to 0 if theres no clip on current time
+                        {
+                            FFadeOut.Add(0);
+                            FNormalizedOut.Add(0);
+                            FSecondsOut.Add(0);
+                            FPositionOut.Add(0);
+                        }
+
+                        FVariableOut.Add(clip.Variable);
+                        FNameOut.Add(clip.Name);
+                        FColorOut.Add(clip.Color);
+                        FDurationOut.Add(clip.Duration);
+
+                    }              
                 }
             }
             catch (Exception e)
@@ -198,11 +195,7 @@ namespace VVVV.Nodes
         {
             if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                if (FInterpoleIn[0].needsUpdate || FColorIn.IsChanged || !FValid)
-                {
-                    UpdateEnum();
-                    FValid = true;
-                }
+                Initialize();
 
                 if (FInterpoleIn[0].clipList.Count > 0) UpdateOutputs();
             }

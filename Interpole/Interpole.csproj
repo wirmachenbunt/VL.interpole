@@ -88,8 +88,8 @@
     </Compile>
     <None Include="Main.cs" />
     <None Include="Nodes\GetClipBuffered.cs" />
-    <None Include="Nodes\GetClipByName.cs" />
-    <None Include="Nodes\GetClipByColor.cs" />
+    <Compile Include="Nodes\GetClipByName.cs" />
+    <Compile Include="Nodes\GetClipByColor.cs" />
     <Compile Include="Keyframes\KFDrawing.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -97,7 +97,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Nodes\GetUnifiedClipByName.cs" />
-    <None Include="Nodes\GetUnifiedClipByColor.cs" />
+    <Compile Include="Nodes\GetUnifiedClipByColor.cs" />
     <Compile Include="Nodes\Info.cs" />
     <Compile Include="Nodes\InterpoleCore.cs" />
     <Compile Include="Nodes\InterpoleUI.cs" />

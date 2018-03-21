@@ -102,6 +102,10 @@ namespace VVVV.Nodes
                 EnumManager.UpdateEnum(myGUID + "_ClipsName",
                     clipList[0].Name,
                     clipList.Select(x => x.Name).Distinct().ToArray());
+                                              
+                EnumManager.UpdateEnum(myGUID + "_ClipsColor",
+                    clipList[0].Color,
+                    clipList.Select(x => x.Color).Distinct().ToArray());
 
                 updateEnums = false;
             }

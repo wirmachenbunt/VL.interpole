@@ -9,6 +9,7 @@ using VVVV.PluginInterfaces.V2;
 using VVVV.Utils.VColor;
 using VVVV.Utils.VMath;
 using VVVV.Nodes;
+using Interpole;
 
 using VVVV.Core.Logging;
 #endregion usings
@@ -27,10 +28,10 @@ namespace VVVV.Nodes
         #region fields & pins
 
         [Input("Interpole", IsSingle = true)]
-        protected Pin<Interpole> FInterpoleIn;
+        protected Pin<InterpoleCoreNode> FInterpoleIn;
 
         // clip name
-        protected IDiffSpread<EnumEntry> FNameIn;
+        IIOContainer<IDiffSpread<EnumEntry>> ClipNameEnum;
 
         [Output("Normalized")]
         protected ISpread<double> FNormalizedOut;
@@ -69,10 +70,9 @@ namespace VVVV.Nodes
         [Import()]
         private IIOFactory FIOFactory;
 
-        private List<List<Interpole.Clip>> FClipList;
-        private string FEnumName;
-        private bool FValid;
+        private List<List<InterpoleBase.Clip>> FClipList;
         private int FLastFramePos;
+        bool init = true;
 
         #endregion fields & pins
         
@@ -81,22 +81,14 @@ namespace VVVV.Nodes
             FInterpoleIn.Connected += OnInterpoleConnected;
             FInterpoleIn.Disconnected += OnInterpoleDisconnected;
 
-            FHost.GetNodePath(true, out FEnumName); //get unique node path
-            FEnumName += "Interpole"; // add unique name to path
-            InputAttribute attr = new InputAttribute("Clip"); // name of pin
-            attr.EnumName = FEnumName;
-            FNameIn = FIOFactory.CreateDiffSpread<EnumEntry>(attr);
+            //new way of enums
+            InputAttribute attr = new InputAttribute("Clip");
+            ClipNameEnum = FIOFactory.CreateIOContainer<IDiffSpread<EnumEntry>>(attr, true);
         }
 
         private void OnInterpoleConnected(object sender, PinConnectionEventArgs args)
         {
-            FValid = false;
-
-            // TODO: ??? find out why we can't update enum and list here
-            // // if (FInterpoleIn[0].clipList != null) {
-            //     UpdateEnum();
-            //     UpdateClipList();
-            // // }
+            init = true;
         }
 
         private void OnInterpoleDisconnected(object sender, PinConnectionEventArgs args)
@@ -105,20 +97,16 @@ namespace VVVV.Nodes
             FClipList = null;
         }
 
-        private void UpdateEnum()
+        //get connected enum for states
+        public void Initialize()
         {
-            try
+            if (init)
             {
-                EnumManager.UpdateEnum(
-                    FEnumName,
-                    FInterpoleIn[0].clipList[0].Name,
-                    FInterpoleIn[0].clipList.Select(x => x.Name).Distinct().ToArray()
-                );
+                var pin = ClipNameEnum.GetPluginIO() as IPin;
+                (pin as IEnumIn).SetSubType(FInterpoleIn[0].myGUID + "_ClipsName");
+                init = false;
             }
-            catch (Exception e)
-            {
-                FLogger.Log(LogType.Error, "updating enum failed: " + e);
-            }
+
         }
 
         private double Clamp(double value, double min, double max)
@@ -126,7 +114,7 @@ namespace VVVV.Nodes
             return (value < min) ? min : (value > max) ? max : value;
         }
 
-        private double CalcFade(Interpole.Clip clip, int clipPos)
+        private double CalcFade(InterpoleBase.Clip clip, int clipPos)
         {
             double value = 0.0;
             value = 1f / clip.FadeIn * clipPos;
@@ -163,15 +151,15 @@ namespace VVVV.Nodes
             try
             {
                 FClipList = null;
-                FClipList = new List<List<Interpole.Clip>>();
+                FClipList = new List<List<InterpoleBase.Clip>>();
 
-                for (int i = 0; i < FNameIn.SliceCount; i++)
+                for (int i = 0; i < ClipNameEnum.IOObject.SliceCount; i++)
                 {
-                    FClipList.Add(new List<Interpole.Clip>());
+                    FClipList.Add(new List<InterpoleBase.Clip>());
 
                     FClipList[i].AddRange(
                         from clip in FInterpoleIn[0].clipList
-                        where clip.Name == FNameIn[i]
+                        where clip.Name == ClipNameEnum.IOObject[i]
                         orderby clip.StartFrame
                         select clip
                     );
@@ -180,7 +168,7 @@ namespace VVVV.Nodes
 
                     for (int x = 0; x < FClipList[i].Count; x++) // get the static infos
                     {
-                        Interpole.Clip clip = FClipList[i][x];
+                        InterpoleBase.Clip clip = FClipList[i][x];
 
                         FVariableOut.Add(clip.Variable);
                         FNameOut.Add(clip.Name);
@@ -204,47 +192,46 @@ namespace VVVV.Nodes
 
         private void UpdateOutputs()
         {
-            int framePos = FInterpoleIn[0].ipD.PlayHead;
-            int ipD.FrameRate = FInterpoleIn[0].Framerate[0];
+            int framePos = FInterpoleIn[0].PlayHead;
+            int FrameRate = FInterpoleIn[0].FrameRate;
 
             int count = 0;
 
-            for (int i = 0; i < FClipList.Count; i++)
+            if (FClipList != null)
             {
-                for (int x = 0; x < FClipList[i].Count; x++)
+                for (int i = 0; i < FClipList.Count; i++)
                 {
-                    Interpole.Clip clip = FClipList[i][x];
-                    int clipFramePos = framePos - clip.StartFrame;
-                    if (clipFramePos < 0 ) clipFramePos = 0;
-                    if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
+                    for (int x = 0; x < FClipList[i].Count; x++)
+                    {
+                        InterpoleBase.Clip clip = FClipList[i][x];
+                        int clipFramePos = framePos - clip.StartFrame;
+                        if (clipFramePos < 0) clipFramePos = 0;
+                        if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
 
-                    // TODO: try to find a way to iterate only on the relevant ones
-                    FNormalizedOut[x + count] = (double)clipFramePos / clip.Duration;
-                    FSecondsOut[x + count] = (double)clipFramePos / ipD.FrameRate;
-                    FFadeOut[x + count] = CalcFade(clip, clipFramePos);
-                    FIsActiveOut[x + count] = clipFramePos > 0 && clipFramePos < clip.Duration ? true : false;
-                    FPositionOut[x + count] = clipFramePos;
+                        // TODO: try to find a way to iterate only on the relevant ones
+                        FNormalizedOut[x + count] = (double)clipFramePos / clip.Duration;
+                        FSecondsOut[x + count] = (double)clipFramePos / FrameRate;
+                        FFadeOut[x + count] = CalcFade(clip, clipFramePos);
+                        FIsActiveOut[x + count] = clipFramePos > 0 && clipFramePos < clip.Duration ? true : false;
+                        FPositionOut[x + count] = clipFramePos;
+                    }
+                    count += FClipList[i].Count;
                 }
-                count += FClipList[i].Count;
-            }
+            }        
         }
 
         public void Evaluate(int SpreadMax)
         {
             if (FInterpoleIn.IsConnected && FInterpoleIn[0].clipList != null)
             {
-                 // update everything
-                if (FInterpoleIn[0].needsUpdate || FNameIn.IsChanged || !FValid)
+                Initialize();
+
+                if (FInterpoleIn[0].clipList.Count > 0)
                 {
-                    UpdateEnum();
                     UpdateClipList();
                     UpdateOutputs();
-                    FValid = true;
                 }
-
-                // needs to be updated every frame to have instant feedback while editing clips
-                // TODO?: another possibilty would be firing needsUpdate while clips are getting edited
-                if (FInterpoleIn[0].clipList.Count > 0) UpdateOutputs();
+                    
             }
         }
         
