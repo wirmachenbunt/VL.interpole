@@ -11,7 +11,29 @@ namespace customWinformsControl
     {
         public bool isClick = false;
         public double oldMouseY = 0;
-        
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            //if ((Control.ModifierKeys & (Keys.Alt | Keys.Shift)) == Keys.None && Control.MouseButtons == MouseButtons.None) {
+
+            Console.WriteLine(isClick.ToString());
+            if (isClick)
+            {
+                double delta = e.Y - oldMouseY;
+                Console.WriteLine(delta.ToString());
+                var val = this.Value;
+                val += Convert.ToDecimal(delta);
+                val = Math.Min(val, this.Maximum);
+                val = Math.Max(val, this.Minimum);
+                this.Value = val;
+                oldMouseY = e.Y;
+            }
+
+            Console.WriteLine("move");
+        }
+
+
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -44,31 +66,5 @@ namespace customWinformsControl
 
 
         }
-
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            Console.WriteLine(isClick.ToString());
-            if (isClick)
-            {
-                double delta = e.Y - oldMouseY;
-                Console.WriteLine(delta.ToString());
-
-                this.Value += Convert.ToDecimal(delta);
-                oldMouseY = e.Y;
-            }
-
-            base.OnMouseMove(e);
-            //if ((Control.ModifierKeys & (Keys.Alt | Keys.Shift)) == Keys.None && Control.MouseButtons == MouseButtons.None) {
-
-            Console.WriteLine("move");
-
-
-
-        }
-
-
-
-
     }
 }

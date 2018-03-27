@@ -172,6 +172,8 @@ namespace VVVV.Nodes
                     Play = false;
                     PlayHead = FTimecode[0].Frames + (FTimecode[0].Seconds * FrameRate) + (FTimecode[0].Minutes * 60 * FrameRate) + (FTimecode[0].Hours * 60 * 60 * FrameRate);
                     FInterpoleIn[0].interpoleForm.ipD.PlayHead = PlayHead; //set UI playhead
+
+                    FInterpoleIn[0].interpoleForm.PlaybackMoveStage(true); // move stage accordingly
                 }
 
 
