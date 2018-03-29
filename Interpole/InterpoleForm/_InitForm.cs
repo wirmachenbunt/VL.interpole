@@ -76,7 +76,7 @@ namespace Interpole
             this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             this.SetStyle(ControlStyles.Opaque, true);
             this.SetStyle(ControlStyles.ResizeRedraw, true);
-            //this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 
             this.ShowIcon = false;
 

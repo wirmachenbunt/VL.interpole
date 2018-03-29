@@ -395,7 +395,7 @@
    </BOUNDS>
    <BOUNDS type="Node" left="3195" top="2775" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
    </PIN>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -405,7 +405,7 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="0">
+   <PIN pinname="X Input Value" slicecount="1" values="1">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="|Set Timecode|">
    </PIN>
@@ -453,7 +453,7 @@
    </BOUNDS>
    <PIN pinname="Cycles" visible="1">
    </PIN>
-   <PIN pinname="Period" slicecount="1" values="0.14">
+   <PIN pinname="Period" slicecount="1" values="0.01">
    </PIN>
    </NODE>
    <LINK srcnodeid="135" srcpinname="Cycles" dstnodeid="134" dstpinname="Frames">

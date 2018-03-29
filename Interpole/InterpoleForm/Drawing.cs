@@ -60,7 +60,7 @@ namespace Interpole
         {
             PlaybackMoveStage(false);
 
-            //pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             pe.Graphics.Clear(MyBackgroundColor);
 
@@ -327,16 +327,17 @@ namespace Interpole
             }
         }
 
-        public void PlaybackMoveStage(bool setTimeCode)
+        public void PlaybackMoveStage(bool ignorePlay)
         {
-            if (play && (ipD.PlayHead + StagePos.x) * Zoom > this.Width / 2 || play && (ipD.PlayHead + StagePos.x) * Zoom < 0)
+            if (!ignorePlay && play && (ipD.PlayHead + StagePos.x) * Zoom > this.Width / 2 || play && (ipD.PlayHead + StagePos.x) * Zoom < 0)
             {
                 StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
             }
 
-            if(setTimeCode) StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
-
-
+            if(ignorePlay && (ipD.PlayHead + StagePos.x) * Zoom > this.Width / 2 || ignorePlay && (ipD.PlayHead + StagePos.x) * Zoom < 0)
+            {
+                StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+            }
         }
 
         public void Application_Idle(object sender, EventArgs e)

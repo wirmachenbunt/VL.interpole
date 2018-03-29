@@ -162,6 +162,10 @@ namespace VVVV.Nodes
                         if (clipFramePos < 0) clipFramePos = 0;
                         if (framePos > (clip.Duration + clip.StartFrame)) clipFramePos = clip.Duration;
 
+                        ///
+                        /// TODO make active on start and endframe too
+                        /// 
+
                         FIsActiveOut.Add(clipFramePos > 0 && clipFramePos < clip.Duration ? true : false);
 
                         if (FIsActiveOut[i])

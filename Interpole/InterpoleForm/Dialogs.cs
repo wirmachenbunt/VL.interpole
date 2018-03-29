@@ -435,7 +435,8 @@ namespace Interpole
 
         private void AddMarker(object sender, EventArgs e)
         {
-            StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+            PlaybackMoveStage(true);
+
             var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
             if(item == null)
             {
@@ -458,7 +459,7 @@ namespace Interpole
 
         private void EditMarker(object sender, EventArgs e)
         {
-            StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+            PlaybackMoveStage(true);
 
             var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
 
@@ -480,7 +481,8 @@ namespace Interpole
 
         private void RemoveMarker(object sender, EventArgs e)
         {
-            StagePos.x = 0 - ipD.PlayHead + (this.Width / 2 / Zoom);
+            PlaybackMoveStage(true);
+
             var item = ipD.MarkerList.FirstOrDefault(r => r.FramePosition == ipD.PlayHead);
 
             if (item != null)
@@ -707,8 +709,6 @@ namespace Interpole
                 }
             }
         }
-
-
 
     }
 
