@@ -47,6 +47,9 @@ namespace Interpole
                     Variable = variable
                 });
 
+                //sort List alphabetically
+                ipD.ClipList = ipD.ClipList.OrderBy(x => x.Name).ToList();
+
                 lastColorName = colorName;
                 UpdateXML();
             }
@@ -75,8 +78,13 @@ namespace Interpole
                 clip.Variable = variable;
                 clip.Bounds = new Rectangle(new Point(startFrame, clip.Bounds.Location.Y), new Size(duration, 20));
                 lastColorName = colorName;
-                UpdateXML();
+                
             }
+
+            //sort List alphabetically
+            ipD.ClipList = ipD.ClipList.OrderBy(x => x.Name).ToList();
+
+            UpdateXML();
         }
 
         public void DragSelection(System.Windows.Forms.MouseEventArgs e)
@@ -132,6 +140,10 @@ namespace Interpole
         {
             PushUndoStep();
             ipD.ClipList.Remove(clip);
+
+            //sort List alphabetically
+            ipD.ClipList = ipD.ClipList.OrderBy(x => x.Name).ToList();
+
             UpdateXML();
         }
 

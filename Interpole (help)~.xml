@@ -395,7 +395,7 @@
    </BOUNDS>
    <BOUNDS type="Node" left="3195" top="2775" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -405,7 +405,7 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
-   <PIN pinname="X Input Value" slicecount="1" values="1">
+   <PIN pinname="X Input Value" slicecount="1" values="0">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="|Set Timecode|">
    </PIN>
@@ -591,13 +591,15 @@
    </PIN>
    <PIN pinname="Normalized" visible="1">
    </PIN>
+   <PIN pinname="Is Active" visible="1">
+   </PIN>
    </NODE>
    <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="153">
    <BOUNDS type="Box" left="10995" top="7845" width="1665" height="510">
    </BOUNDS>
    <BOUNDS type="Node" left="10995" top="7845" width="0" height="0">
    </BOUNDS>
-   <PIN pinname="Input Enum" slicecount="2" visible="1" values="pinki,MyClip">
+   <PIN pinname="Input Enum" slicecount="1" visible="1" values="pinki">
    </PIN>
    <PIN pinname="Default" slicecount="1" values="pink">
    </PIN>
@@ -607,7 +609,7 @@
    </PIN>
    <PIN pinname="SliceCount Mode" slicecount="1" values="ColsRowsPages">
    </PIN>
-   <PIN pinname="Rows" slicecount="1" values="2">
+   <PIN pinname="Rows" slicecount="1" values="1">
    </PIN>
    </NODE>
    <LINK srcnodeid="153" srcpinname="Output Enum" dstnodeid="152" dstpinname="Clip">
@@ -815,5 +817,21 @@
    </LINKPOINT>
    <LINKPOINT x="6690" y="7620">
    </LINKPOINT>
+   </LINK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="180">
+   <BOUNDS type="Box" left="10965" top="8955" width="480" height="480">
+   </BOUNDS>
+   <BOUNDS type="Node" left="10965" top="8955" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Boolean">
+   </PIN>
+   <PIN pinname="Behavior" slicecount="1" values="Toggle">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="152" srcpinname="Is Active" dstnodeid="180" dstpinname="Y Input Value">
    </LINK>
    </PATCH>

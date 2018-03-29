@@ -90,7 +90,7 @@ namespace VVVV.Nodes
 
         private void InterpoleChanged(InterpoleBase interpoleForm, EventArgs e)
         {
-            //FLogger.Log(LogType.Debug, "Interpole Changed");
+            FLogger.Log(LogType.Debug, "Interpole Changed");
             updateEnums = true;  
         }
 
@@ -140,7 +140,7 @@ namespace VVVV.Nodes
         public void Evaluate(int SpreadMax)
         {
             Initialize();
-            UpdateEnums();
+            
 
             #region UI Case
             // only do this when there is a connection to the UI
@@ -179,6 +179,8 @@ namespace VVVV.Nodes
 
                 //update all outputs
                 UpdateOutput();
+                UpdateEnums();
+
             }
             #endregion
 
