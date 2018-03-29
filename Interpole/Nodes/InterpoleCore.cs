@@ -60,7 +60,7 @@ namespace VVVV.Nodes
         public bool Play = false;
         public int FrameRate;
         bool init = true;
-        bool updateEnums = true;
+        public bool updateEnums = true;
 
         public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>(); //just send the clips to getclip
 
@@ -90,7 +90,7 @@ namespace VVVV.Nodes
 
         private void InterpoleChanged(InterpoleBase interpoleForm, EventArgs e)
         {
-            FLogger.Log(LogType.Debug, "Interpole Changed");
+            //FLogger.Log(LogType.Debug, "Interpole Changed");
             updateEnums = true;  
         }
 
