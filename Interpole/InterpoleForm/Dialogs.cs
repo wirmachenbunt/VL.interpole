@@ -479,6 +479,11 @@ namespace Interpole
             else MessageBox.Show("No marker found.");
         }
 
+        private void InfoDialog(object sender, EventArgs e)
+        {
+            MessageBox.Show("Info");
+        }
+
         private void RemoveMarker(object sender, EventArgs e)
         {
             PlaybackMoveStage(true);
@@ -507,12 +512,15 @@ namespace Interpole
             ToolStripMenuItem editMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ToolStripMenuItem deleteMarkerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 
+            ToolStripMenuItem infoStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+
             // 
             // menuStrip1
             // 
             menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             menuToolStripMenuItem,
-            markerToolStripMenuItem});
+            markerToolStripMenuItem,
+            infoStripMenuItem});
 
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
@@ -590,6 +598,17 @@ namespace Interpole
             deleteMarkerToolStripMenuItem.Text = "Delete Marker";
             deleteMarkerToolStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
             deleteMarkerToolStripMenuItem.Click += new System.EventHandler(RemoveMarker);
+
+            // 
+            // info
+            // 
+            infoStripMenuItem.Name = "Info";
+            infoStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            infoStripMenuItem.Text = "Info";
+            infoStripMenuItem.ForeColor = Color.FromArgb(200, 200, 200);
+            infoStripMenuItem.Click += new System.EventHandler(InfoDialog);
+
+
             #endregion
 
             // 
