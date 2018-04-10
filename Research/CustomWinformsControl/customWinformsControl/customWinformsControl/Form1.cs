@@ -17,5 +17,6 @@ namespace customWinformsControl
         {
             InitializeComponent();
         }
+
     }
 }
