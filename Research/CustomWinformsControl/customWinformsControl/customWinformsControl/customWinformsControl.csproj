@@ -52,6 +52,9 @@
     <Compile Include="CustomNumericUpDown.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CustomTextbox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
