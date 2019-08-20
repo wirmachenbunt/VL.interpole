@@ -1,8 +1,8 @@
-<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta35.8.dtd" >
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50beta38.1.dtd" >
    <PATCH nodename="C:\INTERPOLE\Interpole (help).v4p" systemname="Interpol (help)" filename="C:\clips\Interpol (help).v4p" scrollx="0" scrolly="1830">
    <BOUNDS type="Window" left="12345" top="75" width="15300" height="16785">
    </BOUNDS>
-   <PACK Name="addonpack" Version="35.0.0">
+   <PACK Name="addonpack" Version="38.1.0">
    </PACK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="2" systemname="IOBox (Value Advanced)">
    <BOUNDS type="Box" left="3360" top="75" width="795" height="240">
@@ -593,6 +593,8 @@
    </PIN>
    <PIN pinname="Is Active" visible="1">
    </PIN>
+   <PIN pinname="Frames" visible="1">
+   </PIN>
    </NODE>
    <NODE nodename="IOBox (Enumerations)" componentmode="InABox" id="153">
    <BOUNDS type="Box" left="10995" top="7845" width="1665" height="510">
@@ -621,7 +623,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="3780" top="8580" width="3000" height="3000">
    </BOUNDS>
-   <PIN pinname="Interpole" visible="1">
+   <PIN pinname="Interpole" visible="1" slicecount="1" values="||">
    </PIN>
    <PIN pinname="Color" slicecount="1" visible="1" values="Aqua">
    </PIN>
@@ -685,7 +687,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="570" top="8445" width="3000" height="3000">
    </BOUNDS>
-   <PIN pinname="Interpole" visible="1">
+   <PIN pinname="Interpole" visible="1" slicecount="1" values="||">
    </PIN>
    <PIN pinname="Color" slicecount="1" visible="1" values="Aqua">
    </PIN>
@@ -751,6 +753,8 @@
    </BOUNDS>
    <PIN pinname="Input Value" visible="1">
    </PIN>
+   <PIN pinname="Receive String" slicecount="1" values="InterpoleData">
+   </PIN>
    </NODE>
    <LINK srcnodeid="173" srcpinname="Input Value" dstnodeid="114" dstpinname="Interpole">
    </LINK>
@@ -773,6 +777,8 @@
    </BOUNDS>
    <PIN pinname="Input Value" visible="1">
    </PIN>
+   <PIN pinname="Receive String" slicecount="1" values="InterpoleData">
+   </PIN>
    </NODE>
    <LINK srcnodeid="176" srcpinname="Input Value" dstnodeid="120" dstpinname="Interpole">
    </LINK>
@@ -780,6 +786,8 @@
    <BOUNDS type="Node" left="6660" top="6450" width="100" height="100">
    </BOUNDS>
    <PIN pinname="Input Value" visible="1">
+   </PIN>
+   <PIN pinname="Receive String" slicecount="1" values="InterpoleData">
    </PIN>
    </NODE>
    <LINK srcnodeid="178" srcpinname="Input Value" dstnodeid="163" dstpinname="Interpole" linkstyle="Bezier">
@@ -819,9 +827,9 @@
    </LINKPOINT>
    </LINK>
    <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="180">
-   <BOUNDS type="Box" left="10965" top="8955" width="480" height="480">
+   <BOUNDS type="Box" left="10710" top="9540" width="480" height="480">
    </BOUNDS>
-   <BOUNDS type="Node" left="10965" top="8955" width="0" height="0">
+   <BOUNDS type="Node" left="10710" top="9540" width="0" height="0">
    </BOUNDS>
    <PIN pinname="Units" slicecount="1" values="||">
    </PIN>
@@ -835,5 +843,25 @@
    <LINK srcnodeid="152" srcpinname="Is Active" dstnodeid="180" dstpinname="Y Input Value">
    </LINK>
    <LINK srcnodeid="119" srcpinname="Y Output Value" dstnodeid="114" dstpinname="Update">
+   </LINK>
+   <PACK Name="dx11" Version="1.3.1.1">
+   </PACK>
+   <PACK Name="dx11.particles" Version="1.0.6">
+   </PACK>
+   <PACK Name="VVVV.Packs.Image" Version="0.2.0">
+   </PACK>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="181">
+   <BOUNDS type="Box" left="10980" top="9075" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="10980" top="9075" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="152" srcpinname="Frames" dstnodeid="181" dstpinname="Y Input Value">
    </LINK>
    </PATCH>
