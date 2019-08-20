@@ -61,6 +61,7 @@ namespace VVVV.Nodes
         public int FrameRate;
         bool init = true;
         public bool updateEnums = true;
+        public bool playExt = false;
 
         public List<InterpoleBase.Clip> clipList = new List<InterpoleBase.Clip>(); //just send the clips to getclip
 
@@ -148,7 +149,7 @@ namespace VVVV.Nodes
             {
 
                 // if playing, set UI playhead
-                if (FInterpoleIn[0].interpoleForm.play || FPlay[0])
+                if (FInterpoleIn[0].interpoleForm.play || FPlay[0] || playExt)
                 {
                     //iterate playhead
                     PlayHead++;

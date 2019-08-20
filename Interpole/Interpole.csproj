@@ -106,6 +106,7 @@
     <Compile Include="Nodes\PlaybackInfo.cs" />
     <None Include="Nodes\Reader.cs" />
     <None Include="Nodes\SplitTC.cs" />
+    <Compile Include="Nodes\PlayController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
