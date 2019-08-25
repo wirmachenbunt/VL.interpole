@@ -50,6 +50,9 @@ namespace VVVV.Nodes
         [Output("Bin Size")]
         protected ISpread<int> FBinSizeOut;
 
+        [Output("StartFrame")]
+        protected ISpread<int> FStartFrame;
+
         [Output("ClipName", Visibility = PinVisibility.OnlyInspector)]
         protected ISpread<string> FNameOut;
 
@@ -140,6 +143,7 @@ namespace VVVV.Nodes
             FColorOut.SliceCount = 0;
             FPositionOut.SliceCount = 0;
             FDurationOut.SliceCount = 0;
+            FStartFrame.SliceCount = 0;
         }
 
         private void UpdateClipList()
@@ -172,6 +176,7 @@ namespace VVVV.Nodes
                         FNameOut.Add(clip.Name);
                         FColorOut.Add(clip.Color);
                         FDurationOut.Add(clip.Duration);
+                        FStartFrame.Add(clip.StartFrame);
                     }
 
                     // set slice count of the updating values

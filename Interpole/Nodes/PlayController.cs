@@ -36,6 +36,12 @@ namespace VVVV.Nodes
         [Input("Previous")]
         public IDiffSpread<bool> FPrevious;
 
+        [Input("Play")]
+        public IDiffSpread<bool> FPlay;
+
+        [Input("Stop")]
+        public IDiffSpread<bool> FStop;
+
         List<Interpole.InterpoleBase.Clip> stopClips = new List<Interpole.InterpoleBase.Clip>();
         List<Interpole.InterpoleBase.Clip> loopClips = new List<Interpole.InterpoleBase.Clip>();
 
@@ -143,6 +149,17 @@ namespace VVVV.Nodes
                         
              
                     }
+
+                    if (FPlay.IsChanged && FPlay[0] && !InterpoleIn[0].playExt)
+                    {
+                        InterpoleIn[0].playExt = true;
+                    }
+
+                    if (FStop.IsChanged && FStop[0] && InterpoleIn[0].playExt)
+                    {
+                        InterpoleIn[0].playExt = false;
+                    }
+
                 }
             }
         }
