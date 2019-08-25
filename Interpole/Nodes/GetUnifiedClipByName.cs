@@ -53,11 +53,8 @@ namespace VVVV.Nodes
         [Output("Color", Visibility = PinVisibility.OnlyInspector)]
         protected ISpread<string> FColorOut;
 
-        [Output("Position", Visibility = PinVisibility.OnlyInspector)]
+        [Output("Position")]
         protected ISpread<int> FPositionOut;
-
-        [Output("Frames")]
-        protected ISpread<int> FFramesOut;
 
 
         [Output("Duration", Visibility = PinVisibility.OnlyInspector)]
@@ -139,7 +136,6 @@ namespace VVVV.Nodes
             FColorOut.SliceCount = 0;
             FPositionOut.SliceCount = 0;
             FDurationOut.SliceCount = 0;
-            FFramesOut.SliceCount = 0;
         }
 
         public void UpdateOutputs()
@@ -176,8 +172,7 @@ namespace VVVV.Nodes
                         if (FIsActiveOut[i])
                         {
                             FNormalizedOut.Add((double)clipFramePos / clip.Duration);
-                            FSecondsOut.Add((double)clipFramePos / FrameRate);
-                            FFramesOut.Add(clipFramePos);
+                            FSecondsOut.Add((double)clipFramePos / FrameRate);                         
                             FFadeOut.Add(CalcFade(clip, clipFramePos));
                             FPositionOut.Add(clipFramePos);
                         }
