@@ -67,7 +67,8 @@ namespace Interpole
 
             selectionRectangle.Size = new Size(0, 0);
 
-            
+            UpdateXML();
+
         }
 
         private void Form1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -132,6 +133,7 @@ namespace Interpole
             CalcStagePosition(MousePosition, e.Button == MouseButtons.Right, e); // calculate delta on rightclick
 
             SetPlayPosition(); // set playhead
+
 
             if (!ipD.UILock) SetSelectionRectangle(e); // selection rectangle
 
@@ -325,6 +327,8 @@ namespace Interpole
 
                     //FLogger.Log(LogType.Debug, distance.ToString());
                 }
+
+               
             }
         }
 
