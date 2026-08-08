@@ -1,9 +1,0 @@
-C:\interpole\Research\Camera2DPlugin\anotherResource\bin\Debug\ImageZoom.exe.config
-C:\interpole\Research\Camera2DPlugin\anotherResource\bin\Debug\ImageZoom.exe
-C:\interpole\Research\Camera2DPlugin\anotherResource\bin\Debug\ImageZoom.pdb
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.ImageZoomMainForm.resources
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.Windows.Forms.Properties.Resources.resources
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.csproj.GenerateResource.Cache
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.csproj.CoreCompileInputs.cache
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.exe
-C:\interpole\Research\Camera2DPlugin\anotherResource\obj\Debug\ImageZoom.pdb

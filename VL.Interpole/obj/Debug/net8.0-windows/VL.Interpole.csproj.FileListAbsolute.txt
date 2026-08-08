@@ -1,0 +1,14 @@
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\bin\Debug\net8.0-windows\VL.Interpole.deps.json
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\bin\Debug\net8.0-windows\VL.Interpole.dll
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\bin\Debug\net8.0-windows\VL.Interpole.pdb
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\bin\Debug\net8.0-windows\VL.Interpole.xml
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.csproj.AssemblyReference.cache
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.AssemblyInfoInputs.cache
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.AssemblyInfo.cs
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.csproj.CoreCompileInputs.cache
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.dll
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\refint\VL.Interpole.dll
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.xml
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\VL.Interpole.pdb
+C:\Users\christianengler\Documents\Interpole\VL.Interpole\obj\Debug\net8.0-windows\ref\VL.Interpole.dll

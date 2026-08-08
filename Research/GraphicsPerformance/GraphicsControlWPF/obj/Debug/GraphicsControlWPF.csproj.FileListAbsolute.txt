@@ -1,8 +1,0 @@
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\bin\Debug\GraphicsControlWPF.dll
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\bin\Debug\GraphicsControlWPF.pdb
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.csprojResolveAssemblyReference.cache
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.Properties.Resources.resources
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.csproj.GenerateResource.Cache
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.csproj.CoreCompileInputs.cache
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.dll
-C:\Users\CE\Desktop\GraphicsPerformance\GraphicsControlWPF\obj\Debug\GraphicsControlWPF.pdb

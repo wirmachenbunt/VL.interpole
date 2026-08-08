@@ -1,6 +1,0 @@
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\bin\Debug\D2D.dll
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\bin\Debug\D2D.pdb
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\obj\Debug\D2D.csprojResolveAssemblyReference.cache
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\obj\Debug\D2D.csproj.CoreCompileInputs.cache
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\obj\Debug\D2D.dll
-C:\INTERPOLE\Research\MyD2D\D2D\D2D\obj\Debug\D2D.pdb

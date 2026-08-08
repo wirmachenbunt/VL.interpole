@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    vvvv gamma library for the Interpole node.
+
+    Targets net8.0-windows because the node outputs a VL.Skia ILayer directly (it
+    wraps an ImGui editor widget with VL.ImGui.ToSkiaLayer in C#), and
+    VL.ImGui.Skia / VL.Skia are net8.0-windows only. EnableWindowsTargeting lets
+    this still build on non-Windows (dev on macOS) via the Windows targeting packs.
+
+    This mirrors VL.Automata's project setup on purpose — same proven vvvv plumbing.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- vvvv reads the doc file for tooltips; we don't doc every DTO member. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="2025.7.4" />
+    <PackageReference Include="VL.ImGui" Version="2025.7.4" />
+    <PackageReference Include="VL.ImGui.Skia" Version="2025.7.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="VL.Core" />
+    <Using Include="VL.Core.Import" />
+  </ItemGroup>
+</Project>
