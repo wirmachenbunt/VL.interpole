@@ -113,9 +113,12 @@ does the same, and where it deliberately differs.
     clips become the new selection; one undo step (`Commit`). Shortcuts live in `HandleShortcuts`,
     suppressed while an inline rename owns the keyboard.
 - **Clip colour is a palette index, not an RGB value.** `ClipData.Color` is an `int` index into a
-  fixed 10-entry `ClipPalette` in the editor (index 0 = the original blue, so old clips are
-  unchanged; out-of-range falls back to 0 via `ClipRgb`). Storing the index keeps the JSON compact
-  and lets the palette be re-tuned in one place. The swatch strip is drawn/hit-tested manually in
+  fixed 10-entry palette (index 0 = the original blue, so old clips are unchanged; out-of-range
+  falls back to 0). Storing the index keeps the JSON compact and lets the palette be re-tuned in one
+  place. That one place is now **`Engine.InterpolePalette`** (`Colors` + `Rgb`), the single source
+  shared by the editor's swatches/clip fill *and* the node's `Active Color` output; the editor's
+  `ClipPalette`/`ClipRgb` are thin aliases onto it (so all the old call sites are unchanged). The
+  swatch strip is drawn/hit-tested manually in
   `DrawClipColorSwatches` under the clip-rename field (flipped above near the window bottom); a
   swatch click sets `clip.Color` live but keeps the rename open (it deactivates the InputText, so
   the lost-focus is swallowed and the field re-focused) — the colour persists when the rename
@@ -135,6 +138,46 @@ does the same, and where it deliberately differs.
   affects the display only. `_playAccum` is reset on Play/Stop/Rewind so a new run never inherits a
   stale fraction. This is an *internal* timebase; an *external* `Time` input (deterministic, better
   for export) is still Next steps #2. Loop wraps with `np % end`, carrying any multi-frame overshoot.
+- **Domain outputs are evaluated in the Engine, emitted per track as aligned `Spread`s.** The pure
+  evaluation lives on the model, not the editor: `ClipData.Contains`/`End`/`EffectiveFades`/`GainAt`
+  and `TrackData.ActiveClipAt(frame)`. `GainAt` reproduces the editor's fade ramps exactly (linear
+  0→1 across `[Start, Start+FadeIn)`, 1→0 across `[End-FadeOut, End)`, 1 between; 0 outside), and the
+  editor's own `Fades()` now delegates to `EffectiveFades()` so ramps and gain clamp identically —
+  no second copy to drift. The node's `EvaluateOutputs` walks `doc.Tracks` **in order** and builds
+  five same-length spreads (`Active Clip Name`, `Clip Frame`, `Clip Length`, `Fade Gain`,
+  `Active Color`) plus scalars `Current Frame` and `Is Playing` (the editor's `_playing`, read after
+  the update so a stop-at-end this frame shows), so index *i* is the same track across all outputs; a
+  gap yields `""` / `-1` / `-1` / `0` / transparent `Color4(0,0,0,0)`. `Clip Frame` is the
+  playhead's 0-based offset inside the active clip (`playhead - clip.Start`) and `Clip Length` is
+  the active clip's `Length`; both use `-1` as the "no active clip" sentinel (0 would collide with a
+  clip's first frame, and a real `Length` is always >= 1). Colour is Stride `Color4` (RGBA floats — gamma's colour pin type;
+  `Stride.Core.Mathematics` is already on VL.Core's graph). Evaluated **after** the editor's
+  `ToSkia.Update` so this frame's playback advance is reflected, and computed even in **No UI Mode**
+  (the document still exists; only the ImGui frame is skipped) so a headless/exported patch still
+  gets outputs. Fed off the internal playhead for now — an external `Time` input is Next steps #2.
+  Pin-ordering gotcha: the new `out` params are required, so they sit **before** the optional
+  `fps`/`frameStepPlayback` (C# forbids a required param after an optional one).
+- **Transport input pins: Play/Stop/Rewind are rising-edge, Loop is two-way state.** `Play`/`Stop`/
+  `Rewind` are plain `bool` inputs; the node keeps `_prevPlay`/etc. and calls the editor once on each
+  false→true transition, so a bang **or** a held/toggled bool behaves like one button press. The
+  editor exposes thin `Play()`/`Stop()`/`Rewind()` wrappers over the private `OnTransport(TButton)` —
+  the same path the on-screen buttons and Space use, so pin and UI share one implementation
+  (restart-from-end, save-on-stop, playhead-0 on rewind come for free). These run **before** the
+  editor update so a Play/Stop set this frame is reflected in this frame's draw (in No UI Mode the
+  state is still set, but playback only advances inside the ImGui frame, which No UI Mode skips —
+  pre-existing).
+- **Loop is a two-way-bound state, synced pin ⇄ editor (like `Data`).** The editor exposes
+  `Loop { get; set; }` over `_loop`; the node syncs both directions with a single `_prevLoop` guard.
+  **Pin → editor** (before the update): if `loop != _prevLoop`, set `_editor.Loop = loop`. **Editor →
+  pin** (after the update, since the on-screen Loop button toggles `_loop` inside the ImGui frame): if
+  `_editor.Loop != _prevLoop`, write it back into the **Loop pin** via `ISolution.SetPinValue`
+  (`PersistLoopState`, same `~AddToHistory & ~AffectCompilation` write as the `Data` autosave) and
+  update `_prevLoop`. The single guard stops a ping-pong: a value we applied from the pin, or wrote
+  back from the editor, matches `_prevLoop` next frame and does nothing. Bonus: because the state now
+  lives on the pin literal, **loop survives save/reload** (previously `_loop` was purely
+  session-transient). If the Loop pin is *connected* upstream, that source wins (the write-back sets
+  the shadowed literal but the connection re-drives the editor next frame) — the expected
+  "connection is authoritative" behaviour. This replaces the earlier edge-toggle design.
 - **Shift snaps the playhead scrub *and* clip move/resize.** Shared helpers: `CollectClipEdgeTargets`
   fills `_snapTargets` with frame 0 + every clip's `Start`/`End`/fade-in end/fade-out start (an
   `exclude` clip is skipped so a dragged clip can't snap to itself); `Snap(frame)` returns the
@@ -151,8 +194,37 @@ does the same, and where it deliberately differs.
     `_clipSnapActive`/`_clipSnapFrame` drive a cyan vertical guide (`DrawSnapGuide`). Note
     the snap state is set in `HandleInteraction` (after the draw calls), so the guide follows by one
     frame — same 1-frame lag as the dragged clip itself, so it stays consistent.
-- **Loop** wraps at `ContentEnd()` (the max clip end across all tracks); there are no explicit
-  loop in/out markers yet. `_playing` / `_loop` are session-transient widget fields, not saved.
+- **Loop region = `[LoopIn, LoopOut)` in the document, with a whole-content fallback.**
+  `InterpoleDocument.EffectiveLoop()` returns the explicit stored range when valid (`LoopOut > LoopIn`)
+  else `(0, ContentEnd())` — so a doc with no region authored still loops over everything (the old
+  behaviour). `AdvancePlayback` wraps within the effective range (`rel = (np - li) % span`, carrying
+  overshoot); Play-while-parked restarts at `li` when looping. `ContentEnd()` now lives on the
+  document (editor delegates), shared by playback + the fallback. `_playing` stays a session-transient
+  widget field; `_loop` is transient too but its value is mirrored to the Loop pin (see the Loop
+  two-way-sync note), and the *region* persists in the document.
+- **Loop ribbon lives in the top strip of the ruler** (no separate band — it was tried as its own
+  16px row, then folded back in). `LoopStripHeight` (14px) carves `_loopBottom = _rulerTop +
+  LoopStripHeight` off the top of the ruler; `DrawLoopBar` fills `[_rulerTop, _loopBottom)` over the
+  lanes width. The rest of the ruler reflows around it: labels re-center in `[_loopBottom, _lanesTop)`
+  and the **playhead handle/line drop to `_loopBottom`** (so the red marker sits below the strip, not
+  under it). Interaction splits the ruler by Y: the top strip (`_rulerTop.._loopBottom`) is the loop
+  ribbon, below it (`_loopBottom.._lanesTop`) scrubs the playhead — the loop block is checked first so
+  it claims its clicks. `DrawLoopBar` renders the effective range as a green bar
+  (bright when explicit, faint when the implicit default) with an end grip each side. Interaction adds
+  `DragMode.LoopIn/LoopOut/LoopMove`: press hit-tests grips (`EdgeGrabPx`) → body → empty (draw fresh);
+  `MaterializeLoop` writes the effective range into the stored fields on grab so a drag edits explicit
+  values even when starting from the fallback; Alt/Middle-click clears to `0,0`. `ContinueLoopDrag`
+  clamps (in `< out`, min span 1), supports Shift-snap (reusing `CollectClipEdgeTargets` + the
+  `_clipSnapActive` guide — a loop drag and clip drag are never concurrent), and discards a zero-span
+  scratch on release.
+- **The loop region is transport-like, not undoable** (same call as the playhead). It is driven by
+  *both* the ribbon and the `Loop In`/`Loop Out` pins, so — like the playhead — it is kept **out of
+  `StructuralSnapshot`** and ribbon edits call `Changed` (persist) not `Commit` (no undo step). This
+  sidesteps a pin-vs-undo fight (an undo can't revert to a stale loop that the pins won't re-push).
+  The node applies the pins only on a **value change** (`_prevLoopIn`/`_prevLoopOut`) via
+  `SetLoopFromPins`, so pins and ribbon coexist (last writer wins) instead of the pins stomping a
+  ribbon edit every frame. Caveat: a continuously-*animated* loop pin persists on each change (like
+  any `Changed`), acceptable for the usual static/occasional use.
 - **The stopwatch (time/frames) toggle is display-only.** `_showTimecode` (session-transient, like
   `_playing`/`_loop`; **defaults to `true` = timecode**, and also drives the inspector's frames/
   seconds unit) only changes how the ruler ticks and the transport readout are *labelled* —
@@ -182,8 +254,10 @@ does the same, and where it deliberately differs.
   directly, never `Commit`). `ApplySnapshot` also cancels any in-progress drag/rename (its target
   may no longer exist). All keyboard shortcuts live in `HandleShortcuts`, which bails first on
   `io.WantTextInput` (a focused field owns the keys) and only runs when no inline edit is open:
-  **Space** play/stop, **Del/Backspace** delete selection, **Ctrl+Z** undo, **Ctrl+Y / Ctrl+Shift+Z**
-  redo, **Ctrl+C/V** copy/paste the selection.
+  **Space** play/stop, **Del/Backspace** delete selection, **B/N** set loop in/out to the playhead
+  (`SetLoopInToPlayhead`/`SetLoopOutToPlayhead` — materialise the effective range, clamp the other end
+  to stay valid, `Changed` not `Commit` like the rest of the loop editing), **Ctrl+Z** undo,
+  **Ctrl+Y / Ctrl+Shift+Z** redo, **Ctrl+C/V** copy/paste the selection.
 
 ## Editor geometry (how the bands are laid out)
 
@@ -192,12 +266,14 @@ Everything is computed each frame from `_origin` + these constants:
 ```
 TransportHeight   transport toolbar (top, full width)
 RulerHeight       frame ruler
+LoopStripHeight   loop-range ribbon, carved from the TOP of the ruler
 HeaderWidth       track-name column (left)
 TrackHeight       one lane
 
-_rulerTop = _origin.Y + TransportHeight
-_lanesTop = _rulerTop + RulerHeight
-_laneLeft = _origin.X + HeaderWidth
+_rulerTop   = _origin.Y + TransportHeight
+_loopBottom = _rulerTop + LoopStripHeight   (loop strip = [_rulerTop, _loopBottom); scrub/labels below)
+_lanesTop   = _rulerTop + RulerHeight
+_laneLeft   = _origin.X + HeaderWidth
 ```
 
 Time transform: `FrameToX(f) = _laneLeft + f*_pxPerFrame - _scrollX`; inverse `XToFrame`.
@@ -228,17 +304,16 @@ inline edit is open).
 ## Next steps
 
 1. **On-screen verification in gamma** of all interactions (this is where iteration is now).
-2. **Playback outputs**: outputs like **active-clip-per-track** (aligned `Spread`s) + the current
-   playhead frame — plus a **per-track fade gain** (0..1) evaluated from the active clip's
-   `FadeIn`/`FadeOut` at the playhead — turning it from an editor into a usable timeline. Playback timing itself is
-   done (internal real-time via `dt × Fps`, legacy mode behind `Frame Step Playback`); what remains
-   is an optional `Time`/playhead **input** pin to drive the playhead from the patch (deterministic,
-   better for export) instead of the internal clock.
+2. **Optional `Time`/playhead input pin** to drive the playhead from the patch (deterministic,
+   better for export) instead of the internal clock. (Done: the **playback outputs** —
+   `Current Frame` + per-track `Active Clip Name` / `Clip Frame` / `Clip Length` / `Fade Gain` /
+   `Active Color`, aligned `Spread`s evaluated at the playhead; and playback timing itself — internal real-time via `dt × Fps`, legacy
+   mode behind `Frame Step Playback`.)
 3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
-4. Nice-to-haves: explicit loop in/out markers; carry pan/zoom across an external reload;
-   ripple/push on cross-track drop (today it's strict exact-fit); a crisp large readout font (see
-   Known issues). (Done: shift-snapping; marquee multi-select; multi-clip copy/paste; group drag;
-   cross-track drag.)
+4. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
+   it's strict exact-fit); a crisp large readout font (see Known issues). (Done: shift-snapping;
+   marquee multi-select; multi-clip copy/paste; group drag; cross-track drag; loop region + ribbon +
+   `Loop In`/`Loop Out` pins.)
 
 ## Build
 

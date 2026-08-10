@@ -7896,20 +7896,20 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\user\\.nuget\\packages\\": {}
+    "C:\\Users\\christianengler\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\user\\Documents\\INTERPOLE\\VL.Interpole\\VL.Interpole.csproj",
+      "projectUniqueName": "C:\\Users\\christianengler\\Documents\\INTERPOLE\\VL.Interpole\\VL.Interpole.csproj",
       "projectName": "VL.Interpole",
-      "projectPath": "C:\\Users\\user\\Documents\\INTERPOLE\\VL.Interpole\\VL.Interpole.csproj",
-      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\user\\Documents\\INTERPOLE\\VL.Interpole\\obj\\",
+      "projectPath": "C:\\Users\\christianengler\\Documents\\INTERPOLE\\VL.Interpole\\VL.Interpole.csproj",
+      "packagesPath": "C:\\Users\\christianengler\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\christianengler\\Documents\\INTERPOLE\\VL.Interpole\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\user\\Documents\\INTERPOLE\\VL.Interpole\\NuGet.Config",
-        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\christianengler\\Documents\\INTERPOLE\\VL.Interpole\\NuGet.Config",
+        "C:\\Users\\christianengler\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows"

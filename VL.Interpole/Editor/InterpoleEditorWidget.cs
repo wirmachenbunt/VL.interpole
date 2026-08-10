@@ -47,6 +47,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float HeaderWidth = 240f;   // track-name column
     private const float TransportHeight = 88f;// transport toolbar (playhead readout + buttons)
     private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
+    private const float LoopStripHeight = 14f;// loop-range ribbon, carved from the top of the ruler
     private const float TrackHeight = 54f;    // one lane
     private const float ClipPadY = 6f;        // vertical inset of a clip within its lane
     private const float ClipRounding = 4f;    // corner radius of a clip's rounded rect
@@ -89,14 +90,16 @@ public sealed class InterpoleEditorWidget : IDisposable
     private Vector2 _origin;
     private Vector2 _size;
     private float _laneLeft;  // x where the clip lanes begin (= _origin.X + HeaderWidth)
-    private float _rulerTop;  // y where the ruler begins (= _origin.Y + TransportHeight)
-    private float _lanesTop;  // y where the lanes begin (= _rulerTop + RulerHeight)
+    private float _rulerTop;    // y where the ruler begins (= _origin.Y + TransportHeight)
+    private float _loopBottom;  // y where the loop strip ends inside the ruler (= _rulerTop + LoopStripHeight)
+    private float _lanesTop;    // y where the lanes begin (= _rulerTop + RulerHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove }
     private DragMode _drag;
     private string? _dragClipId;
     private float _dragGrabFrame;   // MoveClip: (mouseFrame - clip.Start) captured at grab
+    private float _loopGrabFrame;   // LoopMove: (mouseFrame - LoopIn) captured at grab
     private bool _panning;
     private string? _hoverClipId;
     private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
@@ -173,22 +176,12 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // Fixed 10-colour clip palette; a clip stores an index into it (ClipData.Color). Index 0 is
     // the original blue so existing clips keep their look.
-    private static readonly (float r, float g, float b)[] ClipPalette =
-    {
-        (0.22f, 0.47f, 0.78f), // 0 blue
-        (0.24f, 0.62f, 0.60f), // 1 teal
-        (0.34f, 0.62f, 0.33f), // 2 green
-        (0.70f, 0.64f, 0.24f), // 3 yellow
-        (0.82f, 0.54f, 0.24f), // 4 orange
-        (0.80f, 0.34f, 0.32f), // 5 red
-        (0.75f, 0.36f, 0.56f), // 6 pink
-        (0.56f, 0.42f, 0.76f), // 7 purple
-        (0.30f, 0.55f, 0.72f), // 8 sky
-        (0.46f, 0.50f, 0.57f), // 9 slate
-    };
+    // The palette + colour lookup now live in the Engine (InterpolePalette) so the editor's
+    // swatches / clip fill and the node's Active Color output share one source of truth. These
+    // thin aliases keep the local call sites terse and unchanged.
+    private static (float r, float g, float b)[] ClipPalette => InterpolePalette.Colors;
 
-    private static (float r, float g, float b) ClipRgb(int i)
-        => ClipPalette[(uint)i < (uint)ClipPalette.Length ? i : 0];
+    private static (float r, float g, float b) ClipRgb(int i) => InterpolePalette.Rgb(i);
 
     // ---- time / geometry helpers ----
     private float FrameToX(float f) => _laneLeft + f * _pxPerFrame - _scrollX;
@@ -223,6 +216,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_size.Y < 64) _size.Y = 64;
         _laneLeft = _origin.X + HeaderWidth;
         _rulerTop = _origin.Y + TransportHeight;
+        _loopBottom = _rulerTop + LoopStripHeight;
         _lanesTop = _rulerTop + RulerHeight;
         // The timeline area ends at _canvasRight; the open/close strip lives in the far-right
         // ToggleStripPx column, and the inspector panel (when open) between them.
@@ -253,6 +247,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         DrawLanes(dl);
         if (_drag == DragMode.Marquee) DrawMarquee(dl);
         DrawRuler(dl);
+        DrawLoopBar(dl);
         DrawHeaders(dl);
         DrawPlayhead(dl);
         DrawSnapGuide(dl);
@@ -383,13 +378,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRect(hmin, hmax, Col(0f, 0f, 0f, 0.55f), 2f);
     }
 
-    // Effective (clamped) fade lengths, robust to out-of-range persisted values.
-    private static (int fadeIn, int fadeOut) Fades(ClipData c)
-    {
-        int fi = Math.Clamp(c.FadeIn, 0, c.Length);
-        int fo = Math.Clamp(c.FadeOut, 0, c.Length - fi);
-        return (fi, fo);
-    }
+    // Effective (clamped) fade lengths, robust to out-of-range persisted values. Delegates to the
+    // Engine so the editor's ramps and the node's Fade Gain output clamp identically.
+    private static (int fadeIn, int fadeOut) Fades(ClipData c) => c.EffectiveFades();
 
     // Screen rect of a clip's fade handle: a small square sitting on the top edge, centred on the
     // fade end (the clip corner at zero fade), clamped to stay within the clip's width.
@@ -418,31 +409,61 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (x > LaneRight) break;
             if (x < _laneLeft) continue;
             dl.AddLine(new Vector2(x, _lanesTop - 8), new Vector2(x, _lanesTop), Col(0.5f, 0.55f, 0.6f));
-            // Vertically center the label within the ruler strip so it isn't clipped at the bottom.
+            // Vertically center the label in the ruler *below* the loop strip so the two don't collide.
             var lbl = _showTimecode ? FramesToTimecode(f, step) : f.ToString(CultureInfo.InvariantCulture);
-            float ty = _rulerTop + (RulerHeight - IG.CalcTextSize(lbl).Y) * 0.5f;
+            float ty = _loopBottom + (_lanesTop - _loopBottom - IG.CalcTextSize(lbl).Y) * 0.5f;
             dl.AddText(new Vector2(x + 4, ty), Col(0.7f, 0.75f, 0.8f), lbl);
         }
         dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(LaneRight, _lanesTop), Col(0f, 0f, 0f, 0.5f));
         dl.PopClipRect();
     }
 
+    // The loop-range ribbon, carved from the top strip of the ruler [_rulerTop, _loopBottom): a green
+    // bar spanning the effective loop region with a draggable grip at each end. Drawn brighter when
+    // the range is explicitly authored, faint when it's the implicit whole-content default.
+    private void DrawLoopBar(ImDrawListPtr dl)
+    {
+        dl.PushClipRect(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _loopBottom), true);
+        dl.AddRectFilled(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _loopBottom), Col(0.10f, 0.11f, 0.12f));
+
+        var (li, lo) = Document.EffectiveLoop();
+        bool explicitRange = Document.LoopOut > Math.Max(0, Document.LoopIn);
+        if (lo > li)
+        {
+            float xi = FrameToX(li), xo = FrameToX(lo);
+            float y0 = _rulerTop + 2f, y1 = _loopBottom - 2f;
+            uint bar = explicitRange ? Col(0.30f, 0.72f, 0.45f, 0.85f) : Col(0.30f, 0.72f, 0.45f, 0.28f);
+            dl.AddRectFilled(new Vector2(MathF.Max(xi, _laneLeft), y0), new Vector2(MathF.Min(xo, LaneRight), y1), bar, 2f);
+            uint grip = Col(0.62f, 0.96f, 0.72f, 0.95f);
+            DrawLoopHandle(dl, xi, y0, y1, grip);
+            DrawLoopHandle(dl, xo, y0, y1, grip);
+        }
+        dl.PopClipRect();
+        dl.AddLine(new Vector2(_laneLeft, _loopBottom), new Vector2(LaneRight, _loopBottom), Col(0f, 0f, 0f, 0.35f));
+    }
+
+    private void DrawLoopHandle(ImDrawListPtr dl, float x, float y0, float y1, uint col)
+    {
+        if (x < _laneLeft - 3f || x > LaneRight + 3f) return;
+        dl.AddRectFilled(new Vector2(x - 2f, y0), new Vector2(x + 2f, y1), col, 1.5f);
+    }
+
     private void DrawPlayhead(ImDrawListPtr dl)
     {
         float x = FrameToX(Document.Playhead);
         if (x < _laneLeft || x > LaneRight) return;
-        // Clip to the ruler + lanes (never over the header column or the transport bar).
-        dl.PushClipRect(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, LanesBottom), true);
+        // Clip to the ruler-below-loop-strip + lanes (never over the loop strip, header, or transport).
+        dl.PushClipRect(new Vector2(_laneLeft, _loopBottom), new Vector2(LaneRight, LanesBottom), true);
         // Snapped (Shift-scrub) turns the playhead cyan and a touch thicker as feedback.
         bool snapped = _drag == DragMode.Playhead && _playheadSnapped;
         uint col = snapped ? Col(0.30f, 0.85f, 0.98f) : Col(0.95f, 0.32f, 0.30f);
-        dl.AddLine(new Vector2(x, _rulerTop + 12), new Vector2(x, LanesBottom), col, snapped ? 2.5f : 1.5f);
-        // Downward-pointing handle sitting in the ruler.
+        dl.AddLine(new Vector2(x, _loopBottom + 12), new Vector2(x, LanesBottom), col, snapped ? 2.5f : 1.5f);
+        // Downward-pointing handle sitting in the ruler, just below the loop strip.
         const float hw = 7f, top = 1f;
         dl.AddTriangleFilled(
-            new Vector2(x - hw, _rulerTop + top),
-            new Vector2(x + hw, _rulerTop + top),
-            new Vector2(x, _rulerTop + top + 13f), col);
+            new Vector2(x - hw, _loopBottom + top),
+            new Vector2(x + hw, _loopBottom + top),
+            new Vector2(x, _loopBottom + top + 13f), col);
         dl.PopClipRect();
     }
 
@@ -498,8 +519,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         const string help =
             "dbl-click header: add/rename track   dbl-click lane: add clip   drag clip: move, edges: resize   " +
             "dbl-click clip: rename   drag empty: box-select   Shift/Ctrl+click: add to selection   " +
-            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   wheel: zoom   right-drag: pan   " +
-            "Space: play/stop   Shift: snap   Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste";
+            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   loop bar: set loop (Alt: clear)   " +
+            "B/N: loop in/out at playhead   wheel: zoom   right-drag: pan   Space: play/stop   Shift: snap   " +
+            "Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste";
         var ts = IG.CalcTextSize(help);
         dl.AddText(new Vector2(_laneLeft + 8, LanesBottom - ts.Y - 6), Col(0.5f, 0.55f, 0.6f), help);
     }
@@ -781,6 +803,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
         // Delete / Backspace remove the whole selection.
         if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false)) DeleteSelection();
+        // B / N set the loop in / out to the playhead (After-Effects-style work-area shortcuts).
+        if (IG.IsKeyPressed(ImGuiKey.B, false)) SetLoopInToPlayhead();
+        if (IG.IsKeyPressed(ImGuiKey.N, false)) SetLoopOutToPlayhead();
 
         if (!io.KeyCtrl) return;
         if (IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
@@ -794,6 +819,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Continue an in-progress drag / pan first.
         if (_drag == DragMode.Playhead) { ContinuePlayheadDrag(mouse); return; }
         if (_drag == DragMode.Marquee) { ContinueMarquee(mouse); return; }
+        if (_drag is DragMode.LoopIn or DragMode.LoopOut or DragMode.LoopMove) { ContinueLoopDrag(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
         if (_panning)
         {
@@ -847,8 +873,30 @@ public sealed class InterpoleEditorWidget : IDisposable
             return;
         }
 
-        // Ruler strip: click / drag to scrub the playhead.
-        if (mouse.X >= _laneLeft && mouse.Y >= _rulerTop && mouse.Y < _lanesTop)
+        // Loop ribbon (top strip of the ruler): drag an end grip, drag the body to move the region,
+        // or drag on empty space to draw a fresh one. Alt/Middle-click clears it (back to the
+        // whole-content default). Checked before the ruler scrub so the strip claims its clicks.
+        if (mouse.X >= _laneLeft && mouse.Y >= _rulerTop && mouse.Y < _loopBottom)
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+            {
+                if (Document.LoopIn != 0 || Document.LoopOut != 0) { Document.LoopIn = 0; Document.LoopOut = 0; Changed?.Invoke(); }
+            }
+            else if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+            {
+                var (li, lo) = Document.EffectiveLoop();
+                float xi = FrameToX(li), xo = FrameToX(lo);
+                float mf = XToFrame(mouse.X);
+                if (lo > li && MathF.Abs(mouse.X - xi) <= EdgeGrabPx) { MaterializeLoop(li, lo); _drag = DragMode.LoopIn; }
+                else if (lo > li && MathF.Abs(mouse.X - xo) <= EdgeGrabPx) { MaterializeLoop(li, lo); _drag = DragMode.LoopOut; }
+                else if (lo > li && mouse.X > xi && mouse.X < xo) { MaterializeLoop(li, lo); _drag = DragMode.LoopMove; _loopGrabFrame = mf - li; }
+                else { int f = Math.Max(0, (int)MathF.Round(mf)); Document.LoopIn = f; Document.LoopOut = f; _drag = DragMode.LoopOut; }
+            }
+            return;
+        }
+
+        // Ruler strip (below the loop strip): click / drag to scrub the playhead.
+        if (mouse.X >= _laneLeft && mouse.Y >= _loopBottom && mouse.Y < _lanesTop)
         {
             if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
@@ -999,6 +1047,94 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         if (!IG.IsMouseDown(ImGuiMouseButton.Left)) { _drag = DragMode.None; _playheadSnapped = false; Changed?.Invoke(); return; }
         Document.Playhead = PlayheadFrameFromMouse(mouse.X, IG.GetIO().KeyShift, out _playheadSnapped);
+    }
+
+    // Make the current (possibly implicit whole-content) loop range explicit so a drag edits stored
+    // LoopIn/LoopOut rather than the fallback.
+    private void MaterializeLoop(int inFrame, int outFrame) { Document.LoopIn = inFrame; Document.LoopOut = outFrame; }
+
+    // Drag the loop region or one of its ends. Reuses the clip snap guide (_clipSnapActive) — a loop
+    // drag and a clip drag are never concurrent. Like the playhead, the loop region is transport-like
+    // and pin-drivable, so edits persist via Changed but are NOT undo steps (kept out of the snapshot,
+    // same as the playhead — avoids fighting the Loop In/Out pins). A zero-span scratch (click without
+    // moving on empty ribbon) is discarded back to the whole-content default.
+    private void ContinueLoopDrag(Vector2 mouse)
+    {
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left))
+        {
+            _drag = DragMode.None;
+            _clipSnapActive = false;
+            if (Document.LoopOut <= Document.LoopIn) { Document.LoopIn = 0; Document.LoopOut = 0; }
+            Changed?.Invoke();
+            return;
+        }
+
+        bool shift = IG.GetIO().KeyShift;
+        _clipSnapActive = false;
+        if (shift) { CollectClipEdgeTargets(null); _snapTargets.Add(Document.Playhead); }
+        float mf = XToFrame(mouse.X);
+
+        switch (_drag)
+        {
+            case DragMode.LoopIn:
+            {
+                int f = Math.Max(0, (int)MathF.Round(mf));
+                if (shift) { var s = Snap(f); if (s.snapped) { f = s.frame; _clipSnapActive = true; _clipSnapFrame = f; } }
+                Document.LoopIn = Math.Clamp(f, 0, Math.Max(0, Document.LoopOut - 1));
+                break;
+            }
+            case DragMode.LoopOut:
+            {
+                int f = Math.Max(0, (int)MathF.Round(mf));
+                if (shift) { var s = Snap(f); if (s.snapped) { f = s.frame; _clipSnapActive = true; _clipSnapFrame = f; } }
+                Document.LoopOut = Math.Max(f, Document.LoopIn + 1);
+                break;
+            }
+            case DragMode.LoopMove:
+            {
+                int span = Document.LoopOut - Document.LoopIn;
+                int ni = Math.Max(0, (int)MathF.Round(mf - _loopGrabFrame));
+                if (shift) { var s = Snap(ni); if (s.snapped) { ni = s.frame; _clipSnapActive = true; _clipSnapFrame = ni; } }
+                Document.LoopIn = ni;
+                Document.LoopOut = ni + span;
+                break;
+            }
+        }
+    }
+
+    // B: set the loop-in to the playhead, keeping the out where it is (pushed to stay after the in).
+    // Materialises the effective range so it works even from the whole-content default. Like a scrub,
+    // this persists (Changed) but is not an undo step.
+    private void SetLoopInToPlayhead()
+    {
+        var (_, lo) = Document.EffectiveLoop();
+        int p = Math.Max(0, Document.Playhead);
+        Document.LoopIn = p;
+        Document.LoopOut = Math.Max(lo, p + 1);
+        Changed?.Invoke();
+    }
+
+    // N: set the loop-out to the playhead, keeping the in where it is (pulled to stay before the out).
+    private void SetLoopOutToPlayhead()
+    {
+        var (li, _) = Document.EffectiveLoop();
+        int p = Math.Max(1, Document.Playhead);   // out must be >= 1 (half-open range needs in < out)
+        Document.LoopOut = p;
+        Document.LoopIn = Math.Min(li, p - 1);
+        Changed?.Invoke();
+    }
+
+    // Set the loop region from the node's Loop In / Loop Out input pins. Stored raw (>= 0); an
+    // invalid range (out <= in) falls back to whole-content via EffectiveLoop. Persists (Changed)
+    // but is not an undo step — like a scrub — since the pins may be driven/automated.
+    public void SetLoopFromPins(int inFrame, int outFrame)
+    {
+        int i = Math.Max(0, inFrame);
+        int o = Math.Max(0, outFrame);
+        if (i == Document.LoopIn && o == Document.LoopOut) return;
+        Document.LoopIn = i;
+        Document.LoopOut = o;
+        Changed?.Invoke();
     }
 
     // Frame under the mouse for playhead scrubbing. With Shift held (After Effects style), snap to
@@ -1532,13 +1668,33 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // ============================== transport / playback ==============================
 
+    // Transport control from the node's input pins — identical effect to the on-screen buttons /
+    // Space. Play/Stop/Rewind are momentary, so the node fires them on a rising edge.
+    public void Play() => OnTransport(TButton.Play);
+    public void Stop() => OnTransport(TButton.Stop);
+    public void Rewind() => OnTransport(TButton.Rewind);
+
+    // Loop is a two-way-bound state: the node reads it (to write the Loop pin back) and sets it (from
+    // the pin), keeping the pin and the on-screen Loop button in sync. The button still flips _loop
+    // via OnTransport(TButton.Loop).
+    public bool Loop { get => _loop; set => _loop = value; }
+
+    // Whether the timeline is currently playing — exposed for the node's "Is Playing" output.
+    public bool IsPlaying => _playing;
+
     private void OnTransport(TButton b)
     {
         switch (b)
         {
             case TButton.Play:
-                // Parked at the end? Start over from the top instead of staying stuck there.
-                if (Document.Playhead >= ContentEnd()) { Document.Playhead = 0; EnsurePlayheadVisible(); Changed?.Invoke(); }
+                // Parked outside where playback would run? Jump to the start first, so Play never
+                // stays stuck. When looping, "start" is the loop-in; otherwise frame 0.
+                if (_loop)
+                {
+                    var (li, lo) = Document.EffectiveLoop();
+                    if (Document.Playhead >= lo || Document.Playhead < li) { Document.Playhead = li; EnsurePlayheadVisible(); Changed?.Invoke(); }
+                }
+                else if (Document.Playhead >= ContentEnd()) { Document.Playhead = 0; EnsurePlayheadVisible(); Changed?.Invoke(); }
                 _playing = true; _playAccum = 0f;
                 break;
             case TButton.Stop: _playing = false; _playAccum = 0f; Changed?.Invoke(); break;        // save where it stopped
@@ -1569,10 +1725,21 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (advance <= 0) return;
 
         long np = (long)Document.Playhead + advance;
-        if (np < end) { Document.Playhead = (int)np; return; }
+        if (_loop)
+        {
+            // Wrap within the effective loop region [li, lo). Before lo it just advances; at/past lo
+            // it folds back into the region, carrying any multi-frame overshoot.
+            var (li, lo) = Document.EffectiveLoop();
+            if (np < lo) { Document.Playhead = (int)np; return; }
+            int span = lo - li;
+            long rel = (np - li) % span;
+            if (rel < 0) rel += span;
+            Document.Playhead = (int)(li + rel);
+            return;
+        }
 
-        if (_loop) Document.Playhead = (int)(np % end);        // wrap, carrying the overshoot
-        else { Document.Playhead = end; _playing = false; _playAccum = 0f; }
+        if (np < end) { Document.Playhead = (int)np; return; }
+        Document.Playhead = end; _playing = false; _playAccum = 0f;   // played to the content end, stop
     }
 
     // While playing, keep the playhead on-screen: if it has left the lane view, page the view so
@@ -1589,14 +1756,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     }
 
     // The last frame covered by any clip — the natural end of the timeline (0 if empty).
-    private int ContentEnd()
-    {
-        int end = 0;
-        foreach (var tr in Document.Tracks)
-            foreach (var c in tr.Clips)
-                end = Math.Max(end, ClipEnd(c));
-        return end;
-    }
+    // Delegates to the document so playback, loop fallback, and any future consumer share one source.
+    private int ContentEnd() => Document.ContentEnd();
 
     // ============================== inline editing ==============================
 
