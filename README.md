@@ -74,7 +74,8 @@ even in the renderer's **default** `Normalized` Space.
 ### Inspector (right panel)
 
 A **collapsible inspector** on the right edits the **selected clip** — it **starts collapsed**;
-click the ▸/◂ **strip** at the far right to open/close it. It shows editable fields for the clip:
+click the ▸/◂ **strip** at the far right to open/close it. When several clips are selected it shows a
+count and edits the **primary** (last-clicked) clip. It shows editable fields for the clip:
 
 - **Name** (text)
 - **Color** (the 10-swatch palette)
@@ -90,13 +91,18 @@ Tracks (header column):
 - **Alt-click** or **Middle-click** a track header → delete the track (and its clips)
 
 Clips (lanes) — clips in a track can never overlap; all edits clamp to neighbours:
-- **click** a clip → select it (yellow highlight; editable in the right-side **inspector**); click
-  an empty lane → deselect
-- **Ctrl+C** copy the selected clip, **Ctrl+V** paste a copy at the **playhead** (into the same
-  track, pushed past any covering clip and trimmed to the gap so it never overlaps)
+- **click** a clip → select it (editable in the right-side **inspector**); **Shift/Ctrl-click** a
+  clip → add/remove it from the selection; **drag an empty lane** → **marquee-select** every clip
+  the box touches (hold Shift/Ctrl to add to the current selection); click an empty lane → deselect
+- **Ctrl+C / Ctrl+V** copy/paste the **whole selection** at the **playhead** — the earliest clip
+  lands on the playhead and the rest keep their relative track + time; each pasted clip is trimmed
+  to the gap on its track so it never overlaps
+- **Del / Backspace** → delete every selected clip
 - **double-click** empty lane → add a clip there
-- **drag** a clip body → move it in time
-- **drag** a clip's **left/right edge** → resize it (min length 1 frame)
+- **drag** a clip body → move it in time; **drag a selected clip** → move the **whole selection**
+  together; **drag up/down onto another track** → move the clip(s) to that track (only when the
+  whole selection fits there without overlapping — otherwise it stays put and just slides in time)
+- **drag** a clip's **left/right edge** → resize it (min length 1 frame; resize stays single-clip)
 - **hold Shift** while moving/resizing → snap the clip edge to other clips' edges/fades, frame 0,
   or the **playhead** (a cyan guide marks the snap)
 - **drag** a clip's **top-left / top-right handle** inward → set the **fade-in / fade-out**
@@ -160,12 +166,15 @@ happens. `[ProcessNode]` hot-reloads on rebuild.
 
 Done:
 - **Tracks** — add / rename / delete.
-- **Clips** — add / move / resize / rename / delete, non-overlapping (neighbour-clamped); a
-  **10-colour palette** (picked from the rename field); **per-clip fade-in/out** via top-corner
-  handles (ramp triangles).
-- **Selection + inspector** — click-to-select a clip; a collapsible right-side **inspector** edits
-  its name, colour, and start/length/fades (frames or seconds per the ruler mode).
-- **Clipboard** — Ctrl+C / Ctrl+V copy/paste a clip at the playhead.
+- **Clips** — add / move / resize / rename / delete, non-overlapping (neighbour-clamped); **drag
+  between tracks** (single clip or whole selection, when it fits); a **10-colour palette** (picked
+  from the rename field); **per-clip fade-in/out** via top-corner handles (ramp triangles).
+- **Selection** — click, **Shift/Ctrl-click**, or **marquee** (drag an empty lane); **group drag**
+  moves all selected clips together (incl. across tracks); **Del/Backspace** deletes the selection.
+- **Inspector** — a collapsible right-side panel edits the (primary) selected clip's name, colour,
+  and start/length/fades (frames or seconds per the ruler mode).
+- **Clipboard** — Ctrl+C / Ctrl+V copy/paste the **whole selection** at the playhead (relative
+  track + time preserved).
 - **View** — right-drag pan, wheel zoom (around the cursor), **playhead auto-follow** while playing
   (and on Rewind).
 - **Transport** — Play / Stop / Rewind / Loop; **Space** = play/stop; **real-time playback**
@@ -186,5 +195,6 @@ Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **Optional `Time`/playhead input pin** — drive the playhead from the patch (deterministic, better
   for export) instead of the internal clock.
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).
-- **Nice-to-haves** — drag clips between tracks; loop in/out markers; snapping; carry pan/zoom
-  across an external `Data` reload.
+- **Nice-to-haves** — loop in/out markers; carry pan/zoom across an external `Data` reload;
+  ripple/push on cross-track drop (today it's strict exact-fit); a crisp large timecode-readout font
+  (currently the readout is drawn at the base font size — see [DEVNOTES](DEVNOTES.md#known-issues--rough-edges)).

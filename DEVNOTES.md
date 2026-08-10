@@ -46,11 +46,22 @@ does the same, and where it deliberately differs.
   a bang-per-track (or similar) is ever wanted.
 - **Non-overlap is enforced by neighbour clamping, not by a constraint solver.** Within a
   track, `LeftBound`/`RightBound` return the immediate left neighbour's end and right
-  neighbour's start; every move/resize/add clamps against them. Neighbour identity stays stable
-  during a drag because we clamp *before* the clip could cross a neighbour. `AddClip` finds the
-  gap under the cursor and shrinks the new clip to fit (skips if < 1 frame).
-- **Clips stay in their own track.** v1 has no vertical drag between tracks (keeps the
-  non-overlap logic per-track and simple). See Next steps.
+  neighbour's start; every single-clip move/resize/add clamps against them. Neighbour identity
+  stays stable during a drag because we clamp *before* the clip could cross a neighbour. `AddClip`
+  finds the gap under the cursor and shrinks the new clip to fit (skips if < 1 frame). The
+  multi-selection move uses `GroupLeftBound`/`GroupRightBound` — same idea, but ignoring the
+  *other selected* clips (they move together, so they can't collide with each other).
+- **Clips can be dragged between tracks (single clip or whole selection).** `MoveSelection` is the
+  single mover for `DragMode.MoveClip` (a lone clip is just a selection of one). It first tries a
+  **whole-track vertical shift** toward the track under the cursor: `trackDelta` is clamped so the
+  group stays within `[0, Count)`, and it is committed **only if `GroupFits(trackDelta, timeDelta)`**
+  — every selected clip must land on a valid track at a time with no overlap against *non-selected*
+  clips there (a uniform shift keeps the selected clips from colliding with each other).
+  `ApplyTrackShift` re-homes the clips between `TrackData.Clips` lists (moves collected first, then
+  applied, so no list is mutated mid-enumeration). If the group doesn't fit vertically it stays on
+  its tracks and only slides horizontally — strict non-overlap means a cross-track drop is
+  **exact-fit: no ripple/push**. The shared horizontal delta is then clamped + snapped on the
+  (possibly new) tracks. Resize/fade drags stay single-clip.
 - **Per-clip fades are lengths in frames, edited by top-corner handles.** `ClipData.FadeIn` /
   `FadeOut` are frame lengths from each end (`[Start, Start+FadeIn)`, `[End-FadeOut, End)`), kept
   `>= 0` with `FadeIn + FadeOut <= Length` (`ClampFades`, also re-run after a resize shrinks the
@@ -59,8 +70,11 @@ does the same, and where it deliberately differs.
   centred on the fade end, clamped inside the clip); the fade renders as a dimmed corner triangle
   plus a gain line from the bottom corner up to the handle. In `HitClip` the fade handles take
   priority over the resize edge they overlap, but only in the top ~11px, so the rest of an edge is
-  still resize (new `ClipZone`/`DragMode` FadeIn/FadeOut). Fades are **document + editor only so
-  far** — no output pin applies them yet (see Next steps, alongside the other playback outputs).
+  still resize (new `ClipZone`/`DragMode` FadeIn/FadeOut). The clip fill/border share a `ClipRounding`
+  (4px) radius; the fade's dimmed triangle + gain line pull their **corner-anchored** points onto
+  that rounded edge (inset `r − r/√2 ≈ 0.293·r` along the diagonal) so they follow the rounded
+  corners instead of poking past them. Fades are **document + editor only so far** — no output pin
+  applies them yet (see Next steps, alongside the other playback outputs).
 - **Inspector is a right-side ImGui child window; the timeline shrinks to make room.** The panel
   edits the selected clip and **starts collapsed** (`_inspectorOpen` default false, session-transient). Layout: `_stripLeft` is the far-right open/close strip (`ToggleStripPx`),
   `_canvasRight` is the timeline's right edge (`= _stripLeft - InspectorWidth` when open, else
@@ -78,15 +92,26 @@ does the same, and where it deliberately differs.
   `Fps`), clamp through `ApplyStart`/`ApplyLength`/`ClampFades` (non-overlap preserved), and Commit
   on `IsItemDeactivatedAfterEdit` (one undo step per field). The name buffer re-seeds from the clip
   whenever the field isn't active, so inline-rename/undo changes show through.
-- **Clip selection + clipboard (copy/paste).** A single `_selectedClipId` (set on clip click,
-  cleared on empty-lane click / delete) draws a yellow highlight and is the copy source; `AddClip`
-  and `PasteClip` select their new clip. `Ctrl+C` clones the selected clip (or, as a fallback, the
-  hovered one) into `_clipboard` + remembers its track (`_clipboardTrackId`). `Ctrl+V` pastes into
-  that track (or the first, if it's gone) **at the playhead**: the start is pushed past any clip
-  covering the playhead, then the length is trimmed to the gap before the next clip (so non-overlap
-  holds); no room → no-op. Fades are re-clamped after a trim. The paste is one undo step (`Commit`).
-  Selection is by id, so it survives undo/redo (ids are stable in the JSON). Shortcuts live in
-  `HandleShortcuts`, suppressed while an inline rename owns the keyboard.
+- **Multi-selection (marquee) + clipboard (copy/paste).** Selection is a `HashSet<string>
+  _selection` of clip ids, with `_selectedClipId` kept as the **primary** — the inspector's target
+  and the bolder outline; other selected clips get a lighter outline. Helpers: `SelectSingle`,
+  `ToggleSelected`, `IsSelected`. Ways to select: **click** a clip (single); **Shift/Ctrl-click** a
+  clip (`ToggleSelected`); grabbing a clip already in the selection keeps the whole selection (so it
+  can group-drag); **drag on an empty lane** = a **marquee** (`DragMode.Marquee`, anchor in screen
+  space, clamped to the lane area; `UpdateMarqueeSelection` re-picks every clip whose on-screen rect
+  overlaps the band each frame; Shift/Ctrl at drag-start seeds `_marqueeBase` so the marquee *adds*
+  to the prior selection). **Del/Backspace** = `DeleteSelection` (one undo step). Selection is by
+  id so it survives undo/redo (ids are stable in the JSON); `RemoveClip`/`RemoveTrack` prune stale
+  ids and re-home the primary.
+  - **The clipboard is a list**, `_clipboard` of `ClipCopy(Clip, TrackIndex, StartOffset)`. `Ctrl+C`
+    (`CopySelection`) clones every selected clip — or the hovered one as a fallback — recording each
+    clip's track index and its start relative to the earliest copied clip. `Ctrl+V`
+    (`PasteClipboard`) rebuilds the group **at the playhead**: the earliest clip lands on the
+    playhead (stepped past any clip covering it on its anchor track, as the old single paste did),
+    the rest keep their relative track + time; each pasted clip is trimmed to the gap on its track
+    and dropped if there's no room, so a paste never overlaps (fades re-clamped after a trim). Pasted
+    clips become the new selection; one undo step (`Commit`). Shortcuts live in `HandleShortcuts`,
+    suppressed while an inline rename owns the keyboard.
 - **Clip colour is a palette index, not an RGB value.** `ClipData.Color` is an `int` index into a
   fixed 10-entry `ClipPalette` in the editor (index 0 = the original blue, so old clips are
   unchanged; out-of-range falls back to 0 via `ClipRgb`). Storing the index keeps the JSON compact
@@ -116,10 +141,14 @@ does the same, and where it deliberately differs.
   nearest target within `SnapPx` (8 px, pixel-based → zoom-independent) plus the pixel distance.
   - **Playhead** (`PlayheadFrameFromMouse`, both ruler click and drag): targets are all clips (no
     exclude, playhead not a target); `_playheadSnapped` tints the playhead cyan + thicker.
-  - **Clip drag** (`ContinueClipDrag`): targets exclude the dragged clip and *add the playhead*.
-    Move snaps whichever edge (start/end) is closer; resize snaps the dragged edge. The snap is
-    dropped if a neighbour bound overrides it (`ns == cand` / `== _clipSnapFrame` check after
-    clamp). `_clipSnapActive`/`_clipSnapFrame` drive a cyan vertical guide (`DrawSnapGuide`). Note
+  - **Clip drag** (`ContinueClipDrag`): resize snaps the dragged edge against `CollectClipEdgeTargets`
+    (excludes the dragged clip, adds the playhead). Move goes through `MoveSelection`, which
+    considers the leading *and* trailing edge of **every selected clip** (at the proposed delta)
+    against `CollectSnapTargetsExcludingSelection` (excludes the whole selection, adds the playhead),
+    takes the closest snap across the group, and applies that one delta to all selected clips — so
+    any clip in the selection can snap the move, not just the grabbed one. The snap is dropped if a
+    neighbour bound overrides it (`ns == cand` / `== _clipSnapFrame` check after clamp).
+    `_clipSnapActive`/`_clipSnapFrame` drive a cyan vertical guide (`DrawSnapGuide`). Note
     the snap state is set in `HandleInteraction` (after the draw calls), so the guide follows by one
     frame — same 1-frame lag as the dragged clip itself, so it stays consistent.
 - **Loop** wraps at `ContentEnd()` (the max clip end across all tracks); there are no explicit
@@ -153,7 +182,8 @@ does the same, and where it deliberately differs.
   directly, never `Commit`). `ApplySnapshot` also cancels any in-progress drag/rename (its target
   may no longer exist). All keyboard shortcuts live in `HandleShortcuts`, which bails first on
   `io.WantTextInput` (a focused field owns the keys) and only runs when no inline edit is open:
-  **Space** play/stop, **Ctrl+Z** undo, **Ctrl+Y / Ctrl+Shift+Z** redo, **Ctrl+C/V** copy/paste clip.
+  **Space** play/stop, **Del/Backspace** delete selection, **Ctrl+Z** undo, **Ctrl+Y / Ctrl+Shift+Z**
+  redo, **Ctrl+C/V** copy/paste the selection.
 
 ## Editor geometry (how the bands are laid out)
 
@@ -188,6 +218,12 @@ inline edit is open).
   `io.DeltaTime` being sane — a very long stall produces one large catch-up jump (bounded on loop).
 - Pan/zoom is **not** carried across an external `Data` reload (Automata carries pan/zoom over
   a rebuild; Interpole rebuilds the widget and resets the view). Low priority.
+- **The playhead/timecode readout is drawn at the base font size** (`ReadoutTextScale = 1`). It was
+  `2.4×`, but the node loads no font (`fonts: Spread<FontConfig?>.Empty`), so ImGui uses its default
+  **bitmap atlas** font (ProggyClean, baked ~13px) — magnifying that looked pixelated. A crisp
+  *large* readout needs a dedicated bigger font baked into the atlas via a `FontConfig` on the node's
+  `ToSkiaLayer.Update` (and drawing the readout with `dl.AddText(thatFont, thatFont.FontSize, …)`
+  instead of scaling) — **not done**; kept small for now.
 
 ## Next steps
 
@@ -199,8 +235,10 @@ inline edit is open).
    is an optional `Time`/playhead **input** pin to drive the playhead from the patch (deterministic,
    better for export) instead of the internal clock.
 3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
-4. Nice-to-haves: drag clips between tracks; explicit loop in/out markers; carry pan/zoom across an
-   external reload. (Shift-snapping — playhead + clip move/resize — is done.)
+4. Nice-to-haves: explicit loop in/out markers; carry pan/zoom across an external reload;
+   ripple/push on cross-track drop (today it's strict exact-fit); a crisp large readout font (see
+   Known issues). (Done: shift-snapping; marquee multi-select; multi-clip copy/paste; group drag;
+   cross-track drag.)
 
 ## Build
 

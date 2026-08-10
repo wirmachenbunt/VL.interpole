@@ -49,11 +49,12 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
     private const float TrackHeight = 54f;    // one lane
     private const float ClipPadY = 6f;        // vertical inset of a clip within its lane
+    private const float ClipRounding = 4f;    // corner radius of a clip's rounded rect
     private const float EdgeGrabPx = 6f;      // width of a clip's resize handle
     private const float FadeHandlePx = 11f;   // size of a clip's top-corner fade handle
     private const int DefaultClipLen = 30;    // frames, for a freshly added clip
     private const float MinPxPerFrame = 0.5f, MaxPxPerFrame = 40f;
-    private const float ReadoutTextScale = 2.4f; // playhead/timecode readout size, x the base font
+    private const float ReadoutTextScale = 1f; // playhead/timecode readout size, x the base font
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
     private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
     private const float ReadoutPadX = 24f;     // left inset of the readout from the bar edge
@@ -92,18 +93,28 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _lanesTop;  // y where the lanes begin (= _rulerTop + RulerHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee }
     private DragMode _drag;
     private string? _dragClipId;
     private float _dragGrabFrame;   // MoveClip: (mouseFrame - clip.Start) captured at grab
     private bool _panning;
     private string? _hoverClipId;
-    private string? _selectedClipId;  // clicked clip; drawn highlighted; the copy source
+    private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
+    // Full multi-selection (marquee or Shift/Ctrl-click). Contains _selectedClipId when non-null.
+    // Highlighted clips + the copy source. Ids, not references, so it survives the document rebuilds
+    // that undo/redo do (clip Ids are stable across serialization).
+    private readonly HashSet<string> _selection = new();
     private bool _playheadSnapped;   // set while a Shift-scrub is snapped, for playhead feedback
 
+    // ---- marquee (rubber-band) selection ----
+    private Vector2 _marqueeAnchor;               // fixed corner (screen space), set on press
+    private HashSet<string> _marqueeBase = new();  // selection to union with (additive marquee)
+
     // ---- clip clipboard (copy / paste) ----
-    private ClipData? _clipboard;      // deep copy of a copied clip (fresh Id on paste)
-    private string? _clipboardTrackId; // preferred paste target = the track it was copied from
+    // A copied clip plus where it sat, so a multi-clip paste can rebuild the group at the playhead:
+    // TrackIndex = the track it came from; StartOffset = frames after the earliest copied clip.
+    private readonly List<ClipCopy> _clipboard = new();
+    private sealed record ClipCopy(ClipData Clip, int TrackIndex, int StartOffset);
 
     // ---- inspector panel (right side) ----
     private bool _inspectorOpen;   // collapsed by default; open via the far-right strip
@@ -240,6 +251,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
 
         DrawLanes(dl);
+        if (_drag == DragMode.Marquee) DrawMarquee(dl);
         DrawRuler(dl);
         DrawHeaders(dl);
         DrawPlayhead(dl);
@@ -321,28 +333,36 @@ public sealed class InterpoleEditorWidget : IDisposable
         float lift = hov ? 0.10f : 0f;   // brighten a touch on hover
         uint fill = Col(MathF.Min(1f, cr + lift), MathF.Min(1f, cg + lift), MathF.Min(1f, cb + lift));
         uint border = Col(MathF.Min(1f, cr + 0.35f), MathF.Min(1f, cg + 0.35f), MathF.Min(1f, cb + 0.35f), 0.9f);
-        dl.AddRectFilled(new Vector2(x0, y0), new Vector2(x1, y1), fill, 4f);
+        dl.AddRectFilled(new Vector2(x0, y0), new Vector2(x1, y1), fill, ClipRounding);
 
         // Fade ramps: dim the attenuated corner triangle and draw the gain line from the bottom
-        // corner (level 0) up to the fade handle on the top edge (level 1).
+        // corner (level 0) up to the fade handle on the top edge (level 1). The corner-anchored
+        // points are pulled onto the rounded edge (inset r - r/√2 along the diagonal) so the ramp
+        // and dim triangle follow the clip's rounded corners instead of poking past them.
         var (fi, fo) = Fades(clip);
         uint dim = Col(0f, 0f, 0f, 0.42f), ramp = Col(1f, 1f, 1f, 0.9f);
+        float ci = ClipRounding * 0.2929f;   // corner point offset onto the rounded edge
         if (fi > 0)
         {
             float fx = FrameToX(clip.Start + fi);
-            dl.AddTriangleFilled(new Vector2(x0, y0), new Vector2(fx, y0), new Vector2(x0, y1), dim);
-            dl.AddLine(new Vector2(x0, y1), new Vector2(fx, y0), ramp, 1.5f);
+            dl.AddTriangleFilled(new Vector2(x0 + ci, y0 + ci), new Vector2(fx, y0), new Vector2(x0 + ci, y1 - ci), dim);
+            dl.AddLine(new Vector2(x0 + ci, y1 - ci), new Vector2(fx, y0), ramp, 1.5f);
         }
         if (fo > 0)
         {
             float fx = FrameToX(ClipEnd(clip) - fo);
-            dl.AddTriangleFilled(new Vector2(fx, y0), new Vector2(x1, y0), new Vector2(x1, y1), dim);
-            dl.AddLine(new Vector2(fx, y0), new Vector2(x1, y1), ramp, 1.5f);
+            dl.AddTriangleFilled(new Vector2(fx, y0), new Vector2(x1 - ci, y0 + ci), new Vector2(x1 - ci, y1 - ci), dim);
+            dl.AddLine(new Vector2(fx, y0), new Vector2(x1 - ci, y1 - ci), ramp, 1.5f);
         }
 
-        dl.AddRect(new Vector2(x0, y0), new Vector2(x1, y1), border, 4f, ImDrawFlags.None, 1.5f);
-        if (_selectedClipId == clip.Id)
-            dl.AddRect(new Vector2(x0, y0), new Vector2(x1, y1), Col(1f, 0.93f, 0.5f, 0.95f), 4f, ImDrawFlags.None, 2.5f);
+        dl.AddRect(new Vector2(x0, y0), new Vector2(x1, y1), border, ClipRounding, ImDrawFlags.None, 1.5f);
+        if (IsSelected(clip.Id))
+        {
+            // The primary (inspector target) gets a bolder outline; other selected clips a lighter one.
+            bool primary = _selectedClipId == clip.Id;
+            dl.AddRect(new Vector2(x0, y0), new Vector2(x1, y1), Col(1f, 0.93f, 0.5f, primary ? 0.95f : 0.8f),
+                       ClipRounding, ImDrawFlags.None, primary ? 2.5f : 1.75f);
+        }
 
         string lbl = string.IsNullOrWhiteSpace(clip.Label) ? clip.Id : clip.Label;
         dl.PushClipRect(new Vector2(x0 + 2, y0), new Vector2(x1 - 2, y1), true);
@@ -477,8 +497,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         const string help =
             "dbl-click header: add/rename track   dbl-click lane: add clip   drag clip: move, edges: resize   " +
-            "dbl-click clip: rename   Alt/Middle: delete   drag ruler: playhead   wheel: zoom   right-drag: pan   " +
-            "Space: play/stop   Shift: snap   Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste clip";
+            "dbl-click clip: rename   drag empty: box-select   Shift/Ctrl+click: add to selection   " +
+            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   wheel: zoom   right-drag: pan   " +
+            "Space: play/stop   Shift: snap   Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste";
         var ts = IG.CalcTextSize(help);
         dl.AddText(new Vector2(_laneLeft + 8, LanesBottom - ts.Y - 6), Col(0.5f, 0.55f, 0.6f), help);
     }
@@ -535,8 +556,10 @@ public sealed class InterpoleEditorWidget : IDisposable
         IG.TextDisabled("INSPECTOR");
         IG.Separator();
 
+        if (_selection.Count > 1) { IG.Spacing(); IG.TextDisabled(_selection.Count + " clips selected — editing primary"); IG.Spacing(); }
+
         var found = FindClip(_selectedClipId);
-        if (found is null) { IG.Spacing(); IG.TextDisabled("No clip selected.\nClick a clip to edit it."); return; }
+        if (found is null) { IG.Spacing(); IG.TextDisabled("No clip selected.\nClick a clip, or drag a box to select several."); return; }
         var (tr, clip) = found.Value;
 
         // Name — live preview into the clip, one undo step on commit. Re-seed the buffer from the
@@ -756,18 +779,21 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         // Space toggles play / stop.
         if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
+        // Delete / Backspace remove the whole selection.
+        if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false)) DeleteSelection();
 
         if (!io.KeyCtrl) return;
         if (IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
         else if (IG.IsKeyPressed(ImGuiKey.Y, false)) Redo();
-        else if (IG.IsKeyPressed(ImGuiKey.C, false)) CopySelectedClip();
-        else if (IG.IsKeyPressed(ImGuiKey.V, false)) PasteClip();
+        else if (IG.IsKeyPressed(ImGuiKey.C, false)) CopySelection();
+        else if (IG.IsKeyPressed(ImGuiKey.V, false)) PasteClipboard();
     }
 
     private void HandleInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
     {
         // Continue an in-progress drag / pan first.
         if (_drag == DragMode.Playhead) { ContinuePlayheadDrag(mouse); return; }
+        if (_drag == DragMode.Marquee) { ContinueMarquee(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
         if (_panning)
         {
@@ -867,7 +893,12 @@ public sealed class InterpoleEditorWidget : IDisposable
                 { RemoveClip(tr, clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
-                    _selectedClipId = clip.Id;
+                    // Shift/Ctrl-click toggles this clip in the selection (no drag); a plain click
+                    // selects just this clip and begins a move / resize / fade drag.
+                    if (io.KeyShift || io.KeyCtrl) { ToggleSelected(clip.Id); return; }
+                    // Grabbing a clip that's already in a multi-selection keeps the selection so the
+                    // whole group drags together; grabbing any other clip selects just it.
+                    if (!_selection.Contains(clip.Id)) SelectSingle(clip.Id);
                     _dragClipId = clip.Id;
                     _drag = zone switch
                     {
@@ -886,8 +917,82 @@ public sealed class InterpoleEditorWidget : IDisposable
                 if (tr is not null) AddClip(tr, XToFrame(mouse.X));
             }
             else if (IG.IsMouseClicked(ImGuiMouseButton.Left))
-                _selectedClipId = null;   // click empty lane → deselect
+            {
+                // Empty lane → start a marquee. Shift/Ctrl keeps the current selection to add to;
+                // otherwise it replaces it. A click with no drag bands nothing, so it deselects.
+                _drag = DragMode.Marquee;
+                _marqueeAnchor = mouse;
+                _marqueeBase = (io.KeyShift || io.KeyCtrl) ? new HashSet<string>(_selection) : new HashSet<string>();
+                UpdateMarqueeSelection(mouse);
+            }
         }
+    }
+
+    // ---- selection ----
+
+    private bool IsSelected(string id) => _selection.Contains(id);
+
+    // Replace the selection with a single clip (or nothing), and make it the primary.
+    private void SelectSingle(string? id)
+    {
+        _selection.Clear();
+        _selectedClipId = id;
+        if (id is not null) _selection.Add(id);
+    }
+
+    // Add a clip to the selection if absent, else remove it; keep the primary pointing at a
+    // still-selected clip.
+    private void ToggleSelected(string id)
+    {
+        if (_selection.Add(id)) _selectedClipId = id;
+        else { _selection.Remove(id); if (_selectedClipId == id) _selectedClipId = _selection.FirstOrDefault(); }
+    }
+
+    // ---- marquee ----
+
+    private void ContinueMarquee(Vector2 mouse)
+    {
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left)) { _drag = DragMode.None; return; }
+        UpdateMarqueeSelection(mouse);
+    }
+
+    // Selection = the additive base plus every clip whose on-screen rect overlaps the band.
+    private void UpdateMarqueeSelection(Vector2 mouse)
+    {
+        var (min, max) = MarqueeRect(mouse);
+        _selection.Clear();
+        _selection.UnionWith(_marqueeBase);
+        for (int i = 0; i < Document.Tracks.Count; i++)
+        {
+            float top = TrackTop(i) + ClipPadY, bottom = TrackTop(i) + TrackHeight - ClipPadY;
+            if (bottom < min.Y || top > max.Y) continue;
+            foreach (var clip in Document.Tracks[i].Clips)
+            {
+                float x0 = FrameToX(clip.Start), x1 = FrameToX(ClipEnd(clip));
+                if (x1 >= min.X && x0 <= max.X) _selection.Add(clip.Id);   // rects overlap on X and Y
+            }
+        }
+        if (_selectedClipId is null || !_selection.Contains(_selectedClipId))
+            _selectedClipId = _selection.FirstOrDefault();
+    }
+
+    // The band as a normalized screen rect, its moving corner clamped to the lane area so it never
+    // spills into the headers / ruler.
+    private (Vector2 min, Vector2 max) MarqueeRect(Vector2 mouse)
+    {
+        float mx = Math.Clamp(mouse.X, _laneLeft, LaneRight);
+        float my = Math.Clamp(mouse.Y, _lanesTop, LanesBottom);
+        return (new Vector2(MathF.Min(_marqueeAnchor.X, mx), MathF.Min(_marqueeAnchor.Y, my)),
+                new Vector2(MathF.Max(_marqueeAnchor.X, mx), MathF.Max(_marqueeAnchor.Y, my)));
+    }
+
+    private void DrawMarquee(ImDrawListPtr dl)
+    {
+        dl.PushClipRect(new Vector2(_laneLeft, _lanesTop), new Vector2(LaneRight, LanesBottom), true);
+        var (min, max) = MarqueeRect(IG.GetMousePos());
+        dl.AddRectFilled(min, max, Col(0.35f, 0.6f, 0.95f, 0.18f));
+        dl.AddRect(min, max, Col(0.55f, 0.78f, 1f, 0.9f));
+        dl.PopClipRect();
     }
 
     private void ContinuePlayheadDrag(Vector2 mouse)
@@ -965,25 +1070,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         switch (_drag)
         {
             case DragMode.MoveClip:
-            {
-                int lo = LeftBound(tr, clip), hi = RightBound(tr, clip);
-                int hiMax = hi == int.MaxValue ? int.MaxValue : hi - clip.Length;
-                int ns = (int)MathF.Round(mf - _dragGrabFrame);
-                if (shift)
-                {
-                    // Try snapping either edge; take whichever is closer, then re-clamp to neighbours.
-                    var a = Snap(ns);                 // leading edge (start)
-                    var b = Snap(ns + clip.Length);   // trailing edge (end)
-                    int cand = ns, guide = 0; bool sn = false;
-                    if (a.snapped && (!b.snapped || a.dxPx <= b.dxPx)) { cand = a.frame; guide = a.frame; sn = true; }
-                    else if (b.snapped) { cand = b.frame - clip.Length; guide = b.frame; sn = true; }
-                    ns = Math.Clamp(cand, lo, hiMax);
-                    if (sn && ns == cand) { _clipSnapActive = true; _clipSnapFrame = guide; }  // dropped if a bound overrode it
-                }
-                else ns = Math.Clamp(ns, lo, hiMax);
-                clip.Start = ns;
+                MoveSelection(mouse, shift);   // one or many clips; also handles moving to other tracks
                 break;
-            }
             case DragMode.ResizeL:
             {
                 int end = ClipEnd(clip), lo = LeftBound(tr, clip);
@@ -1023,6 +1111,140 @@ public sealed class InterpoleEditorWidget : IDisposable
                 break;
             }
         }
+    }
+
+    // Move the selection (one clip or many) with the grabbed clip. First try to shift the whole
+    // selection vertically to the track under the cursor — committed only when every selected clip
+    // fits on its destination track at the cursor's time (strict no-overlap). Then apply the shared
+    // horizontal delta on the (possibly new) tracks: clamped so none overlaps a non-selected
+    // neighbour, with Shift snapping the grabbed clip's edges to non-selected targets.
+    private void MoveSelection(Vector2 mouse, bool shift)
+    {
+        var grabbed = FindClip(_dragClipId);
+        if (grabbed is null) return;
+        var gclip = grabbed.Value.clip;
+
+        int desiredDelta = (int)MathF.Round(XToFrame(mouse.X) - _dragGrabFrame) - gclip.Start;
+
+        // Vertical: shift all selected clips by whole tracks toward the track under the cursor,
+        // clamped so the group stays in range, and only if the whole group fits there at that time.
+        int targetIdx = TrackIndexAtY(mouse.Y);
+        if (targetIdx >= 0)
+        {
+            int trackDelta = targetIdx - Document.Tracks.IndexOf(grabbed.Value.tr);
+            if (trackDelta != 0)
+            {
+                int minTi = int.MaxValue, maxTi = int.MinValue;
+                foreach (var (tr, _) in SelectedClips())
+                { int ti = Document.Tracks.IndexOf(tr); minTi = Math.Min(minTi, ti); maxTi = Math.Max(maxTi, ti); }
+                trackDelta = Math.Clamp(trackDelta, -minTi, (Document.Tracks.Count - 1) - maxTi);
+                if (trackDelta != 0 && GroupFits(trackDelta, desiredDelta)) ApplyTrackShift(trackDelta);
+            }
+        }
+
+        // Widest delta that keeps every selected clip clear of its non-selected neighbours.
+        int dMin = int.MinValue, dMax = int.MaxValue;
+        foreach (var (tr, clip) in SelectedClips())
+        {
+            dMin = Math.Max(dMin, GroupLeftBound(tr, clip) - clip.Start);
+            int hi = GroupRightBound(tr, clip);
+            if (hi != int.MaxValue) dMax = Math.Min(dMax, hi - ClipEnd(clip));
+        }
+        if (dMin > dMax) return;   // boxed in on both sides — nothing can move
+
+        int delta = Math.Clamp(desiredDelta, dMin, dMax);
+
+        _clipSnapActive = false;
+        if (shift)
+        {
+            CollectSnapTargetsExcludingSelection();
+            _snapTargets.Add(Document.Playhead);
+            // Consider the leading AND trailing edge of *every* selected clip (at the proposed
+            // delta) and take the closest snap across the whole group — so any clip in the
+            // selection can snap the move, not just the grabbed one.
+            float bestDx = float.MaxValue; int snapDelta = delta, guide = 0; bool sn = false;
+            foreach (var (_, clip) in SelectedClips())
+            {
+                var a = Snap(clip.Start + delta);                    // this clip's leading edge
+                if (a.snapped && a.dxPx < bestDx) { bestDx = a.dxPx; snapDelta = a.frame - clip.Start; guide = a.frame; sn = true; }
+                var b = Snap(clip.Start + clip.Length + delta);      // this clip's trailing edge
+                if (b.snapped && b.dxPx < bestDx) { bestDx = b.dxPx; snapDelta = b.frame - clip.Length - clip.Start; guide = b.frame; sn = true; }
+            }
+            if (sn && Math.Clamp(snapDelta, dMin, dMax) == snapDelta)   // dropped if a bound overrides it
+            { delta = snapDelta; _clipSnapActive = true; _clipSnapFrame = guide; }
+        }
+
+        if (delta == 0) return;
+        foreach (var (_, clip) in SelectedClips()) clip.Start += delta;
+    }
+
+    private IEnumerable<(TrackData tr, ClipData clip)> SelectedClips()
+    {
+        foreach (var tr in Document.Tracks)
+            foreach (var c in tr.Clips)
+                if (_selection.Contains(c.Id)) yield return (tr, c);
+    }
+
+    // Would every selected clip, shifted by trackDelta tracks and timeDelta frames, sit on a valid
+    // track (>= 0) at a valid time (>= 0) without overlapping any non-selected clip there? Other
+    // selected clips don't count — they move too, and a uniform track shift keeps them from colliding.
+    private bool GroupFits(int trackDelta, int timeDelta)
+    {
+        foreach (var (tr, clip) in SelectedClips())
+        {
+            int ti = Document.Tracks.IndexOf(tr) + trackDelta;
+            if (ti < 0 || ti >= Document.Tracks.Count) return false;
+            int s = clip.Start + timeDelta, e = s + clip.Length;
+            if (s < 0) return false;
+            foreach (var o in Document.Tracks[ti].Clips)
+                if (!_selection.Contains(o.Id) && s < ClipEnd(o) && o.Start < e) return false;
+        }
+        return true;
+    }
+
+    // Move every selected clip trackDelta tracks down (negative = up). Collect the moves first, then
+    // re-home the clips, so we never mutate a track's list while enumerating it.
+    private void ApplyTrackShift(int trackDelta)
+    {
+        var moves = new List<(TrackData from, TrackData to, ClipData clip)>();
+        foreach (var (tr, clip) in SelectedClips())
+            moves.Add((tr, Document.Tracks[Document.Tracks.IndexOf(tr) + trackDelta], clip));
+        foreach (var (from, to, clip) in moves) { from.Clips.Remove(clip); to.Clips.Add(clip); }
+    }
+
+    // Neighbour bounds like LeftBound/RightBound, but treating every selected clip as movable (so
+    // the group is bounded only by the clips that stay put).
+    private int GroupLeftBound(TrackData tr, ClipData clip)
+    {
+        int lo = 0;
+        foreach (var o in tr.Clips)
+            if (!_selection.Contains(o.Id) && o.Start < clip.Start) lo = Math.Max(lo, ClipEnd(o));
+        return lo;
+    }
+    private int GroupRightBound(TrackData tr, ClipData clip)
+    {
+        int hi = int.MaxValue;
+        foreach (var o in tr.Clips)
+            if (!_selection.Contains(o.Id) && o.Start > clip.Start) hi = Math.Min(hi, o.Start);
+        return hi;
+    }
+
+    // Snap targets (frame 0 + clip starts/ends/fade points) from clips outside the selection, for
+    // snapping a group move against the clips that stay put.
+    private void CollectSnapTargetsExcludingSelection()
+    {
+        _snapTargets.Clear();
+        _snapTargets.Add(0);
+        foreach (var tr in Document.Tracks)
+            foreach (var c in tr.Clips)
+            {
+                if (_selection.Contains(c.Id)) continue;
+                var (fi, fo) = Fades(c);
+                _snapTargets.Add(c.Start);
+                _snapTargets.Add(ClipEnd(c));
+                if (fi > 0) _snapTargets.Add(c.Start + fi);
+                if (fo > 0) _snapTargets.Add(ClipEnd(c) - fo);
+            }
     }
 
     // Keep a clip's fades non-negative and non-overlapping within its (possibly shrunk) length.
@@ -1117,7 +1339,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void RemoveTrack(string id)
     {
         Document.Tracks.RemoveAll(t => t.Id == id);
-        if (FindClip(_selectedClipId) is null) _selectedClipId = null;   // it may have lived here
+        _selection.RemoveWhere(cid => FindClip(cid) is null);   // drop clips that lived on this track
+        if (FindClip(_selectedClipId) is null) _selectedClipId = _selection.FirstOrDefault();
         Commit();
     }
 
@@ -1139,15 +1362,28 @@ public sealed class InterpoleEditorWidget : IDisposable
         _clipCounter++;
         var nc = new ClipData { Id = InterpoleDocument.NewId("cl"), Label = "clip " + _clipCounter, Start = start, Length = len };
         tr.Clips.Add(nc);
-        _selectedClipId = nc.Id;
+        SelectSingle(nc.Id);
         Commit();
     }
 
     private void RemoveClip(TrackData tr, ClipData clip)
     {
         tr.Clips.Remove(clip);
-        if (_selectedClipId == clip.Id) _selectedClipId = null;
+        _selection.Remove(clip.Id);
+        if (_selectedClipId == clip.Id) _selectedClipId = _selection.FirstOrDefault();
         Commit();
+    }
+
+    // Delete every selected clip in one undo step.
+    private void DeleteSelection()
+    {
+        if (_selection.Count == 0) return;
+        int removed = 0;
+        foreach (var tr in Document.Tracks)
+            removed += tr.Clips.RemoveAll(c => _selection.Contains(c.Id));
+        _selection.Clear();
+        _selectedClipId = null;
+        if (removed > 0) Commit();
     }
 
     // ---- copy / paste ----
@@ -1158,49 +1394,78 @@ public sealed class InterpoleEditorWidget : IDisposable
         Color = c.Color, FadeIn = c.FadeIn, FadeOut = c.FadeOut
     };
 
-    // Copy the selected clip (or, as a fallback, the hovered one) to the clipboard.
-    private void CopySelectedClip()
+    // Copy every selected clip (or, if nothing is selected, the hovered one) to the clipboard,
+    // recording each clip's track index and its start relative to the earliest copied clip, so a
+    // paste can rebuild the whole group at the playhead.
+    private void CopySelection()
     {
-        var found = FindClip(_selectedClipId) ?? FindClip(_hoverClipId);
-        if (found is null) return;
-        _clipboard = CloneClip(found.Value.clip);
-        _clipboardTrackId = found.Value.tr.Id;
+        _clipboard.Clear();
+        var picked = new List<(ClipData clip, int trackIndex)>();
+        for (int i = 0; i < Document.Tracks.Count; i++)
+            foreach (var c in Document.Tracks[i].Clips)
+                if (_selection.Contains(c.Id)) picked.Add((c, i));
+
+        if (picked.Count == 0)   // fallback: the hovered clip, so bare Ctrl+C still copies one
+        {
+            var hov = FindClip(_hoverClipId);
+            if (hov is null) return;
+            picked.Add((hov.Value.clip, Document.Tracks.IndexOf(hov.Value.tr)));
+        }
+
+        int minStart = picked.Min(p => p.clip.Start);
+        foreach (var (clip, trackIndex) in picked)
+            _clipboard.Add(new ClipCopy(CloneClip(clip), trackIndex, clip.Start - minStart));
     }
 
-    // Paste a copy at the playhead, into the source track (or the first track if it's gone). The
-    // clip keeps its label/colour/fades; it starts at the playhead — pushed past any clip covering
-    // it — and is trimmed to the gap so it never overlaps. No room → no-op.
-    private void PasteClip()
+    // Paste the clipboard at the playhead: the earliest copied clip lands on the playhead (stepped
+    // past any clip covering it on its track, as the single-clip paste did), the rest keep their
+    // relative track + time offsets. Each pasted clip is trimmed to the gap on its track and dropped
+    // if there's no room, so a paste never overlaps. The pasted clips become the new selection.
+    private void PasteClipboard()
     {
-        if (_clipboard is null) return;
-        var tr = Document.Tracks.FirstOrDefault(t => t.Id == _clipboardTrackId) ?? Document.Tracks.FirstOrDefault();
-        if (tr is null) return;
+        if (_clipboard.Count == 0) return;
 
-        int start = Document.Playhead;
-        foreach (var c in tr.Clips.OrderBy(c => c.Start))
-            if (c.Start <= start && start < ClipEnd(c)) start = ClipEnd(c);   // step past covering clips
+        var anchor = _clipboard.OrderBy(e => e.StartOffset).First();
+        int baseStart = Document.Playhead;
+        if (anchor.TrackIndex < Document.Tracks.Count)
+            foreach (var c in Document.Tracks[anchor.TrackIndex].Clips.OrderBy(c => c.Start))
+                if (c.Start <= baseStart && baseStart < ClipEnd(c)) baseStart = ClipEnd(c);
 
-        int rightStart = int.MaxValue;
-        foreach (var c in tr.Clips)
-            if (c.Start >= start) rightStart = Math.Min(rightStart, c.Start);
-
-        int maxLen = rightStart == int.MaxValue ? _clipboard.Length : rightStart - start;
-        int len = Math.Min(_clipboard.Length, maxLen);
-        if (len < 1) return;   // no room at/after the playhead
-
-        var nc = new ClipData
+        var newSel = new List<string>();
+        foreach (var e in _clipboard.OrderBy(e => e.TrackIndex).ThenBy(e => e.StartOffset))
         {
-            Id = InterpoleDocument.NewId("cl"),
-            Label = _clipboard.Label,
-            Start = start,
-            Length = len,
-            Color = _clipboard.Color,
-            FadeIn = _clipboard.FadeIn,
-            FadeOut = _clipboard.FadeOut
-        };
-        ClampFades(nc);   // a trimmed paste may no longer fit both fades
-        tr.Clips.Add(nc);
-        _selectedClipId = nc.Id;
+            if (e.TrackIndex >= Document.Tracks.Count) continue;   // track gone (fewer tracks now)
+            var tr = Document.Tracks[e.TrackIndex];
+            int start = baseStart + e.StartOffset;
+
+            bool covered = false;
+            int rightStart = int.MaxValue;
+            foreach (var c in tr.Clips)
+            {
+                if (c.Start <= start && start < ClipEnd(c)) { covered = true; break; }
+                if (c.Start > start) rightStart = Math.Min(rightStart, c.Start);
+            }
+            if (covered) continue;   // its slot is occupied — skip this one, keep the rest of the group
+
+            int maxLen = rightStart == int.MaxValue ? e.Clip.Length : rightStart - start;
+            int len = Math.Min(e.Clip.Length, maxLen);
+            if (len < 1) continue;
+
+            var nc = new ClipData
+            {
+                Id = InterpoleDocument.NewId("cl"),
+                Label = e.Clip.Label, Start = start, Length = len,
+                Color = e.Clip.Color, FadeIn = e.Clip.FadeIn, FadeOut = e.Clip.FadeOut
+            };
+            ClampFades(nc);   // a trimmed paste may no longer fit both fades
+            tr.Clips.Add(nc);
+            newSel.Add(nc.Id);
+        }
+
+        if (newSel.Count == 0) return;   // nothing fit → no-op, leave the current selection alone
+        _selection.Clear();
+        _selection.UnionWith(newSel);
+        _selectedClipId = newSel[0];
         Commit();
     }
 
