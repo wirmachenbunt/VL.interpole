@@ -138,6 +138,11 @@ public sealed class InterpoleEditorWidget : IDisposable
     private bool _playing;
     private bool _loop;
     private float _playAccum;   // fractional-frame accumulator for real-time (delta) playback
+    // Wall-clock source for playback timing. Playback is advanced from the node's Update (via Tick),
+    // NOT from the ImGui frame — so it keeps running in No UI Mode, where there is no frame and thus
+    // no ImGui io.DeltaTime. _lastTickSec is refreshed every Tick so the delta stays a single frame.
+    private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
+    private double _lastTickSec;
     // Ruler + playhead readout show timecode (M:SS[:FF] via Fps) instead of raw frame numbers.
     // A view preference only — session-transient, like _playing / _loop; not saved in the document.
     // Defaults to timecode (the stopwatch toggle on).
@@ -232,8 +237,8 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         ClampScroll();
 
-        // Advance the playhead while playing (unless the user is scrubbing it), and keep it in view.
-        if (_playing && _drag != DragMode.Playhead) AdvancePlayback(io.DeltaTime);
+        // Playback is advanced in Tick() (called from the node's Update, so it runs in No UI Mode too);
+        // here we only keep the playhead in view while playing (needs this frame's geometry).
         if (_playing && !_panning) EnsurePlayheadVisible();
 
         // Which clip is highlighted: the one being dragged, else the one under the cursor.
@@ -1674,6 +1679,17 @@ public sealed class InterpoleEditorWidget : IDisposable
     public void Stop() => OnTransport(TButton.Stop);
     public void Rewind() => OnTransport(TButton.Rewind);
 
+    // Seek the playhead to an absolute frame — the programmatic equivalent of a ruler scrub, fired by
+    // the node's rising-edge Set pin (which reads the Time pin's value). One-shot: it does NOT suppress
+    // playback (if playing, playback simply continues from the new frame). Persists like a scrub (calls
+    // Changed — one save per Set, not per frame), and works in No UI Mode (it just sets Playhead).
+    public void SeekTo(int frame)
+    {
+        Document.Playhead = Math.Max(0, frame);
+        EnsurePlayheadVisible();
+        Changed?.Invoke();
+    }
+
     // Loop is a two-way-bound state: the node reads it (to write the Loop pin back) and sets it (from
     // the pin), keeping the pin and the on-screen Loop button in sync. The button still flips _loop
     // via OnTransport(TButton.Loop).
@@ -1698,10 +1714,28 @@ public sealed class InterpoleEditorWidget : IDisposable
                 _playing = true; _playAccum = 0f;
                 break;
             case TButton.Stop: _playing = false; _playAccum = 0f; Changed?.Invoke(); break;        // save where it stopped
-            case TButton.Rewind: Document.Playhead = 0; _playAccum = 0f; EnsurePlayheadVisible(); Changed?.Invoke(); break; // jump to start + bring it into view
+            // Jump to the start + bring it into view. When looping, "start" is the loop-in (so Rewind
+            // returns to the top of the loop region), otherwise frame 0.
+            case TButton.Rewind:
+                Document.Playhead = _loop ? Document.EffectiveLoop().inFrame : 0;
+                _playAccum = 0f; EnsurePlayheadVisible(); Changed?.Invoke();
+                break;
 
             case TButton.Loop: _loop = !_loop; break;
         }
+    }
+
+    // Drive playback from the node's Update, once per frame, independent of the ImGui frame — so the
+    // timeline keeps playing (and the outputs keep updating) in No UI Mode, which skips the editor
+    // draw entirely. dt comes from a wall clock (there is no io.DeltaTime without a frame); it is
+    // sampled every call so it stays a single frame's worth even when not playing. Scrubbing the
+    // playhead (UI only) still suppresses the advance, same as before.
+    public void Tick()
+    {
+        double now = _clock.Elapsed.TotalSeconds;
+        float dt = (float)(now - _lastTickSec);
+        _lastTickSec = now;
+        if (_playing && _drag != DragMode.Playhead) AdvancePlayback(dt);
     }
 
     // Advance the playhead while playing. Default: by real elapsed time (dt × Fps), accumulating

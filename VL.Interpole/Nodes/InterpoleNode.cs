@@ -27,8 +27,8 @@ namespace VL.Interpole;
 //
 // Besides the editor, the node emits per-track domain outputs evaluated at the playhead:
 // the current frame, the active clip's name, its fade gain (0..1), and its palette colour —
-// aligned Spreads, one entry per track. An optional external Time/playhead *input* is still to
-// come (see DEVNOTES → Next steps).
+// aligned Spreads, one entry per track. The playhead can also be seeked from the patch: a
+// rising-edge 'Set' pin jumps it to the 'Time' pin's value (a programmatic scrub).
 [ProcessNode(Name = "Interpole", Category = "Interpole")]
 public class InterpoleNode : IDisposable
 {
@@ -62,6 +62,18 @@ public class InterpoleNode : IDisposable
     private string _persistedData = "\0";
     private bool _docDirty;
 
+    // JSON strings this node has written back into the Data pin. SetPinValue echoes our own write
+    // back into the incoming 'data' over the next frame(s); we must not mistake that echo for an
+    // external edit and rebuild the editor (which resets the view and reverts the live playhead).
+    // A single last-value guard (_persistedData) is not enough: a couple of writes can be briefly
+    // in flight at once — e.g. a Set/seek persist plus the rebuild's canonical re-persist, or a
+    // seek immediately followed by a Stop — and their echoes arrive interleaved. Matching only the
+    // most recent one lets a *stale* echo slip through and rebuild from old JSON, and the two
+    // in-flight literals then ping-pong the playhead between old and new. So remember the last few
+    // self-writes and skip an echo of ANY of them.
+    private readonly Queue<string> _selfWrites = new();
+    private const int SelfWriteMemory = 16;
+
     // Previous transport-pin states, for rising-edge (false→true) detection so each pin fires its
     // action once per press — a bang or a held bool both work like clicking the on-screen button.
     private bool _prevPlay, _prevStop, _prevRewind;
@@ -76,6 +88,10 @@ public class InterpoleNode : IDisposable
     // instead of the pins overwriting a ribbon edit every frame.
     private int _prevLoopIn, _prevLoopOut;
 
+    // Previous Set-pin state, for rising-edge (false→true) detection so a bang or a held bool seeks
+    // the playhead once per press (to the current Time value).
+    private bool _prevSet;
+
     public InterpoleNode(NodeContext nodeContext)
     {
         _nc = nodeContext;
@@ -86,9 +102,10 @@ public class InterpoleNode : IDisposable
         // The timeline as JSON, stored on this pin and saved with the patch. Leave it
         // unconnected — the node reads and writes it. You can still paste JSON in to load it.
         string? data,
-        // Headless switch: when true, skip the ImGui frame + ToSkiaLayer update entirely and
-        // output a null Editor layer. Flip on in a running/exported patch to reclaim the
-        // per-frame editor cost. Default false = UI on.
+        // Headless switch: when true, skip *only the editor rendering* (the ImGui frame + ToSkiaLayer
+        // update) and output a null Editor layer. Playback and all outputs keep running — the playhead
+        // is advanced from this Update (via _editor.Tick), not from the render frame. Flip on in a
+        // running/exported patch to reclaim the per-frame editor cost. Default false = UI on.
         bool noUIMode,
         // Inspector-only switch (hidden on the node face, editable in the Inspektor). When true
         // the editor canvas is drawn transparent, so the renderer shows through. Default false.
@@ -109,6 +126,13 @@ public class InterpoleNode : IDisposable
         // invalid/empty range (Loop Out <= Loop In, e.g. both 0) means "loop the whole content".
         int loopIn,
         int loopOut,
+        // Seek target: the frame the playhead jumps to when Set fires. Read only at that moment —
+        // changing Time on its own does nothing to the playhead. (Integer frames; clamped >= 0.)
+        int time,
+        // Seek trigger, rising-edge (false→true) like the other transport pins — wire a bang or toggle
+        // a bool. On the edge the playhead jumps to the current Time value (a programmatic scrub). It
+        // does not stop playback: if playing, playback continues from the new frame.
+        bool set,
         out ILayer? editor,
         // The playhead position in frames — the current time on the timeline. Same value the
         // ruler shows; advanced by playback and scrubbing.
@@ -169,13 +193,26 @@ public class InterpoleNode : IDisposable
             if (play && !_prevPlay) _editor.Play();
             if (stop && !_prevStop) _editor.Stop();
             if (rewind && !_prevRewind) _editor.Rewind();
+            // Set (rising edge): jump the playhead to the current Time value. A one-shot seek — reads
+            // Time only here, doesn't touch playback. Works in No UI Mode too (just sets the playhead).
+            if (set && !_prevSet) _editor.SeekTo(time);
             // Loop pin changed in the patch → drive the editor's loop state.
             if (loop != _prevLoop) { _editor.Loop = loop; _prevLoop = loop; }
             // Push the loop region only on a pin change, so a ribbon edit isn't stomped every frame.
             if (loopIn != _prevLoopIn || loopOut != _prevLoopOut) _editor.SetLoopFromPins(loopIn, loopOut);
         }
-        _prevPlay = play; _prevStop = stop; _prevRewind = rewind;
+        _prevPlay = play; _prevStop = stop; _prevRewind = rewind; _prevSet = set;
         _prevLoopIn = loopIn; _prevLoopOut = loopOut;
+
+        // Playback timing settings + the per-frame playback advance run in BOTH modes: No UI Mode
+        // skips only the editor rendering, not the clock. Tick() advances the playhead independent of
+        // the ImGui frame, so the timeline keeps playing and the outputs below keep updating headless.
+        if (_editor is not null)
+        {
+            _editor.Fps = fps;
+            _editor.FrameStepPlayback = frameStepPlayback;
+            _editor.Tick();
+        }
 
         if (_editor is null || noUIMode)
         {
@@ -184,8 +221,6 @@ public class InterpoleNode : IDisposable
         else
         {
             _editor.ShowBackground = !noBackground;
-            _editor.Fps = fps;
-            _editor.FrameStepPlayback = frameStepPlayback;
             _toSkia.Update(_editor.Widget, dockingEnabled: false, fonts: Spread<FontConfig?>.Empty, fullscreenWindow: false, Style: null);
             editor = _editorLayer;
         }
@@ -277,13 +312,14 @@ public class InterpoleNode : IDisposable
         upcomingNames = ub.ToSpread();
     }
 
-    // Load the document from the Data pin into the editor, but only when the pin value is one
-    // we don't already have. A fresh/empty pin yields a seeded default timeline, persisted back
-    // so a newly dropped node saves a valid document. The _persistedData guard keeps our own
-    // autosave echo from rebuilding the editor (which would reset the view).
+    // Load the document from the Data pin into the editor, but only when the pin value is a genuine
+    // external change — not one we don't already have, and not an echo of our own autosave. A
+    // fresh/empty pin yields a seeded default timeline, persisted back so a newly dropped node saves
+    // a valid document. The _loadedData + _selfWrites guard keeps our own SetPinValue echoes from
+    // rebuilding the editor (which would reset the view and revert the live playhead).
     private void LoadIfChanged(string data)
     {
-        if (_editor is not null && (data == _loadedData || data == _persistedData)) return;
+        if (_editor is not null && (data == _loadedData || _selfWrites.Contains(data))) return;
         _loadedData = data;
 
         var doc = InterpoleDocument.Parse(data);
@@ -307,6 +343,11 @@ public class InterpoleNode : IDisposable
     {
         if (json == _persistedData) return;
         _persistedData = json;
+
+        // Record this write so LoadIfChanged recognises its echo even when a newer write has since
+        // superseded _persistedData (several echoes can be in flight at once — see _selfWrites).
+        _selfWrites.Enqueue(json);
+        while (_selfWrites.Count > SelfWriteMemory) _selfWrites.Dequeue();
 
         var solution = IDevSession.Current?.CurrentSolution;
         if (solution is null) return;

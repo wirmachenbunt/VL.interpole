@@ -31,8 +31,15 @@ does the same, and where it deliberately differs.
 - **Persist data in the patch via `ISolution.SetPinValue`.** The `Data` pin holds the timeline
   JSON; the node writes it back with a `SolutionUpdateKind` that skips `AffectCompilation` and
   `AddToHistory` (continuous autosave, no recompile, no undo spam). The write echoes back into
-  the live `data` pin next frame — `LoadIfChanged` guards against that (via `_persistedData`)
-  so our own autosave doesn't rebuild the editor and reset the view.
+  the live `data` pin over the next frame(s) — `LoadIfChanged` guards against that so our own
+  autosave doesn't rebuild the editor (which resets the view **and** reverts the live playhead).
+  The guard remembers the last several self-writes (`_selfWrites`), **not just the most recent**:
+  a couple of writes can be in flight at once (a `Set`/seek persist plus the rebuild's canonical
+  re-persist, or a seek then a Stop), and their echoes arrive interleaved. A single last-value
+  guard let a *stale* echo through → a rebuild from old JSON, and the two in-flight literals then
+  **ping-ponged the playhead between old and new** (the bug that surfaced once `Set`/seek existed).
+  Skipping an echo of *any* recent self-write fixes it; a genuinely new external `data` (never
+  written by us) still loads.
 
 ## Interpole-specific decisions
 
@@ -129,15 +136,25 @@ does the same, and where it deliberately differs.
   fires during playback (that would hit the solution API ~60×/s). Only manual scrub, **Stop**
   and **Rewind** call `Changed` and save the position. Consequence: if the patch is saved mid-
   playback, the *last saved* playhead is stored, not the live one — acceptable.
+- **Playback is driven from the node's `Update`, not the ImGui frame — so it runs in No UI Mode.**
+  The editor's `Tick()` advances the playhead once per node `Update` (the node calls it every frame,
+  in **both** modes), so **No UI Mode disables only the rendering, not the clock**: the timeline keeps
+  playing and the outputs keep updating headless — the whole point of the mode. This was the earlier
+  bug — `AdvancePlayback` used to be called from inside `Draw`, which No UI Mode skips, so playback
+  froze. `Tick` therefore takes its `dt` from a **wall clock** (`_clock`, a `Stopwatch`), *not* ImGui's
+  `io.DeltaTime` (there is no ImGui frame without rendering); `_lastTickSec` is resampled every call so
+  the delta is one frame's worth even when parked. Because the node sets `Fps`/`FrameStepPlayback` on
+  the editor **before** `Tick` in both modes, playback speed is correct headless too. Scrubbing still
+  suppresses the advance (`_drag != DragMode.Playhead`), a no-op in No UI Mode where nothing drags.
 - **Playback timebase = real elapsed time (default), render-frames (legacy, hidden).** By default
-  `AdvancePlayback(dt)` advances by `dt × Fps` (ImGui `io.DeltaTime`), accumulating fractional
+  `AdvancePlayback(dt)` advances by `dt × Fps` (the wall-clock delta from `Tick`), accumulating fractional
   frames in `_playAccum` so one wall-clock second covers `Fps` frames regardless of render rate —
   so `Fps` is now the timeline's real frame rate, driving **both** playback and the timecode
-  display (they finally agree). The old *one-frame-per-rendered-Draw* behaviour is kept behind the
-  hidden **`Frame Step Playback`** pin (`FrameStepPlayback`) for cases that want it; there `Fps`
-  affects the display only. `_playAccum` is reset on Play/Stop/Rewind so a new run never inherits a
-  stale fraction. This is an *internal* timebase; an *external* `Time` input (deterministic, better
-  for export) is still Next steps #2. Loop wraps with `np % end`, carrying any multi-frame overshoot.
+  display (they finally agree). The old *one-frame-per-Draw* behaviour is kept behind the
+  hidden **`Frame Step Playback`** pin (`FrameStepPlayback`) for cases that want it — now one frame per
+  node `Update` (so it steps headless too); there `Fps` affects the display only. `_playAccum` is reset
+  on Play/Stop/Rewind so a new run never inherits a stale fraction. Loop wraps with `np % end`, carrying
+  any multi-frame overshoot.
 - **Domain outputs are evaluated in the Engine, emitted per track as aligned `Spread`s.** The pure
   evaluation lives on the model, not the editor: `ClipData.Contains`/`End`/`EffectiveFades`/`GainAt`
   and `TrackData.ActiveClipAt(frame)`. `GainAt` reproduces the editor's fade ramps exactly (linear
@@ -154,8 +171,8 @@ does the same, and where it deliberately differs.
   clip's first frame, and a real `Length` is always >= 1). Colour is Stride `Color4` (RGBA floats — gamma's colour pin type;
   `Stride.Core.Mathematics` is already on VL.Core's graph). Evaluated **after** the editor's
   `ToSkia.Update` so this frame's playback advance is reflected, and computed even in **No UI Mode**
-  (the document still exists; only the ImGui frame is skipped) so a headless/exported patch still
-  gets outputs. Fed off the internal playhead for now — an external `Time` input is Next steps #2.
+  (the document still exists and `Tick` still advances playback; only the rendering is skipped) so a
+  headless/exported patch still plays and gets live outputs.
   Pin-ordering gotcha: the new `out` params are required, so they sit **before** the optional
   `fps`/`frameStepPlayback` (C# forbids a required param after an optional one). **`Upcoming Clip
   Names`** is per-track like the rest (built in the same loop, independent of the active clip):
@@ -173,10 +190,25 @@ does the same, and where it deliberately differs.
   false→true transition, so a bang **or** a held/toggled bool behaves like one button press. The
   editor exposes thin `Play()`/`Stop()`/`Rewind()` wrappers over the private `OnTransport(TButton)` —
   the same path the on-screen buttons and Space use, so pin and UI share one implementation
-  (restart-from-end, save-on-stop, playhead-0 on rewind come for free). These run **before** the
-  editor update so a Play/Stop set this frame is reflected in this frame's draw (in No UI Mode the
-  state is still set, but playback only advances inside the ImGui frame, which No UI Mode skips —
-  pre-existing).
+  (restart-from-end, save-on-stop, rewind-to-start — frame 0, or the loop-in when looping — come for free). These run **before** the
+  editor update so a Play/Stop set this frame is reflected in this frame's draw. In No UI Mode the state
+  is set **and** playback advances — the node's `Tick` drives the playhead every `Update` regardless of
+  rendering (see the playback-in-`Update` decision above).
+- **Seek from the patch: `Time` (value) + `Set` (trigger), not a continuous drive.** A `Time` int pin
+  holds the target frame; a rising-edge `Set` bool applies it — the playhead jumps to `Time` **only** on
+  `Set`'s false→true edge (changing `Time` alone does nothing). This was deliberately chosen over a
+  continuous "slave the playhead to `Time` every frame" design: a one-shot seek doesn't fight the
+  internal transport, needs no override/suppression machinery, and matches the bang-driven feel of the
+  other transport pins. Both are plain **required** pins (defaults `0` / `false`, declared **before** the
+  `out` params, in the transport group next to Play/Stop/Rewind) — no `-1` sentinel and no after-`out`
+  placement is needed, because neither pin's default has to encode an "off" state. The node detects the
+  edge with `_prevSet` and calls `_editor.SeekTo(time)` **before** the editor update, alongside the other
+  rising-edge transport pins — so it also applies in **No UI Mode** (`SeekTo` just sets `Playhead`, it
+  doesn't depend on the ImGui frame). `SeekTo(frame)` sets `Document.Playhead = max(0, frame)`, calls
+  `EnsurePlayheadVisible`, and calls **`Changed`** (a seek persists, like a manual scrub — one save per
+  `Set`, not per frame, so no `SetPinValue` spam). It deliberately does **not** touch `_playing`: seeking
+  while playing just continues playback from the new frame. Domain outputs (`EvaluateOutputs`) read
+  `Document.Playhead` after the update, so a `Set` this frame is reflected in this frame's outputs.
 - **Loop is a two-way-bound state, synced pin ⇄ editor (like `Data`).** The editor exposes
   `Loop { get; set; }` over `_loop`; the node syncs both directions with a single `_prevLoop` guard.
   **Pin → editor** (before the update): if `loop != _prevLoop`, set `_editor.Loop = loop`. **Editor →
@@ -300,9 +332,10 @@ inline edit is open).
   `vl-automata-editor-dpi-pixel-lock` memory). This is why several sizing constants (ruler
   height especially) were bumped by hand. A proper fix is to fold `1/DIPFactor` into the editor
   scale rather than chasing pixel constants — **not done yet**.
-- Playback is real-time by default (dt × Fps); render-rate-locked stepping is now opt-in via the
-  hidden `Frame Step Playback` pin (see timebase decision above). Real-time still relies on ImGui's
-  `io.DeltaTime` being sane — a very long stall produces one large catch-up jump (bounded on loop).
+- Playback is real-time by default (dt × Fps), driven from the node's `Update` via `Tick` so it runs in
+  No UI Mode; per-`Update` stepping is opt-in via the hidden `Frame Step Playback` pin (see timebase
+  decision above). Real-time relies on the wall-clock `dt` being sane — a very long stall (or the node
+  not being evaluated for a while) produces one large catch-up jump (bounded on loop).
 - Pan/zoom is **not** carried across an external `Data` reload (Automata carries pan/zoom over
   a rebuild; Interpole rebuilds the widget and resets the view). Low priority.
 - **The playhead/timecode readout is drawn at the base font size** (`ReadoutTextScale = 1`). It was
@@ -315,16 +348,14 @@ inline edit is open).
 ## Next steps
 
 1. **On-screen verification in gamma** of all interactions (this is where iteration is now).
-2. **Optional `Time`/playhead input pin** to drive the playhead from the patch (deterministic,
-   better for export) instead of the internal clock. (Done: the **playback outputs** —
-   `Current Frame` + per-track `Active Clip Name` / `Clip Frame` / `Clip Length` / `Fade Gain` /
-   `Active Color`, aligned `Spread`s evaluated at the playhead; and playback timing itself — internal real-time via `dt × Fps`, legacy
-   mode behind `Frame Step Playback`.)
-3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
-4. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
+2. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
+3. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
    it's strict exact-fit); a crisp large readout font (see Known issues). (Done: shift-snapping;
    marquee multi-select; multi-clip copy/paste; group drag; cross-track drag; loop region + ribbon +
-   `Loop In`/`Loop Out` pins.)
+   `Loop In`/`Loop Out` pins; playhead **seek from the patch** via `Time` + rising-edge `Set`;
+   playback **outputs** — `Current Frame` + per-track `Active Clip Name` / `Clip Frame` /
+   `Clip Length` / `Fade Gain` / `Active Color` — and the real-time `dt × Fps` timebase with the
+   legacy mode behind `Frame Step Playback`.)
 
 ## Build
 

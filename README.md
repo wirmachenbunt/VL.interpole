@@ -32,13 +32,15 @@ Interpole/
 | direction | pin | type | meaning |
 |-----------|-----|------|---------|
 | in | `Data` | string | the timeline as JSON, **stored in the patch** — leave unconnected; the node reads and writes it (see [Persistence](#persistence-data-pin)). You can still paste JSON in to load a timeline, or copy it out. |
-| in | `No UI Mode` | bool | when true, skip the ImGui frame + `ToSkiaLayer` update and output a null `Editor` — flip on in a running/exported patch to reclaim the per-frame editor cost. Default false = UI on. |
+| in | `No UI Mode` | bool | when true, skip **only the editor rendering** (the ImGui frame + `ToSkiaLayer` update) and output a null `Editor` — flip on in a running/exported patch to reclaim the per-frame editor cost. **Playback keeps running and all outputs keep updating** (the playhead is advanced from the node's `Update`, not the render frame). Default false = UI on. |
 | in | `Play` | bool | transport, same as the ▶ button / Space. Fires on a **rising edge** (false→true) — wire a bang or toggle a bool. Starts playback (restarts from 0 if parked at the end). |
 | in | `Stop` | bool | transport (rising edge): halts playback and saves the playhead position. |
-| in | `Rewind` | bool | transport (rising edge): jumps the playhead to frame 0. |
+| in | `Rewind` | bool | transport (rising edge): jumps the playhead to the start — frame 0, or the **loop-in** when `Loop` is on. |
 | in | `Loop` | bool | looping on/off — a **two-way-bound state** (not a bang): set the pin to drive the editor, and toggling Loop in the editor **writes the pin back**, so the pin and the on-screen Loop button always agree. Persists with the patch via the pin (same `SetPinValue` technique as `Data`). |
 | in | `Loop In` | int | start frame of the loop region. Applied whenever it (or `Loop Out`) **changes**, so it coexists with the on-screen loop ribbon (last edit wins). |
 | in | `Loop Out` | int | end frame of the loop region (half-open `[Loop In, Loop Out)`). An invalid/empty range (`Loop Out <= Loop In`, e.g. both 0) means **loop the whole content**. |
+| in | `Time` | int | **seek target** in frames — the frame the playhead jumps to when `Set` fires. Read **only** at that moment; changing `Time` on its own does nothing. Clamped `>= 0`. |
+| in | `Set` | bool | **seek trigger**, rising edge (false→true) like the other transport pins — wire a bang or toggle a bool. On the edge the playhead jumps to the current `Time` value (a programmatic scrub). Does **not** stop playback (if playing, it continues from the new frame); works in **No UI Mode** too. |
 | in | `No Background` | bool | **inspector-only** (`PinVisibility.Optional`). When true the editor canvas is transparent (fill + ImGui window background dropped) so the renderer shows through. Default false = opaque. |
 | in | `Fps` | int | **inspector-only** (`PinVisibility.Optional`). The timeline's frame rate: it drives **real-time playback** (below) *and* the **timecode** display. The model stays in integer frames. Default **60**; clamped `>= 1`. |
 | in | `Frame Step Playback` | bool | **inspector-only** (`PinVisibility.Optional`). Playback timing mode. Default **false** = real-time: the playhead advances by elapsed time × `Fps`, so one second of playback is one wall-clock second regardless of render rate. **true** = legacy: advance one frame per rendered frame (bound to the renderer's FPS). Independent of the stopwatch ruler toggle. |
@@ -55,11 +57,11 @@ Interpole/
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
 
-> **The node now emits domain outputs** (`Current Frame`, and per-track `Active Clip Name` /
-> `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color`, evaluated at the playhead) — see the pin table above. Colours and
-> fades are finally *consumed* downstream. What remains is an optional `Time`/playhead **input** to
-> drive the playhead from the patch (deterministic, better for export) instead of the internal
-> clock — see [DEVNOTES → Next steps](DEVNOTES.md#next-steps).
+> **The node emits domain outputs** (`Current Frame`, and per-track `Active Clip Name` /
+> `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color`, evaluated at the playhead) — see the
+> pin table above — so colours and fades are *consumed* downstream. The playhead can also be **seeked**
+> from the patch: a rising-edge **`Set`** pin jumps it to the **`Time`** pin's frame value (a
+> programmatic scrub; changing `Time` alone does nothing).
 
 ## Editor
 
@@ -148,8 +150,8 @@ Playhead & view:
 - **Play** advances the playhead in real time (`Fps` frames per second by default; see the
   `Frame Step Playback` pin for the legacy per-render-frame mode) — pressing Play while parked at
   the end restarts from 0 (or the **loop-in** when looping); **Loop** wraps the playhead within the
-  **loop region** (`[Loop In, Loop Out)`, or the whole content when unset); **Rewind** jumps to 0;
-  **Stop** halts and saves the position. While playing, if the playhead scrolls out of view the
+  **loop region** (`[Loop In, Loop Out)`, or the whole content when unset); **Rewind** jumps to the
+  start (frame 0, or the **loop-in** when looping); **Stop** halts and saves the position. While playing, if the playhead scrolls out of view the
   timeline **auto-pages** to keep it visible
 - **mouse wheel** over the lanes → zoom the time axis (around the cursor)
 - **right-drag** → pan the view (time + tracks)
@@ -225,14 +227,15 @@ Done:
   playhead), `Active Color` (palette colour of the active clip), and `Upcoming Clip Names` (that
   track's next clip to play, for preloading — wraps around the loop region while looping). This is what
   makes the authored colours/fades actually *do* something downstream.
-- **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out`
-  in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` / `Clip Frame` / `Clip Length` /
-  `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only `No Background`, `Fps`,
-  `Frame Step Playback`.
+- **Seek from the patch** — a rising-edge **`Set`** pin jumps the playhead to the **`Time`** pin's
+  frame value (a programmatic scrub). `Time` is read only when `Set` fires; changing it alone does
+  nothing. The seek doesn't stop playback and works in **No UI Mode** too.
+- **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
+  `Time` / `Set` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` / `Clip Frame` /
+  `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only
+  `No Background`, `Fps`, `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
-- **Optional `Time`/playhead input pin** — drive the playhead from the patch (deterministic, better
-  for export) instead of the internal clock.
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).
 - **Nice-to-haves** — carry pan/zoom across an external `Data` reload; ripple/push on cross-track
   drop (today it's strict exact-fit); a crisp large timecode-readout font (currently the readout is
