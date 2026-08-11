@@ -144,9 +144,10 @@ does the same, and where it deliberately differs.
   0→1 across `[Start, Start+FadeIn)`, 1→0 across `[End-FadeOut, End)`, 1 between; 0 outside), and the
   editor's own `Fades()` now delegates to `EffectiveFades()` so ramps and gain clamp identically —
   no second copy to drift. The node's `EvaluateOutputs` walks `doc.Tracks` **in order** and builds
-  five same-length spreads (`Active Clip Name`, `Clip Frame`, `Clip Length`, `Fade Gain`,
-  `Active Color`) plus scalars `Current Frame` and `Is Playing` (the editor's `_playing`, read after
-  the update so a stop-at-end this frame shows), so index *i* is the same track across all outputs; a
+  six same-length spreads (`Active Clip Name`, `Clip Frame`, `Clip Length`, `Fade Gain`,
+  `Active Color`, `Upcoming Clip Names`) plus scalars `Current Frame` and `Is Playing` (the editor's
+  `_playing`, read after the update so a stop-at-end this frame shows), so index *i* is the same track
+  across all six; a
   gap yields `""` / `-1` / `-1` / `0` / transparent `Color4(0,0,0,0)`. `Clip Frame` is the
   playhead's 0-based offset inside the active clip (`playhead - clip.Start`) and `Clip Length` is
   the active clip's `Length`; both use `-1` as the "no active clip" sentinel (0 would collide with a
@@ -156,7 +157,17 @@ does the same, and where it deliberately differs.
   (the document still exists; only the ImGui frame is skipped) so a headless/exported patch still
   gets outputs. Fed off the internal playhead for now — an external `Time` input is Next steps #2.
   Pin-ordering gotcha: the new `out` params are required, so they sit **before** the optional
-  `fps`/`frameStepPlayback` (C# forbids a required param after an optional one).
+  `fps`/`frameStepPlayback` (C# forbids a required param after an optional one). **`Upcoming Clip
+  Names`** is per-track like the rest (built in the same loop, independent of the active clip):
+  `TrackData.NextClipAfter(frame)` returns that track's soonest clip with `Start > frame` (no sort
+  assumption — picks the min Start), and the node emits its label or `""` when the track has nothing
+  upcoming — for per-track preloading of what plays next. **It wraps while looping** (`_editor.Loop`):
+  `NextClipLooping(frame, loopIn, loopOut)` first looks forward within `(frame, loopOut)`, and if the
+  track has nothing left before the loop wraps, falls back to `FirstClipInRange(loopIn, loopOut)` — the
+  clip the loop replays from its start (covering `Loop In`, else the first clip in the region). So a
+  looping timeline always reports an upcoming clip as long as the loop region holds one on that track,
+  letting the loop-start content be preloaded ahead of the wrap. Not looping → plain forward
+  `NextClipAfter`, `""` past the last clip.
 - **Transport input pins: Play/Stop/Rewind are rising-edge, Loop is two-way state.** `Play`/`Stop`/
   `Rewind` are plain `bool` inputs; the node keeps `_prevPlay`/etc. and calls the editor once on each
   false→true transition, so a bang **or** a held/toggled bool behaves like one button press. The

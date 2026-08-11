@@ -76,6 +76,45 @@ public sealed class TrackData
             if (c.Contains(frame)) return c;
         return null;
     }
+
+    // The next clip on this track that starts *after* the given frame (the soonest upcoming clip),
+    // or null if there is none — for per-track preloading of what plays next. Doesn't assume the
+    // clip list is sorted; picks the smallest Start > frame.
+    public ClipData? NextClipAfter(int frame)
+    {
+        ClipData? best = null;
+        foreach (var c in Clips)
+            if (c.Start > frame && (best is null || c.Start < best.Start))
+                best = c;
+        return best;
+    }
+
+    // The first clip this track plays inside the range [inFrame, outFrame): the clip active at
+    // inFrame if one covers it (playback resumes mid-clip on a loop wrap), otherwise the earliest
+    // clip that starts within the range. Null if the track has no clip there.
+    public ClipData? FirstClipInRange(int inFrame, int outFrame)
+    {
+        var active = ActiveClipAt(inFrame);
+        if (active is not null) return active;
+        ClipData? best = null;
+        foreach (var c in Clips)
+            if (c.Start >= inFrame && c.Start < outFrame && (best is null || c.Start < best.Start))
+                best = c;
+        return best;
+    }
+
+    // The next clip this track will play while looping over [inFrame, outFrame): the soonest clip
+    // starting in (frame, outFrame); if none remain before the loop wraps, the clip the loop replays
+    // from its start (FirstClipInRange). This makes "upcoming" wrap around, so a looping timeline
+    // always reports something as long as the loop region holds a clip on this track.
+    public ClipData? NextClipLooping(int frame, int inFrame, int outFrame)
+    {
+        ClipData? fwd = null;
+        foreach (var c in Clips)
+            if (c.Start > frame && c.Start < outFrame && (fwd is null || c.Start < fwd.Start))
+                fwd = c;
+        return fwd ?? FirstClipInRange(inFrame, outFrame);
+    }
 }
 
 // A clip occupies the half-open frame range [Start, Start + Length). Length is always >= 1.

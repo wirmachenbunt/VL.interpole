@@ -130,6 +130,11 @@ public class InterpoleNode : IDisposable
         out Spread<int> clipLength,
         out Spread<float> fadeGain,
         out Spread<Color4> activeColor,
+        // Per track (aligned by track order): the name of that track's next clip to play — for
+        // preloading what plays next — or "" if the track has none. Normally the soonest clip starting
+        // *after* the playhead; **when looping it wraps**: a track with nothing left before Loop Out
+        // reports the clip the loop replays from its start, so a looping timeline always looks ahead.
+        out Spread<string> upcomingClipNames,
         // Inspector-only (like No Background). Frames per second the editor uses to derive
         // timecode for the "time / frames" ruler toggle — a display timebase only, it does not
         // change the model (which stays in integer frames). Default 60; clamped >= 1 in the editor.
@@ -200,13 +205,14 @@ public class InterpoleNode : IDisposable
         // Domain outputs, evaluated at the (possibly just-advanced) playhead. Computed after the
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
-        EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor);
+        EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor, out upcomingClipNames);
     }
 
-    // Evaluate the per-track domain outputs from the document at the playhead. Spreads are aligned
-    // by track order, so index i corresponds to the same track across all outputs.
+    // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned
+    // by track order, so index i corresponds to the same track across all of them.
     private void EvaluateOutputs(out int currentFrame, out Spread<string> names, out Spread<int> clipFrames,
-                                 out Spread<int> clipLengths, out Spread<float> gains, out Spread<Color4> colors)
+                                 out Spread<int> clipLengths, out Spread<float> gains, out Spread<Color4> colors,
+                                 out Spread<string> upcomingNames)
     {
         var doc = _editor?.Document;
         if (doc is null)
@@ -217,17 +223,25 @@ public class InterpoleNode : IDisposable
             clipLengths = Spread<int>.Empty;
             gains = Spread<float>.Empty;
             colors = Spread<Color4>.Empty;
+            upcomingNames = Spread<string>.Empty;
             return;
         }
 
         int frame = doc.Playhead;
         currentFrame = frame;
 
+        // "Upcoming" wraps when looping: after the wrap the loop replays from its start, so a track
+        // with nothing left before Loop Out still has an upcoming clip. Only needs the loop region
+        // while looping.
+        bool looping = _editor?.Loop ?? false;
+        var (loopIn, loopOut) = doc.EffectiveLoop();
+
         var nb = new SpreadBuilder<string>(doc.Tracks.Count);
         var fb = new SpreadBuilder<int>(doc.Tracks.Count);
         var lb = new SpreadBuilder<int>(doc.Tracks.Count);
         var gb = new SpreadBuilder<float>(doc.Tracks.Count);
         var cb = new SpreadBuilder<Color4>(doc.Tracks.Count);
+        var ub = new SpreadBuilder<string>(doc.Tracks.Count);
         foreach (var track in doc.Tracks)
         {
             var clip = track.ActiveClipAt(frame);
@@ -248,12 +262,19 @@ public class InterpoleNode : IDisposable
                 gb.Add(clip.GainAt(frame));
                 cb.Add(new Color4(r, g, b, 1f));
             }
+            // Independent of the active clip: this track's next upcoming clip name ("" if none). When
+            // looping it wraps around the loop region so the replayed clips still count as upcoming.
+            var upcoming = looping
+                ? track.NextClipLooping(frame, loopIn, loopOut)
+                : track.NextClipAfter(frame);
+            ub.Add(upcoming?.Label ?? "");
         }
         names = nb.ToSpread();
         clipFrames = fb.ToSpread();
         clipLengths = lb.ToSpread();
         gains = gb.ToSpread();
         colors = cb.ToSpread();
+        upcomingNames = ub.ToSpread();
     }
 
     // Load the document from the Data pin into the editor, but only when the pin value is one

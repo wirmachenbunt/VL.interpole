@@ -50,6 +50,7 @@ Interpole/
 | out | `Clip Length` | Spread&lt;int&gt; | per track: the active clip's total length in frames, or `-1` in a gap. |
 | out | `Fade Gain` | Spread&lt;float&gt; | per track: the active clip's fade envelope at the playhead — `0..1`, ramping through the fade-in/out and `1` in between; `0` in a gap. |
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
+| out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -221,11 +222,13 @@ Done:
 - **Domain output pins** — `Current Frame`, `Is Playing`, and per-track (aligned `Spread`s)
   `Active Clip Name`, `Clip Frame` (0-based position within the active clip, `-1` in a gap),
   `Clip Length` (active clip's length in frames, `-1` in a gap), `Fade Gain` (0..1, evaluated at the
-  playhead), and `Active Color` (palette colour of the active clip). This is what makes the authored
-  colours/fades actually *do* something downstream.
+  playhead), `Active Color` (palette colour of the active clip), and `Upcoming Clip Names` (that
+  track's next clip to play, for preloading — wraps around the loop region while looping). This is what
+  makes the authored colours/fades actually *do* something downstream.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out`
   in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` / `Clip Frame` / `Clip Length` /
-  `Fade Gain` / `Active Color` out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
+  `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only `No Background`, `Fps`,
+  `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **Optional `Time`/playhead input pin** — drive the playhead from the patch (deterministic, better
