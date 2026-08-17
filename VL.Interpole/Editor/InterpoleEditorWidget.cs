@@ -81,6 +81,11 @@ public sealed class InterpoleEditorWidget : IDisposable
     public Action? Changed;
     public Widget Widget { get; }
 
+    // When true, Tick() keeps the wall clock fresh but does NOT advance the playhead — the node is
+    // driving the playhead from the audio mixer's sample position instead ("audio is master"). Set
+    // per-frame by the node; false = the editor advances playback on its own clock, as before.
+    public bool SuppressPlaybackAdvance;
+
     // ---- view transform (time axis) ----
     private float _pxPerFrame = 6f;
     private float _scrollX;   // pixels scrolled along time, >= 0
@@ -335,6 +340,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         uint border = Col(MathF.Min(1f, cr + 0.35f), MathF.Min(1f, cg + 0.35f), MathF.Min(1f, cb + 0.35f), 0.9f);
         dl.AddRectFilled(new Vector2(x0, y0), new Vector2(x1, y1), fill, ClipRounding);
 
+        // Audio clips draw their waveform over the fill (under the fade ramps + label).
+        if (clip.IsAudio) DrawWaveform(dl, clip, x0, x1, y0, y1);
+
         // Fade ramps: dim the attenuated corner triangle and draw the gain line from the bottom
         // corner (level 0) up to the fade handle on the top edge (level 1). The corner-anchored
         // points are pulled onto the rounded edge (inset r - r/√2 along the diagonal) so the ramp
@@ -381,6 +389,40 @@ public sealed class InterpoleEditorWidget : IDisposable
         var (hmin, hmax) = FadeHandleRect(clip, fadeIn, x0, x1, y0);
         dl.AddRectFilled(hmin, hmax, fillCol, 2f);
         dl.AddRect(hmin, hmax, Col(0f, 0f, 0f, 0.55f), 2f);
+    }
+
+    // Draw an audio clip's waveform as a per-pixel min/max envelope. Each screen column maps to the
+    // file-time window it covers (from the clip's FileInPoint, at natural rate) and draws a vertical
+    // line between that window's min and max sample. Columns past the file's end (a clip longer than
+    // its media) are left blank. While the peaks are still decoding — or if the file is missing — a
+    // small status label is shown instead. The peak data comes from the async WaveformCache.
+    private void DrawWaveform(ImDrawListPtr dl, ClipData clip, float x0, float x1, float y0, float y1)
+    {
+        var state = WaveformCache.Get(clip.FilePath!, out var peaks);
+        float midY = (y0 + y1) * 0.5f;
+        float halfH = (y1 - y0) * 0.5f - 2f;
+
+        if (state != WaveformState.Ready || peaks is null)
+        {
+            string msg = state == WaveformState.Failed ? "! missing file" : "loading...";
+            var ts = IG.CalcTextSize(msg);
+            dl.AddText(new Vector2((x0 + x1) * 0.5f - ts.X * 0.5f, midY - ts.Y * 0.5f), Col(1f, 1f, 1f, 0.5f), msg);
+            return;
+        }
+
+        float vx0 = MathF.Max(x0, _laneLeft);
+        float vx1 = MathF.Min(x1, LaneRight);
+        uint wcol = Col(1f, 1f, 1f, 0.5f);
+        double secPerPx = 1.0 / (_pxPerFrame * _fps);   // file-seconds spanned by one screen pixel
+        for (float x = vx0; x <= vx1; x += 1f)
+        {
+            double tA = clip.FileInPoint + (XToFrame(x) - clip.Start) / (double)_fps;
+            if (!peaks.Envelope(tA, tA + secPerPx, out float mn, out float mx)) continue;
+            float yTop = midY - mx * halfH;
+            float yBot = midY - mn * halfH;
+            if (yBot - yTop < 1f) { yTop -= 0.5f; yBot += 0.5f; }   // keep near-silence visible
+            dl.AddLine(new Vector2(x, yTop), new Vector2(x, yBot), wcol, 1f);
+        }
     }
 
     // Effective (clamped) fade lengths, robust to out-of-range persisted values. Delegates to the
@@ -496,8 +538,9 @@ public sealed class InterpoleEditorWidget : IDisposable
             uint bg = (i % 2 == 0) ? Col(0.17f, 0.18f, 0.20f) : Col(0.15f, 0.16f, 0.18f);
             dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_laneLeft, bottom), bg);
             dl.AddLine(new Vector2(_origin.X, bottom), new Vector2(_laneLeft, bottom), Col(0f, 0f, 0f, 0.35f));
-            // accent tab
-            dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5, bottom), Col(0.25f, 0.55f, 0.85f));
+            // accent tab — green for audio tracks, blue for standard, so the kinds read at a glance
+            uint accent = tr.Kind == TrackKind.Audio ? Col(0.25f, 0.72f, 0.55f) : Col(0.25f, 0.55f, 0.85f);
+            dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5, bottom), accent);
             string name = string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name;
             var ts = IG.CalcTextSize(name);
             dl.AddText(new Vector2(_origin.X + 14, top + TrackHeight * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
@@ -510,19 +553,25 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void DrawCorner(ImDrawListPtr dl, Vector2 mouse)
     {
         dl.AddRectFilled(new Vector2(_origin.X, _rulerTop), new Vector2(_laneLeft, _lanesTop), Col(0.13f, 0.14f, 0.16f));
-        var (bmin, bmax) = AddTrackButtonRect();
-        bool hov = InRect(mouse, bmin, bmax);
-        dl.AddRectFilled(bmin, bmax, hov ? Col(0.28f, 0.5f, 0.75f) : Col(0.22f, 0.4f, 0.6f), 4f);
-        const string t = "+ Track";
-        var ts = IG.CalcTextSize(t);
-        dl.AddText(new Vector2((bmin.X + bmax.X) * 0.5f - ts.X * 0.5f, (bmin.Y + bmax.Y) * 0.5f - ts.Y * 0.5f),
-                   Col(0.95f, 0.98f, 1f), t);
+        // Two "add track" buttons side by side: a standard clip track and an audio track. Audio
+        // tracks are tinted green to match their header accent + default clip colour.
+        DrawCornerButton(dl, mouse, AddTrackButtonRect(), "+ Track", Col(0.22f, 0.4f, 0.6f), Col(0.28f, 0.5f, 0.75f));
+        DrawCornerButton(dl, mouse, AddAudioTrackButtonRect(), "+ Audio", Col(0.20f, 0.5f, 0.42f), Col(0.26f, 0.62f, 0.52f));
+    }
+
+    private void DrawCornerButton(ImDrawListPtr dl, Vector2 mouse, (Vector2 min, Vector2 max) r, string label, uint bg, uint bgHov)
+    {
+        bool hov = InRect(mouse, r.min, r.max);
+        dl.AddRectFilled(r.min, r.max, hov ? bgHov : bg, 4f);
+        var ts = IG.CalcTextSize(label);
+        dl.AddText(new Vector2((r.min.X + r.max.X) * 0.5f - ts.X * 0.5f, (r.min.Y + r.max.Y) * 0.5f - ts.Y * 0.5f),
+                   Col(0.95f, 0.98f, 1f), label);
     }
 
     private void DrawHelp(ImDrawListPtr dl)
     {
         const string help =
-            "dbl-click header: add/rename track   dbl-click lane: add clip   drag clip: move, edges: resize   " +
+            "dbl-click header: add/rename track   dbl-click lane: add clip (audio track: pick a file)   drag clip: move, edges: resize   " +
             "dbl-click clip: rename   drag empty: box-select   Shift/Ctrl+click: add to selection   " +
             "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   loop bar: set loop (Alt: clear)   " +
             "B/N: loop in/out at playhead   wheel: zoom   right-drag: pan   Space: play/stop   Shift: snap   " +
@@ -531,8 +580,13 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddText(new Vector2(_laneLeft + 8, LanesBottom - ts.Y - 6), Col(0.5f, 0.55f, 0.6f), help);
     }
 
+    // The corner splits into two buttons: "+ Track" (left, wider) and "+ Audio" (right). The split
+    // point is shared so the two rects abut with a small gap.
+    private float CornerSplitX => _origin.X + 8 + (_laneLeft - 16 - (_origin.X + 8)) * 0.56f;
     private (Vector2 min, Vector2 max) AddTrackButtonRect()
-        => (new Vector2(_origin.X + 8, _rulerTop + 4), new Vector2(_laneLeft - 8, _lanesTop - 4));
+        => (new Vector2(_origin.X + 8, _rulerTop + 4), new Vector2(CornerSplitX - 3, _lanesTop - 4));
+    private (Vector2 min, Vector2 max) AddAudioTrackButtonRect()
+        => (new Vector2(CornerSplitX + 3, _rulerTop + 4), new Vector2(_laneLeft - 8, _lanesTop - 4));
 
     // ---- inspector panel ----
 
@@ -633,6 +687,31 @@ public sealed class InterpoleEditorWidget : IDisposable
         var fo = NumberField("Fade Out", "fout", clip.FadeOut, timeMode, 0);
         if (fo.changed) { clip.FadeOut = fo.value; ClampFades(clip); }
         if (fo.done) Commit();
+
+        // Audio-clip fields: the source file (read-only), the trim in-point, and a linear gain.
+        if (clip.IsAudio)
+        {
+            IG.Spacing();
+            IG.Separator();
+            IG.TextDisabled("AUDIO");
+
+            IG.Text("File");
+            IG.SetNextItemWidth(-1f);
+            string fileName = System.IO.Path.GetFileName(clip.FilePath) ?? "";
+            IG.InputText("##inspFile", ref fileName, 260, ImGuiInputTextFlags.ReadOnly);
+
+            IG.Text("In-point (s)");
+            IG.SetNextItemWidth(-1f);
+            float inSec = (float)clip.FileInPoint;
+            if (IG.DragFloat("##inspInPoint", ref inSec, 0.01f, 0f, 0f, "%.3f s")) clip.FileInPoint = Math.Max(0, inSec);
+            if (IG.IsItemDeactivatedAfterEdit()) Commit();
+
+            IG.Text("Gain");
+            IG.SetNextItemWidth(-1f);
+            float gain = clip.Gain;
+            if (IG.DragFloat("##inspGain", ref gain, 0.01f, 0f, 8f, "%.2f")) clip.Gain = Math.Max(0f, gain);
+            if (IG.IsItemDeactivatedAfterEdit()) Commit();
+        }
 
         IG.Spacing();
         IG.TextDisabled("track: " + (string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name));
@@ -913,10 +992,15 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         bool alt = io.KeyAlt;
 
-        // Corner "+ Track" button.
+        // Corner "add track" buttons — a standard track and an audio track.
         if (InRect(mouse, AddTrackButtonRect().min, AddTrackButtonRect().max))
         {
-            if (IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack();
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Standard);
+            return;
+        }
+        if (InRect(mouse, AddAudioTrackButtonRect().min, AddAudioTrackButtonRect().max))
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Audio);
             return;
         }
 
@@ -967,7 +1051,11 @@ public sealed class InterpoleEditorWidget : IDisposable
             else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 var tr = TrackAtY(mouse.Y);
-                if (tr is not null) AddClip(tr, XToFrame(mouse.X));
+                if (tr is not null)
+                {
+                    if (tr.Kind == TrackKind.Audio) AddAudioClip(tr, XToFrame(mouse.X));
+                    else AddClip(tr, XToFrame(mouse.X));
+                }
             }
             else if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
@@ -1220,6 +1308,10 @@ public sealed class InterpoleEditorWidget : IDisposable
                 if (shift) { var s = Snap(raw); if (s.snapped) { raw = s.frame; _clipSnapActive = true; _clipSnapFrame = s.frame; } }
                 int ns = Math.Clamp(raw, lo, end - 1);
                 if (_clipSnapActive && ns != _clipSnapFrame) _clipSnapActive = false;   // bound overrode the snap
+                // Audio clips head-trim: moving the left edge advances/retreats the file in-point by
+                // the same delta, so the audio content stays put on the timeline (clamped at the
+                // file's head, so you can't reveal media before sample 0).
+                if (clip.IsAudio) clip.FileInPoint = Math.Max(0, clip.FileInPoint + (ns - clip.Start) / (double)_fps);
                 clip.Start = ns;
                 clip.Length = end - ns;
                 ClampFades(clip);   // shorter clip may no longer fit both fades
@@ -1470,10 +1562,11 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // ============================== mutations ==============================
 
-    private void AddTrack()
+    private void AddTrack(TrackKind kind = TrackKind.Standard)
     {
         _trackCounter++;
-        Document.Tracks.Add(new TrackData { Id = InterpoleDocument.NewId("tr"), Name = "Track " + _trackCounter });
+        string name = (kind == TrackKind.Audio ? "Audio " : "Track ") + _trackCounter;
+        Document.Tracks.Add(new TrackData { Id = InterpoleDocument.NewId("tr"), Name = name, Kind = kind });
         Commit();
     }
 
@@ -1507,6 +1600,48 @@ public sealed class InterpoleEditorWidget : IDisposable
         Commit();
     }
 
+    // Double-clicking an empty spot on an audio track opens a file dialog; the chosen sound file
+    // becomes a clip sized to the file's duration (in frames at Fps), clamped to the gap on the track.
+    // Mirrors AddClip's neighbour/gap math. The file dialog is modal (blocks this frame) — acceptable
+    // for a one-shot picker. FileInPoint starts at 0 (play from the file's head); trim it in the
+    // inspector or by dragging the clip's left edge.
+    private void AddAudioClip(TrackData tr, float frameF)
+    {
+        int f = Math.Max(0, (int)MathF.Round(frameF));
+        int leftEnd = 0, rightStart = int.MaxValue;
+        foreach (var c in tr.Clips)
+        {
+            if (ClipEnd(c) <= f) leftEnd = Math.Max(leftEnd, ClipEnd(c));
+            else if (c.Start >= f) rightStart = Math.Min(rightStart, c.Start);
+            else return; // f is inside an existing clip
+        }
+        int start = Math.Max(f, leftEnd);
+        int gap = rightStart == int.MaxValue ? int.MaxValue : rightStart - start;
+        if (gap < 1) return;
+
+        string? path = NativeFileDialog.Open("Open audio file", NativeFileDialog.AudioFilter);
+        if (path is null) return;
+
+        double dur = WaveformCache.ProbeDurationSeconds(path);
+        int fileLen = Math.Max(1, (int)MathF.Round((float)(dur * _fps)));
+        int len = gap == int.MaxValue ? fileLen : Math.Min(fileLen, gap);
+        if (len < 1) return;
+
+        _clipCounter++;
+        var nc = new ClipData
+        {
+            Id = InterpoleDocument.NewId("cl"),
+            Label = System.IO.Path.GetFileNameWithoutExtension(path),
+            Start = start, Length = len,
+            Color = 2,   // green-ish default so audio clips read as audio; recolour freely
+            FilePath = path, FileInPoint = 0, Gain = 1f,
+        };
+        tr.Clips.Add(nc);
+        WaveformCache.Get(path, out _);   // kick off the background peak decode now
+        SelectSingle(nc.Id);
+        Commit();
+    }
+
     private void RemoveClip(TrackData tr, ClipData clip)
     {
         tr.Clips.Remove(clip);
@@ -1532,7 +1667,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     private static ClipData CloneClip(ClipData c) => new()
     {
         Label = c.Label, Start = c.Start, Length = c.Length,
-        Color = c.Color, FadeIn = c.FadeIn, FadeOut = c.FadeOut
+        Color = c.Color, FadeIn = c.FadeIn, FadeOut = c.FadeOut,
+        FilePath = c.FilePath, FileInPoint = c.FileInPoint, Gain = c.Gain
     };
 
     // Copy every selected clip (or, if nothing is selected, the hovered one) to the clipboard,
@@ -1596,7 +1732,8 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 Id = InterpoleDocument.NewId("cl"),
                 Label = e.Clip.Label, Start = start, Length = len,
-                Color = e.Clip.Color, FadeIn = e.Clip.FadeIn, FadeOut = e.Clip.FadeOut
+                Color = e.Clip.Color, FadeIn = e.Clip.FadeIn, FadeOut = e.Clip.FadeOut,
+                FilePath = e.Clip.FilePath, FileInPoint = e.Clip.FileInPoint, Gain = e.Clip.Gain
             };
             ClampFades(nc);   // a trimmed paste may no longer fit both fades
             tr.Clips.Add(nc);
@@ -1735,8 +1872,16 @@ public sealed class InterpoleEditorWidget : IDisposable
         double now = _clock.Elapsed.TotalSeconds;
         float dt = (float)(now - _lastTickSec);
         _lastTickSec = now;
-        if (_playing && _drag != DragMode.Playhead) AdvancePlayback(dt);
+        // When the audio mixer owns the clock (SuppressPlaybackAdvance), we still refresh the wall
+        // clock above (so resuming wall-clock playback later doesn't see a huge delta) but leave the
+        // playhead to the node's SetPlayheadFrame.
+        if (_playing && _drag != DragMode.Playhead && !SuppressPlaybackAdvance) AdvancePlayback(dt);
     }
+
+    // Set the playhead to an absolute frame from an external clock (the audio mixer's sample position).
+    // Transient like AdvancePlayback — it does NOT persist per frame (the position is saved on Stop /
+    // Rewind / scrub); view-follow stays with Draw's EnsurePlayheadVisible, so this is safe in No UI Mode.
+    public void SetPlayheadFrame(int frame) => Document.Playhead = Math.Max(0, frame);
 
     // Advance the playhead while playing. Default: by real elapsed time (dt × Fps), accumulating
     // fractional frames so 1s = 1s no matter the render rate. Legacy FrameStepPlayback mode: one

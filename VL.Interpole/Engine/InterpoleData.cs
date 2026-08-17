@@ -61,11 +61,23 @@ public sealed class InterpoleDocument
     public static string NewId(string prefix) => $"{prefix}-{Guid.NewGuid():N}"[..(prefix.Length + 9)];
 }
 
+// What a track carries. Standard is the original abstract clip (name/colour/fades → domain
+// outputs). Audio tracks hold clips that reference a sound file and play through the node's
+// internal mixer. Serialized as an int (Standard = 0), so documents written before audio existed
+// deserialize to Standard and are unchanged.
+public enum TrackKind
+{
+    Standard = 0,
+    Audio = 1,
+}
+
 // A horizontal track: a named lane carrying clips that must not overlap in time.
 public sealed class TrackData
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    // Standard by default so pre-audio documents load unchanged (the field is simply absent there).
+    public TrackKind Kind { get; set; } = TrackKind.Standard;
     public List<ClipData> Clips { get; set; } = new();
 
     // The clip covering a given frame, or null if the frame falls in a gap. Clips never overlap
@@ -132,7 +144,23 @@ public sealed class ClipData
     public int FadeIn { get; set; }
     public int FadeOut { get; set; }
 
+    // ---- audio clips only (null / default on Standard-track clips) ----
+    // Absolute path to the sound file this clip plays. Null on non-audio clips. Stored absolute for
+    // v1 (a moved patch breaks the reference); relative-to-patch is a later nice-to-have.
+    public string? FilePath { get; set; }
+    // Trim in-point: where in the file playback starts, in seconds. The clip plays the file from
+    // here at natural rate; the clip's Length (frames → seconds via Fps) is how much of the file
+    // sounds. Past the file end = silence. Default 0 = start of the file.
+    public double FileInPoint { get; set; }
+    // Linear gain applied to this clip's audio (on top of the fade envelope). Default 1 = unity.
+    public float Gain { get; set; } = 1f;
+
+    // True when this clip references a sound file (i.e. lives on an audio track).
+    [JsonIgnore]
+    public bool IsAudio => FilePath is not null;
+
     // Exclusive end frame; the clip covers [Start, End).
+    [JsonIgnore]
     public int End => Start + Length;
 
     // True when the frame lies in the clip's half-open range [Start, End).

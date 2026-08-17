@@ -1,4 +1,5 @@
 using Stride.Core.Mathematics;
+using VL.Audio;
 using VL.Interpole.Engine;
 using VL.ImGui;
 using VL.Lang.PublicAPI;
@@ -58,6 +59,23 @@ public class InterpoleNode : IDisposable
     private readonly ILayer _editorLayer;
     private InterpoleEditorWidget? _editor;
 
+    // The audio side: a stereo mixer (a VL.Audio MultiChannelSignal) that plays the timeline's audio
+    // clips. Its two Outputs are exposed as the node's Spread<AudioSignal> — wire them into VL.Audio's
+    // engine/output. The mixer runs on the audio thread; the node feeds it an immutable transport
+    // snapshot each Update and (in No UI Mode too) reads its sample position back for the playhead.
+    //
+    // Created defensively: constructing a MultiChannelSignal touches VL.Audio's global engine (which
+    // may open an audio device). If that fails (e.g. a machine with no audio device), the node still
+    // works fully as a timeline — audio is simply disabled (null mixer → empty Audio output, and the
+    // clock stays on the editor's wall clock). So adding audio never regresses the non-audio node.
+    private readonly InterpoleMixerSignal? _mixer = TryCreateMixer();
+
+    private static InterpoleMixerSignal? TryCreateMixer()
+    {
+        try { return new InterpoleMixerSignal(); }
+        catch { return null; }
+    }
+
     private string _loadedData = "\0";
     private string _persistedData = "\0";
     private bool _docDirty;
@@ -91,6 +109,11 @@ public class InterpoleNode : IDisposable
     // Previous Set-pin state, for rising-edge (false→true) detection so a bang or a held bool seeks
     // the playhead once per press (to the current Time value).
     private bool _prevSet;
+
+    // Whether the audio mixer owned the clock last frame (audio-master). On the false→true edge we
+    // realign the mixer to the playhead and only start following it the next frame, avoiding a
+    // one-frame backward jump when the clock is first handed over.
+    private bool _prevAudioMaster;
 
     public InterpoleNode(NodeContext nodeContext)
     {
@@ -159,6 +182,10 @@ public class InterpoleNode : IDisposable
         // *after* the playhead; **when looping it wraps**: a track with nothing left before Loop Out
         // reports the clip the loop replays from its start, so a looping timeline always looks ahead.
         out Spread<string> upcomingClipNames,
+        // The timeline's audio as a Spread<AudioSignal> (a fixed stereo mix bus): every audio clip on
+        // every audio track, summed with its fade envelope + gain and played in sync with the playhead.
+        // Stable regardless of which clips are active — wire it straight into VL.Audio's engine/output.
+        out Spread<AudioSignal> audio,
         // Inspector-only (like No Background). Frames per second the editor uses to derive
         // timecode for the "time / frames" ruler toggle — a display timebase only, it does not
         // change the model (which stays in integer frames). Default 60; clamped >= 1 in the editor.
@@ -200,18 +227,55 @@ public class InterpoleNode : IDisposable
             if (loop != _prevLoop) { _editor.Loop = loop; _prevLoop = loop; }
             // Push the loop region only on a pin change, so a ribbon edit isn't stomped every frame.
             if (loopIn != _prevLoopIn || loopOut != _prevLoopOut) _editor.SetLoopFromPins(loopIn, loopOut);
+
+            // Align the audio mixer's play position to the playhead whenever the transport jumps —
+            // Play (from a park), Rewind, or a Set/seek — so audio starts from where the playhead is.
+            // (These calls above may have moved the playhead, e.g. Play jumping to loop-in, so we read
+            // it afterwards.) Sample-accurate playhead-follows-audio arbitration comes in the next step.
+            if ((play && !_prevPlay) || (rewind && !_prevRewind) || (set && !_prevSet))
+                _mixer?.RequestSeek(_editor.Document.Playhead / (double)Math.Max(1, fps));
         }
         _prevPlay = play; _prevStop = stop; _prevRewind = rewind; _prevSet = set;
         _prevLoopIn = loopIn; _prevLoopOut = loopOut;
 
-        // Playback timing settings + the per-frame playback advance run in BOTH modes: No UI Mode
-        // skips only the editor rendering, not the clock. Tick() advances the playhead independent of
-        // the ImGui frame, so the timeline keeps playing and the outputs below keep updating headless.
+        // Playback timing + the per-frame advance run in BOTH modes (No UI Mode skips only rendering,
+        // not the clock). Tick() advances the playhead independent of the ImGui frame, so the timeline
+        // keeps playing and the outputs keep updating headless.
         if (_editor is not null)
         {
             _editor.Fps = fps;
             _editor.FrameStepPlayback = frameStepPlayback;
-            _editor.Tick();
+
+            // Feed the mixer this frame's transport + clip layout before reading its position back, so
+            // the audio thread is working from current state.
+            _mixer?.SetTransport(AudioTransport.Build(_editor.Document, fps, _editor.IsPlaying, _editor.Loop));
+
+            // Clock arbitration — "audio is master". When the VL.Audio engine is actively pulling the
+            // mixer AND the timeline has audio clips AND we're playing, the playhead is derived from the
+            // mixer's sample position (sample-accurate, zero drift). Otherwise the editor advances the
+            // playhead on its own wall clock exactly as before — so a timeline with no audio, with the
+            // audio output unwired, or with no audio engine available, plays identically to today.
+            bool audioMaster = _mixer is not null && _editor.IsPlaying && HasAudioClips(_editor.Document) && _mixer.MillisSinceLastFill < 250;
+            _editor.SuppressPlaybackAdvance = audioMaster;
+            _editor.Tick();   // refreshes the wall clock; advances the playhead only when not suppressed
+
+            if (audioMaster)
+            {
+                if (!_prevAudioMaster)
+                {
+                    // Just handed the clock to audio (Play, or the engine started pulling mid-play):
+                    // align the mixer to the current playhead; start following it next frame.
+                    _mixer!.RequestSeek(_editor.Document.Playhead / (double)Math.Max(1, fps));
+                }
+                else
+                {
+                    int frame = (int)Math.Round(_mixer!.PositionSeconds * fps);
+                    int end = _editor.Document.ContentEnd();
+                    if (!_editor.Loop && end > 0 && frame >= end) { _editor.SetPlayheadFrame(end); _editor.Stop(); }
+                    else _editor.SetPlayheadFrame(frame);
+                }
+            }
+            _prevAudioMaster = audioMaster;
         }
 
         if (_editor is null || noUIMode)
@@ -237,10 +301,31 @@ public class InterpoleNode : IDisposable
 
         isPlaying = _editor?.IsPlaying ?? false;
 
+        // Expose the mixer's fixed stereo outputs as the Audio Spread (transport + clip layout were
+        // already pushed to the mixer above). Stable set of signals — safe to wire once into VL.Audio.
+        // Empty when the mixer couldn't be created (no audio engine on this machine).
+        if (_mixer is not null)
+        {
+            var ab = new SpreadBuilder<AudioSignal>(_mixer.Outputs.Count);
+            foreach (var o in _mixer.Outputs) ab.Add(o);
+            audio = ab.ToSpread();
+        }
+        else audio = Spread<AudioSignal>.Empty;
+
         // Domain outputs, evaluated at the (possibly just-advanced) playhead. Computed after the
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
         EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor, out upcomingClipNames);
+    }
+
+    // True when any track holds at least one audio clip — gates the audio-master clock so a timeline
+    // with no audio behaves exactly as before (wall-clock playback).
+    private static bool HasAudioClips(InterpoleDocument doc)
+    {
+        foreach (var t in doc.Tracks)
+            foreach (var c in t.Clips)
+                if (c.IsAudio) return true;
+        return false;
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned
@@ -384,6 +469,7 @@ public class InterpoleNode : IDisposable
     public void Dispose()
     {
         _editor?.Dispose();
+        _mixer?.Dispose();
         _toSkia.Dispose();
     }
 }

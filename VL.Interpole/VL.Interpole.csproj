@@ -24,6 +24,10 @@
     <PackageReference Include="VL.Core" Version="2025.7.4" />
     <PackageReference Include="VL.ImGui" Version="2025.7.4" />
     <PackageReference Include="VL.ImGui.Skia" Version="2025.7.4" />
+    <!-- Audio tracks: AudioSignal / MultiChannelSignal / AudioService, plus NAudio (2.2.1)
+         transitively for file decoding + resampling. Versioned on its own line (not core-aligned);
+         net8.0-windows, no VL.Core pin, so it composes with the 2025.7.x stack above. -->
+    <PackageReference Include="VL.Audio" Version="1.9.19" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="VL.Core" />
