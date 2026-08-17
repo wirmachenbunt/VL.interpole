@@ -21,14 +21,14 @@
               <Choice Kind="ProcessAppFlag" Name="Interpole" />
             </p:NodeReference>
             <Pin Id="SCyZ2pXVnQgNsiWnEw9rnd" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Sd4BjqEM0nsPf5isjhn78y" Name="Data" Kind="InputPin" DefaultValue="{&#xD;&#xA;  &quot;Title&quot;: &quot;Interpole&quot;,&#xD;&#xA;  &quot;Tracks&quot;: [&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-200ba74f&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;FX Tracks&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-e87a1951&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Sequenz21&quot;,&#xD;&#xA;          &quot;Start&quot;: 92,&#xD;&#xA;          &quot;Length&quot;: 107,&#xD;&#xA;          &quot;Color&quot;: 9,&#xD;&#xA;          &quot;FadeIn&quot;: 52,&#xD;&#xA;          &quot;FadeOut&quot;: 23,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-1fb4652c&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 12&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-2abb5c9b&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;main intro&quot;,&#xD;&#xA;          &quot;Start&quot;: 106,&#xD;&#xA;          &quot;Length&quot;: 130,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 20,&#xD;&#xA;          &quot;FadeOut&quot;: 22,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-50571265&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 13&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-21f981f4&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;clip 16&quot;,&#xD;&#xA;          &quot;Start&quot;: 67,&#xD;&#xA;          &quot;Length&quot;: 106,&#xD;&#xA;          &quot;Color&quot;: 5,&#xD;&#xA;          &quot;FadeIn&quot;: 13,&#xD;&#xA;          &quot;FadeOut&quot;: 10,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-af78475f&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 14&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-7ec2d3e2&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 15&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-1c3f1574&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;clip 11&quot;,&#xD;&#xA;          &quot;Start&quot;: 173,&#xD;&#xA;          &quot;Length&quot;: 202,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 47,&#xD;&#xA;          &quot;FadeOut&quot;: 34,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-02b30d4b&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Movie001&quot;,&#xD;&#xA;          &quot;Start&quot;: 21,&#xD;&#xA;          &quot;Length&quot;: 86,&#xD;&#xA;          &quot;Color&quot;: 7,&#xD;&#xA;          &quot;FadeIn&quot;: 17,&#xD;&#xA;          &quot;FadeOut&quot;: 13,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-4560a526&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Audio 6&quot;,&#xD;&#xA;      &quot;Kind&quot;: 1,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-752d33f7&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;demo&quot;,&#xD;&#xA;          &quot;Start&quot;: 227,&#xD;&#xA;          &quot;Length&quot;: 336,&#xD;&#xA;          &quot;Color&quot;: 2,&#xD;&#xA;          &quot;FadeIn&quot;: 62,&#xD;&#xA;          &quot;FadeOut&quot;: 56,&#xD;&#xA;          &quot;FilePath&quot;: &quot;C:\\Users\\christianengler\\Desktop\\demo.wav&quot;,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    }&#xD;&#xA;  ],&#xD;&#xA;  &quot;Playhead&quot;: 308,&#xD;&#xA;  &quot;LoopIn&quot;: 63,&#xD;&#xA;  &quot;LoopOut&quot;: 129&#xD;&#xA;}" />
+            <Pin Id="Sd4BjqEM0nsPf5isjhn78y" Name="Data" Kind="InputPin" DefaultValue="{&#xD;&#xA;  &quot;Title&quot;: &quot;Interpole&quot;,&#xD;&#xA;  &quot;Tracks&quot;: [&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-200ba74f&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;FX Tracks&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-e87a1951&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Sequenz21&quot;,&#xD;&#xA;          &quot;Start&quot;: 38,&#xD;&#xA;          &quot;Length&quot;: 107,&#xD;&#xA;          &quot;Color&quot;: 9,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-1fb4652c&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 12&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-2abb5c9b&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;main intro&quot;,&#xD;&#xA;          &quot;Start&quot;: 12,&#xD;&#xA;          &quot;Length&quot;: 130,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 20,&#xD;&#xA;          &quot;FadeOut&quot;: 22,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-50571265&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 13&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-97a45ff8&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;clip 8&quot;,&#xD;&#xA;          &quot;Start&quot;: 284,&#xD;&#xA;          &quot;Length&quot;: 241,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-21f981f4&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;clip 16&quot;,&#xD;&#xA;          &quot;Start&quot;: 62,&#xD;&#xA;          &quot;Length&quot;: 110,&#xD;&#xA;          &quot;Color&quot;: 5,&#xD;&#xA;          &quot;FadeIn&quot;: 110,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-af78475f&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 14&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-7ec2d3e2&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Track 15&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-1c3f1574&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;clip 11&quot;,&#xD;&#xA;          &quot;Start&quot;: 173,&#xD;&#xA;          &quot;Length&quot;: 202,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 47,&#xD;&#xA;          &quot;FadeOut&quot;: 34,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-02b30d4b&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Movie001&quot;,&#xD;&#xA;          &quot;Start&quot;: 21,&#xD;&#xA;          &quot;Length&quot;: 86,&#xD;&#xA;          &quot;Color&quot;: 7,&#xD;&#xA;          &quot;FadeIn&quot;: 17,&#xD;&#xA;          &quot;FadeOut&quot;: 13,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-4560a526&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Audio 6&quot;,&#xD;&#xA;      &quot;Kind&quot;: 1,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-9cbdf526&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Audio 7&quot;,&#xD;&#xA;      &quot;Kind&quot;: 1,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-dd1a04ab&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;demo&quot;,&#xD;&#xA;          &quot;Start&quot;: 50,&#xD;&#xA;          &quot;Length&quot;: 328,&#xD;&#xA;          &quot;Color&quot;: 2,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FilePath&quot;: &quot;C:\\Users\\christianengler\\Desktop\\demo.wav&quot;,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-c968f74c&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Audio 8&quot;,&#xD;&#xA;      &quot;Kind&quot;: 1,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-e0c874cf&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Audio 9&quot;,&#xD;&#xA;      &quot;Kind&quot;: 1,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    }&#xD;&#xA;  ],&#xD;&#xA;  &quot;Playhead&quot;: 219,&#xD;&#xA;  &quot;LoopIn&quot;: 63,&#xD;&#xA;  &quot;LoopOut&quot;: 226&#xD;&#xA;}" />
             <Pin Id="PuLRQ79q6PfLjTIufgxsEf" Name="No UIMode" Kind="InputPin" DefaultValue="False" />
             <Pin Id="EdyucsaxwUYMshB2YoGOnW" Name="Editor" Kind="OutputPin" />
             <Pin Id="LvnvyIgKRWALBFP4je1xOe" Name="No Background" Kind="InputPin" DefaultValue="False" IsHidden="true" />
             <Pin Id="LhoxvEhVbPZOM5Py0MeHMm" Name="Play" Kind="InputPin" />
             <Pin Id="AUfFRSdf8lOMOK35UMxJ82" Name="Stop" Kind="InputPin" />
             <Pin Id="TRR9XtpfZj2L5MC2pWfXje" Name="Rewind" Kind="InputPin" />
-            <Pin Id="USC15KS2zCOOPKA17o3C7d" Name="Loop" Kind="InputPin" DefaultValue="False" />
+            <Pin Id="USC15KS2zCOOPKA17o3C7d" Name="Loop" Kind="InputPin" DefaultValue="True" />
             <Pin Id="MRah7cvmHG4MnTjzUZvuSp" Name="Loop In" Kind="InputPin" />
             <Pin Id="Qb22cCB62zSN4jDhR1bBI0" Name="Loop Out" Kind="InputPin" />
             <Pin Id="LPh7YLiy7XZOmlupDiRBdo" Name="Time" Kind="InputPin" DefaultValue="163" />
@@ -43,6 +43,7 @@
             <Pin Id="DCpvhM08D4LMgof5Q1FVMr" Name="Fade Gain" Kind="OutputPin" />
             <Pin Id="AuKxlLIFAvpNBJK0Y96wvm" Name="Active Color" Kind="OutputPin" />
             <Pin Id="HbtfkQMBQ9RMXa9RqJAqyT" Name="Upcoming Clip Names" Kind="OutputPin" />
+            <Pin Id="Qrry8PNUZOvPJ9NQJkzC3u" Name="Audio" Kind="OutputPin" />
           </Node>
           <Node Bounds="462,510,145,19" Id="EjXR5f0zOnSPfvr17oH41Q">
             <p:NodeReference LastCategoryFullName="Graphics.Skia" LastDependency="VL.Skia.vl">
@@ -50,7 +51,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="PpTOszOUUQzP809HQnyoo6" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ISXhRY1UbvEPOAW08yWU3e" Name="Bounds" Kind="InputPin" DefaultValue="320, 234, 1148, 561" IsHidden="true" />
+            <Pin Id="ISXhRY1UbvEPOAW08yWU3e" Name="Bounds" Kind="InputPin" DefaultValue="817, 87, 1312, 641" IsHidden="true" />
             <Pin Id="UkJiu7xLJqYPWK64g8t5Hs" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="In0xuntUTwEPGVR6jJWHQp" Name="Bound to Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="KW8GHUxkP5OPfDIWwkFmoB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -72,13 +73,13 @@
             <Pin Id="FVvW4yhx1ZaL3kNmBp1GpA" Name="ClientBounds" Kind="OutputPin" />
             <Pin Id="ULmxe7ga9WuQXjef1Gzi4s" Name="Render Time" Kind="OutputPin" />
           </Node>
-          <Pad Id="ShrDV2HB9UTMDlCtktYHnR" Comment="Active Clip Name" Bounds="760,350,56,115" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="SCUeFru5oC7NEIzFBUdt9E" Comment="Fade Gain" Bounds="982,271,35,95" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="KoclnrsgrtZLnzb0gfbanm" Comment="Clip Frame" Bounds="810,250,35,95" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="FvidjKXkGP7PnUUScwcZmJ" Comment="Active Color" Bounds="1069,310,35,95" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="GjxspDLuhTKN64AJ6UDkre" Comment="Clip Length" Bounds="896,400,35,95" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="BV6gGAQE3xyLqFM4Ty9yD5" Comment="Current Frame" Bounds="563,280,22,30" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="JyJ2w7hypvcPUaKbH0DaDa" Comment="Play" Bounds="661,131,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="ShrDV2HB9UTMDlCtktYHnR" Comment="Active Clip Name" Bounds="694,380,56,115" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="SCUeFru5oC7NEIzFBUdt9E" Comment="Fade Gain" Bounds="925,271,35,95" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="KoclnrsgrtZLnzb0gfbanm" Comment="Clip Frame" Bounds="771,250,35,95" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="FvidjKXkGP7PnUUScwcZmJ" Comment="Active Color" Bounds="1001,310,35,95" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="GjxspDLuhTKN64AJ6UDkre" Comment="Clip Length" Bounds="848,420,35,95" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="BV6gGAQE3xyLqFM4Ty9yD5" Comment="Current Frame" Bounds="541,290,22,30" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="JyJ2w7hypvcPUaKbH0DaDa" Comment="Play" Bounds="618,91,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -86,7 +87,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="O0ilO0MNuLUMmkt5BgU5di" Comment="Stop" Bounds="760,121,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="O0ilO0MNuLUMmkt5BgU5di" Comment="Stop" Bounds="694,130,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -94,7 +95,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="J8Pwz62tk6vL1fDAFYkvof" Comment="Rewind" Bounds="859,121,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="J8Pwz62tk6vL1fDAFYkvof" Comment="Rewind" Bounds="771,51,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -102,17 +103,17 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="UMHY2rx6LTlMNWuhGelzee" Comment="Loop Out" Bounds="1155,140,35,15" ShowValueBox="true" isIOBox="true" Value="129">
+          <Pad Id="UMHY2rx6LTlMNWuhGelzee" Comment="Loop Out" Bounds="1001,140,35,15" ShowValueBox="true" isIOBox="true" Value="129">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="LjhxUvyBjlRLVwyNaevXMX" Comment="Loop In" Bounds="1056,140,35,15" ShowValueBox="true" isIOBox="true" Value="63">
+          <Pad Id="LjhxUvyBjlRLVwyNaevXMX" Comment="Loop In" Bounds="925,71,35,15" ShowValueBox="true" isIOBox="true" Value="63">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Otx9iKMziw6LVcm36SrPeg" Comment="No UIMode" Bounds="563,140,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+          <Pad Id="Otx9iKMziw6LVcm36SrPeg" Comment="No UIMode" Bounds="541,140,35,35" ShowValueBox="true" isIOBox="true" Value="False">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -120,22 +121,112 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="QOwsxIQeJHiP3WPPuvO1G4" Comment="Loop" Bounds="958,150,35,35" ShowValueBox="true" isIOBox="true" Value="False">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
-            </p:TypeAnnotation>
-            <p:ValueBoxSettings>
-              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
-            </p:ValueBoxSettings>
-          </Pad>
-          <Pad Id="BnWT1k75p7zL3WzPDguPIk" Comment="Is Playing" Bounds="637,320,35,35" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="AsOI5zOcJNeQTztKTFzvHi" Comment="Set" Bounds="1174,60,35,35" ShowValueBox="true" isIOBox="true" Value="false">
+          <Pad Id="BnWT1k75p7zL3WzPDguPIk" Comment="Is Playing" Bounds="618,340,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="AsOI5zOcJNeQTztKTFzvHi" Comment="Set" Bounds="1155,80,35,35" ShowValueBox="true" isIOBox="true" Value="false">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
             </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="1153,320,60,19" Id="DWAD5p1f4izMHK52avRVc5">
+            <p:NodeReference LastCategoryFullName="Audio.Sink" LastDependency="VL.Audio.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="AudioOut" />
+            </p:NodeReference>
+            <Pin Id="Dw5gjcsfKQ6NITtFDJfscn" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GUTZIEGRxwLLTAQwUsEJF5" Name="Input" Kind="InputPin" />
+            <Pin Id="HLQIEd0ud8iOWMmrTa8O9Y" Name="Channel Offset" Kind="InputPin" />
+          </Node>
+          <Node Bounds="969,860,145,19" Id="RuSqzX0eULdPWsujVZwBaF">
+            <p:NodeReference LastCategoryFullName="Graphics.Skia" LastDependency="VL.Skia.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="NMdS7OpfO3nPceJSErxT6U" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OxFcX6xAXN7LomIYvLMup2" Name="Bounds" Kind="InputPin" DefaultValue="155, 94, 701, 498" IsHidden="true" />
+            <Pin Id="NDyF7Ev3bDuOEKMzLzaPGJ" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="R9iSira7lPoLl8h0Ns6xRH" Name="Bound to Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="G1IXMBqcWPnOneUWaAz4ab" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TDtjWXZw42oO2mqnhuiAD7" Name="Always On Top" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FUckvdSlgwXQO2Xu4xsInV" Name="Extend Into Title Bar" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OkW32EyPYTrORifc1kpUpX" Name="Input" Kind="InputPin" />
+            <Pin Id="I9lkJ7Znm3lMLUtEDVHOAf" Name="Title" Kind="InputPin" />
+            <Pin Id="IwuW7aG7hPTMOlBbSfD8Vd" Name="Title Bar Interaction Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="I37WXtqjxL3PosvEeueZov" Name="Color" Kind="InputPin" />
+            <Pin Id="HdjZxqPm3qFNuLCtJoX2mG" Name="Clear" Kind="InputPin" />
+            <Pin Id="LpEDxDIsvALMwdIHa0A5oF" Name="Space" Kind="InputPin" />
+            <Pin Id="McT9EIkv3diLEZQNB5Gq23" Name="Show Cursor" Kind="InputPin" />
+            <Pin Id="Usn0NLCigcNLUYywlcBgRx" Name="VSync" Kind="InputPin" />
+            <Pin Id="HKWXSXZsJHnOMn6Wfs1r9W" Name="Commands" Kind="InputPin" IsHidden="true" />
+            <Pin Id="QPd8ZNDGWibOQXebWsSchX" Name="Enable Keyboard Shortcuts" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OLr9HoODrCSOoy7CVsWLDS" Name="Enabled" Kind="InputPin" />
+            <Pin Id="CCk4ugvvyveN0vXIc8MvmU" Name="Form Bounds Notifications" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="QPVpS0COe0KLWUGN6X1xK8" Name="Form" Kind="OutputPin" />
+            <Pin Id="TptiCZpe0KPN5GbiQyJsHE" Name="ClientBounds" Kind="OutputPin" />
+            <Pin Id="R8SdcZQzXpuNYdAvskFcAR" Name="Render Time" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="997,719,85,19" Id="JXmR2rtvlLSLd79E9wTQSo">
+            <p:NodeReference LastCategoryFullName="Graphics.Skia.Layers" LastDependency="VL.Skia.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="CkrdOjL7hBGLj8uHXHaHpA" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EJ6O931DIrfPAlmeTZKsX7" Name="Position" Kind="InputPin" />
+            <Pin Id="EB5CTD2VVw4N0KgTgS2DfX" Name="Size" Kind="InputPin" />
+            <Pin Id="B9cemdUqBWbL1IY65ECedH" Name="Anchor" Kind="InputPin" />
+            <Pin Id="A41EkUqVkyjMExUn1SQNHd" Name="Paint" Kind="InputPin" />
+            <Pin Id="Kldmd2sc85pPuM61aAp2XT" Name="Enabled" Kind="InputPin" />
+            <Pin Id="NX7F94JlWkKLReWthKj6vq" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="997,769,64,19" Id="O1CY4zWZ3A0LeHq3tTu2Qe">
+            <p:NodeReference LastCategoryFullName="Graphics.Skia.Transform" LastDependency="VL.Skia.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Skia" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Transform" />
+            </p:NodeReference>
+            <Pin Id="L2HoxMHjiGtQV6rSf1I5pV" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Gw6LD7Jx7BvOwFFy66Pc4N" Name="Input" Kind="InputPin" />
+            <Pin Id="FBTiXr1nW7oLXfCho6PMZU" Name="Transformation" Kind="InputPin" />
+            <Pin Id="GlytOyfkpZMLyjcWEzR4vH" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="1057,670,80,19" Id="EeFWsIEsGqjQEs7yGskuIg">
+            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
+            </p:NodeReference>
+            <Pin Id="Rv4AFECHiMwPZpb9SjLbDL" Name="Input" Kind="InputPin" />
+            <Pin Id="SDWulbPyIDsPjWQizCPGx6" Name="Scaling" Kind="InputPin" />
+            <Pin Id="SLM5qqOJLoNMgIPNKzTGx2" Name="Rotation" Kind="InputPin" />
+            <Pin Id="KCPyov9TryuMnDMpQWQYCl" Name="Translation" Kind="InputPin" />
+            <Pin Id="E7rYTgKUx4xQbX5OWO509J" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="975,471,52,19" Id="P7qMdaOeBu3NeFSQ6T7EqW">
+            <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="GetSlice" />
+            </p:NodeReference>
+            <Pin Id="MHMpIvEDkcmMH8D3ljPBAG" Name="Input" Kind="StateInputPin" />
+            <Pin Id="SkVQX1XBPzkQeAdo39Ha7j" Name="Default Value" Kind="InputPin" />
+            <Pin Id="B6vD5uGsJyCOxQxRwyxW1u" Name="Index" Kind="InputPin" DefaultValue="4" />
+            <Pin Id="VSM0fCMTzLxNc6NP2UtKA3" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Pad Id="Ltbv1G3iBL6NoMBHChdWGC" Comment="Index" Bounds="1040,440,35,15" ShowValueBox="true" isIOBox="true" Value="2">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="GarblkD00K4LGrlvGh5047" Bounds="1234,130,35,57" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 1">
+            <p:TypeAnnotation LastCategoryFullName="3D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="ImmutableTypeFlag" Name="Vector4" />
+            </p:TypeAnnotation>
           </Pad>
         </Canvas>
         <Patch Id="FbSPiF0OXwcOPNt2uLlK1D" Name="Create" />
@@ -157,9 +248,15 @@
         <Link Id="KfuTeSUw2tMLLsOxiuzP7G" Ids="UMHY2rx6LTlMNWuhGelzee,Qb22cCB62zSN4jDhR1bBI0" />
         <Link Id="JUJejXbzbMBLK87sXbA7i3" Ids="LjhxUvyBjlRLVwyNaevXMX,MRah7cvmHG4MnTjzUZvuSp" />
         <Link Id="ThEtAT5vmnDLn64b9flYLb" Ids="Otx9iKMziw6LVcm36SrPeg,PuLRQ79q6PfLjTIufgxsEf" />
-        <Link Id="Qsbyffi2eKNOj77X0tXmtr" Ids="QOwsxIQeJHiP3WPPuvO1G4,USC15KS2zCOOPKA17o3C7d" />
         <Link Id="KdpA8IV8kBMOZSDaHclNCt" Ids="FxJsaqCZrETNMk4sWiA5Co,BnWT1k75p7zL3WzPDguPIk" />
         <Link Id="IdcglnRDNTfOpw0mlRH7Bw" Ids="AsOI5zOcJNeQTztKTFzvHi,E4E3i6GzfJUOXPn37cm2Uc" />
+        <Link Id="FX4JDCZXUEiMDGheDvISor" Ids="Qrry8PNUZOvPJ9NQJkzC3u,GUTZIEGRxwLLTAQwUsEJF5" />
+        <Link Id="Ocjr9fw0YwNQKcxDDWyrU3" Ids="NX7F94JlWkKLReWthKj6vq,Gw6LD7Jx7BvOwFFy66Pc4N" />
+        <Link Id="Usu2IQg1zdiO9snNzAWJm2" Ids="GlytOyfkpZMLyjcWEzR4vH,OkW32EyPYTrORifc1kpUpX" />
+        <Link Id="KcMKA88c6UjNkWZsHLt3z4" Ids="E7rYTgKUx4xQbX5OWO509J,FBTiXr1nW7oLXfCho6PMZU" />
+        <Link Id="AM79pUqzHYUQbfqsnh7nEl" Ids="DCpvhM08D4LMgof5Q1FVMr,MHMpIvEDkcmMH8D3ljPBAG" />
+        <Link Id="VOIXHYHKSO3PveMvvLF0ZX" Ids="Ltbv1G3iBL6NoMBHChdWGC,B6vD5uGsJyCOxQxRwyxW1u" />
+        <Link Id="PweoiavOblgQbhNF0tqtRv" Ids="VSM0fCMTzLxNc6NP2UtKA3,SLM5qqOJLoNMgIPNKzTGx2" />
       </Patch>
     </Node>
   </Patch>

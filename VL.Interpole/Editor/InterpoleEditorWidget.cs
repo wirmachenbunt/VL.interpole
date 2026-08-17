@@ -81,11 +81,6 @@ public sealed class InterpoleEditorWidget : IDisposable
     public Action? Changed;
     public Widget Widget { get; }
 
-    // When true, Tick() keeps the wall clock fresh but does NOT advance the playhead — the node is
-    // driving the playhead from the audio mixer's sample position instead ("audio is master"). Set
-    // per-frame by the node; false = the editor advances playback on its own clock, as before.
-    public bool SuppressPlaybackAdvance;
-
     // ---- view transform (time axis) ----
     private float _pxPerFrame = 6f;
     private float _scrollX;   // pixels scrolled along time, >= 0
@@ -1872,16 +1867,15 @@ public sealed class InterpoleEditorWidget : IDisposable
         double now = _clock.Elapsed.TotalSeconds;
         float dt = (float)(now - _lastTickSec);
         _lastTickSec = now;
-        // When the audio mixer owns the clock (SuppressPlaybackAdvance), we still refresh the wall
-        // clock above (so resuming wall-clock playback later doesn't see a huge delta) but leave the
-        // playhead to the node's SetPlayheadFrame.
-        if (_playing && _drag != DragMode.Playhead && !SuppressPlaybackAdvance) AdvancePlayback(dt);
+        if (_playing && _drag != DragMode.Playhead) AdvancePlayback(dt);
     }
 
-    // Set the playhead to an absolute frame from an external clock (the audio mixer's sample position).
-    // Transient like AdvancePlayback — it does NOT persist per frame (the position is saved on Stop /
-    // Rewind / scrub); view-follow stays with Draw's EnsurePlayheadVisible, so this is safe in No UI Mode.
-    public void SetPlayheadFrame(int frame) => Document.Playhead = Math.Max(0, frame);
+    // The playhead as a *continuous* (sub-frame) frame position: the integer playhead plus the
+    // fractional-frame accumulator from real-time playback. The node feeds this to the audio mixer as
+    // its chase target, so the audio follows a smooth position instead of a frame-stepped one (which
+    // would make the varispeed correction warble). Falls back to the integer playhead when parked
+    // (_playAccum is reset on Play / Stop / Rewind).
+    public double PlayheadContinuousFrames => Document.Playhead + _playAccum;
 
     // Advance the playhead while playing. Default: by real elapsed time (dt × Fps), accumulating
     // fractional frames so 1s = 1s no matter the render rate. Legacy FrameStepPlayback mode: one

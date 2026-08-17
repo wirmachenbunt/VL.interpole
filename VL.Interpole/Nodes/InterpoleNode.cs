@@ -110,11 +110,6 @@ public class InterpoleNode : IDisposable
     // the playhead once per press (to the current Time value).
     private bool _prevSet;
 
-    // Whether the audio mixer owned the clock last frame (audio-master). On the false→true edge we
-    // realign the mixer to the playhead and only start following it the next frame, avoiding a
-    // one-frame backward jump when the clock is first handed over.
-    private bool _prevAudioMaster;
-
     public InterpoleNode(NodeContext nodeContext)
     {
         _nc = nodeContext;
@@ -227,55 +222,25 @@ public class InterpoleNode : IDisposable
             if (loop != _prevLoop) { _editor.Loop = loop; _prevLoop = loop; }
             // Push the loop region only on a pin change, so a ribbon edit isn't stomped every frame.
             if (loopIn != _prevLoopIn || loopOut != _prevLoopOut) _editor.SetLoopFromPins(loopIn, loopOut);
-
-            // Align the audio mixer's play position to the playhead whenever the transport jumps —
-            // Play (from a park), Rewind, or a Set/seek — so audio starts from where the playhead is.
-            // (These calls above may have moved the playhead, e.g. Play jumping to loop-in, so we read
-            // it afterwards.) Sample-accurate playhead-follows-audio arbitration comes in the next step.
-            if ((play && !_prevPlay) || (rewind && !_prevRewind) || (set && !_prevSet))
-                _mixer?.RequestSeek(_editor.Document.Playhead / (double)Math.Max(1, fps));
         }
         _prevPlay = play; _prevStop = stop; _prevRewind = rewind; _prevSet = set;
         _prevLoopIn = loopIn; _prevLoopOut = loopOut;
 
-        // Playback timing + the per-frame advance run in BOTH modes (No UI Mode skips only rendering,
-        // not the clock). Tick() advances the playhead independent of the ImGui frame, so the timeline
-        // keeps playing and the outputs keep updating headless.
+        // Playback + the per-frame advance run in BOTH modes (No UI Mode skips only rendering, not the
+        // clock). Tick() advances the playhead on the wall clock, so the timeline — and every value
+        // output derived from the playhead — stays smooth and locked to vvvv's main loop.
         if (_editor is not null)
         {
             _editor.Fps = fps;
             _editor.FrameStepPlayback = frameStepPlayback;
+            _editor.Tick();
 
-            // Feed the mixer this frame's transport + clip layout before reading its position back, so
-            // the audio thread is working from current state.
-            _mixer?.SetTransport(AudioTransport.Build(_editor.Document, fps, _editor.IsPlaying, _editor.Loop));
-
-            // Clock arbitration — "audio is master". When the VL.Audio engine is actively pulling the
-            // mixer AND the timeline has audio clips AND we're playing, the playhead is derived from the
-            // mixer's sample position (sample-accurate, zero drift). Otherwise the editor advances the
-            // playhead on its own wall clock exactly as before — so a timeline with no audio, with the
-            // audio output unwired, or with no audio engine available, plays identically to today.
-            bool audioMaster = _mixer is not null && _editor.IsPlaying && HasAudioClips(_editor.Document) && _mixer.MillisSinceLastFill < 250;
-            _editor.SuppressPlaybackAdvance = audioMaster;
-            _editor.Tick();   // refreshes the wall clock; advances the playhead only when not suppressed
-
-            if (audioMaster)
-            {
-                if (!_prevAudioMaster)
-                {
-                    // Just handed the clock to audio (Play, or the engine started pulling mid-play):
-                    // align the mixer to the current playhead; start following it next frame.
-                    _mixer!.RequestSeek(_editor.Document.Playhead / (double)Math.Max(1, fps));
-                }
-                else
-                {
-                    int frame = (int)Math.Round(_mixer!.PositionSeconds * fps);
-                    int end = _editor.Document.ContentEnd();
-                    if (!_editor.Loop && end > 0 && frame >= end) { _editor.SetPlayheadFrame(end); _editor.Stop(); }
-                    else _editor.SetPlayheadFrame(frame);
-                }
-            }
-            _prevAudioMaster = audioMaster;
+            // Feed the audio mixer this frame's transport: the audio-clip layout plus the playhead
+            // (sub-frame precise) as the chase target. The mixer follows it with a small varispeed
+            // correction (a few % pitch) and hard-syncs only on big jumps (Play / Seek / loop wrap) —
+            // so audio stays loosely locked to the timeline WITHOUT the playhead having to follow the
+            // async audio clock (which used to jitter the value outputs against the rest of the patch).
+            _mixer?.SetTransport(AudioTransport.Build(_editor.Document, fps, _editor.IsPlaying, _editor.PlayheadContinuousFrames));
         }
 
         if (_editor is null || noUIMode)
@@ -316,16 +281,6 @@ public class InterpoleNode : IDisposable
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
         EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor, out upcomingClipNames);
-    }
-
-    // True when any track holds at least one audio clip — gates the audio-master clock so a timeline
-    // with no audio behaves exactly as before (wall-clock playback).
-    private static bool HasAudioClips(InterpoleDocument doc)
-    {
-        foreach (var t in doc.Tracks)
-            foreach (var c in t.Clips)
-                if (c.IsAudio) return true;
-        return false;
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned

@@ -302,6 +302,98 @@ does the same, and where it deliberately differs.
   to stay valid, `Changed` not `Commit` like the rest of the loop editing), **Ctrl+Z** undo,
   **Ctrl+Y / Ctrl+Shift+Z** redo, **Ctrl+C/V** copy/paste the selection.
 
+## Audio tracks (VL.Audio integration)
+
+Audio is **additive and fault-isolated**: everything below only engages for audio *tracks* / *clips*;
+a timeline with none behaves byte-for-byte as before. Read this before touching `Engine/
+InterpoleAudioEngine.cs`, `Engine/WaveformCache.cs`, or the audio branches in the editor/node.
+
+- **Design decisions:** *full NLE* (multiple audio clips per track, each a file + trim in/out);
+  *internal stereo mix bus* → a **stable** `Spread<AudioSignal>` output (not a changing per-clip spread,
+  which would churn downstream wiring). **Sync = visual-master, audio soft-follows** (see the sync bullet
+  — this replaced an initial *audio-master* clock that jittered the value outputs).
+- **The mixer is a `MultiChannelSignal` (2 outputs) → `Spread<AudioSignal>`.** `InterpoleMixerSignal :
+  MultiChannelSignal` (base ctor `SetOutputCount(2)` = stereo). VL.Audio's engine pulls it on the
+  **audio thread** via `protected override void FillBuffers(float[][] buffers, int offset, int count)`;
+  its inherited `Outputs` (one `SingleSignal` per channel) are what the node emits as the `Audio` pin.
+  This is exactly how the stock `AudioPlayer` surfaces its channels. **Buffer-offset gotcha:** write
+  `buffers[ch][0..count)` and **ignore `offset`** for the destination — `FReadBuffers` is the parent's
+  0-based scratch and the per-channel `SingleSignal` copies it out with the right offset (mirrors
+  `FileStreamSignal`; writing at `offset+i` corrupts).
+- **Sync = the visual playhead is master; audio soft-follows it (varispeed chase).** The playhead is
+  driven by the editor's **wall clock** exactly as a no-audio timeline is (`editor.Tick()`), so it — and
+  every value output derived from it (Fade Gain, Active Color, Clip Frame…) — stays smooth and locked to
+  vvvv's main loop. *(The first cut did the opposite — drove the playhead from the audio sample clock;
+  sampling that async clock once per main-loop frame made those outputs visibly **jitter** against the
+  rest of the patch. Reverted.)* The node just tells the mixer the playhead each frame as its **chase
+  target** (`AudioTransport.TargetSec`), sub-frame precise via **`editor.PlayheadContinuousFrames`**
+  (`Playhead + _playAccum` — the fractional accumulator; a *stepped* integer target would make the
+  varispeed warble). The mixer keeps its own `double _audioPosSec` and each buffer computes
+  `drift = _audioPosSec − TargetSec`: within a 5 ms **deadband** it plays at exactly 1.0; beyond it,
+  it nudges playback **speed a few % (`MaxCorrection` 3 %)** to ease back into lock — an inaudible pitch
+  bend, no seek; only a **large** jump (`> HardSyncSec` 150 ms — Play from stop, a seek, a loop wrap,
+  where `TargetSec` leaps) snaps `_audioPosSec` to the target and forces a reseek. So the audio never
+  drives the playhead, yet stays locked within a few ms. All in `Update`, so it works in No UI Mode too.
+- **Sequencer (`FillBuffers`).** The mixer mixes every clip overlapping this buffer's timeline span
+  `[_audioPosSec, _audioPosSec + count·speed/rate)`; each clip's output-frame window `[o0,o1)` is
+  derived from its overlap. A clip's file source is read **sequentially** and reseeked **only on a
+  discontinuity** — `|clipStartSecThisBuffer − source.NextTimelineSec| > ReseekTol` (a fresh clip, or a
+  hard-sync, the latter via `ForceReseekAll` setting every `NextTimelineSec = NaN`). Contiguous playback
+  ⇒ no seeks, just decode-forward at the current `speed`. There is **no loop handling in the mixer** —
+  the visual playhead already wraps, so `TargetSec` leaps and the hard-sync path repositions the audio.
+  Past a clip's file end the reader returns 0 ⇒ silence.
+- **Per-sample fades (not per-frame).** `GainAt(clip, timelineSec)` in the mixer reproduces
+  `ClipData.GainAt` as a *smooth* linear ramp evaluated at every output sample (× `clip.Gain`), so
+  audio fades don't zipper at frame boundaries. Same envelope the editor draws — reused *concept*,
+  smooth *implementation*.
+- **Threading model — one immutable snapshot, swapped by reference.** The node builds an
+  `AudioTransport` (`Playing` / `TargetSec` / clip list) on the main thread each frame via
+  `AudioTransport.Build(doc, fps, playing, playheadContinuousFrames)` and hands it over with
+  `SetTransport` (a `volatile` reference — atomic). The **audio thread only ever reads that reference**,
+  never the live `InterpoleDocument`, and it doesn't publish anything back (the playhead is the node's,
+  not the mixer's). All geometry in the snapshot is in **seconds** (frames ÷ Fps), so the mixer is
+  independent of the engine sample rate (read live via `SampleRate`, can change under us). *Caveat:* the
+  snapshot is rebuilt **every frame** (small per-frame allocation) rather than only on `Changed` —
+  simplest, and it keeps playing state + target live; revisit if GC churn ever matters.
+- **Per-clip file source, opened off the audio thread, played through a live varispeed resampler.**
+  `AudioClipSource` wraps NAudio `AudioFileReader` + a **`WdlResampler`** (NAudio.Dsp — the low-level
+  resampler, *not* the fixed-rate `WdlResamplingSampleProvider` wrapper, because we need to change the
+  ratio live for the chase). `ReadFrames(dst, count, speed, engineRate)` calls
+  `SetRates(sourceRate, engineRate/speed)` each buffer then `ResamplePrepare` → read source →
+  `ResampleOut` — exactly the wrapper's own Read loop, plus the live rate (speed = E/O ratio; `speed`× =
+  that much file per output second). Opened on a `Task` so the audio thread never blocks on IO — until
+  ready (or if missing) it reads silence (same "load then appear" as the waveform). Keyed in the mixer's
+  pool by **clip id** (not path) so two clips off one file get independent positions; the pool is
+  **audio-thread-owned** (`EnsureSource` creates lazily, `PruneSources` disposes any whose clip left the
+  snapshot — no cross-thread lifetime races). `Seek` sets `reader.CurrentTime` + `resampler.Reset()`.
+  *Caveat:* MP3/compressed decode on the audio thread; WAV/PCM (the focus) is cheap.
+- **Waveform peaks are a separate read path.** `FileStreamSignal`/`AudioFileReaderVVVV` expose **no
+  raw samples**, so `WaveformCache` decodes the file a second time (NAudio) into fixed-bucket min/max
+  envelope pairs (256 source frames/bucket), **off-thread**, cached by `path + lastWriteTime`, shared
+  across clips. **Not serialized** (would bloat the JSON) — recomputed on first draw after a reload.
+  `DrawWaveform` maps each screen column to its file-time window (from `FileInPoint`, at natural rate)
+  and draws the min/max line; columns past the file end stay blank; `loading...` / `! missing file`
+  otherwise. `ProbeDurationSeconds` reads just the header (no full decode) to size a dropped clip.
+- **Data model additions are back-compatible.** `TrackData.Kind` (`TrackKind.Standard=0` / `Audio`)
+  and `ClipData.FilePath?` / `FileInPoint` (trim, seconds) / `Gain` — all default so pre-audio
+  documents (field absent → `Standard`, `FilePath` null) load unchanged. `ClipData.IsAudio =>
+  FilePath is not null` (`[JsonIgnore]`, like `End`). `Start`/`Length` stay integer frames; only the
+  mixer works in samples/seconds.
+- **Left-edge resize head-trims audio clips.** Dragging a clip's left edge advances `FileInPoint` by
+  the same delta (clamped ≥ 0), so the audio content stays put on the timeline (proper NLE trim), and
+  the drawn waveform shifts to match. In-point + gain are also editable in the inspector's **AUDIO**
+  section. Copy/paste and `CloneClip` carry `FilePath`/`FileInPoint`/`Gain`.
+- **File dialog = Win32 `GetOpenFileNameW` on an STA thread** (`NativeFileDialog`), not WinForms — one
+  P/Invoke, no `UseWindowsForms`. Runs on its own STA thread (the ImGui/Skia render thread isn't STA)
+  and **blocks that frame** while open (fine for a modal picker; could be made async later). Fired from
+  the audio-track branch of the empty-lane double-click (`AddAudioClip`); the clip is sized to the file
+  duration, clamped to the gap.
+- **Mixer creation is fault-tolerant.** `new InterpoleMixerSignal()` touches VL.Audio's global engine
+  (which may open an audio device); the node creates it in a `try/catch` (`TryCreateMixer`) and holds
+  it as **nullable**. If it fails (no audio device on the machine), the node is a full timeline with
+  audio simply disabled (empty `Audio` output, wall-clock playback) — dropping the node can't break
+  for existing non-audio users.
+
 ## Editor geometry (how the bands are laid out)
 
 Everything is computed each frame from `_origin` + these constants:
@@ -338,6 +430,16 @@ inline edit is open).
   not being evaluated for a while) produces one large catch-up jump (bounded on loop).
 - Pan/zoom is **not** carried across an external `Data` reload (Automata carries pan/zoom over
   a rebuild; Interpole rebuilds the widget and resets the view). Low priority.
+- **Audio caveats (all noted inline in the Audio section):** the transport snapshot rebuilds every
+  frame (small alloc); MP3/compressed decode on the audio thread (WAV is cheap); WAV **paths are
+  absolute** in the patch (a moved patch/machine breaks references — relative-to-patch is a future
+  nice-to-have); the file dialog is modal and briefly freezes the editor frame; a seek rebuilds the
+  WDL resample chain (tiny alloc, only on discontinuities). None block v1; all are M5/future candidates.
+- **Audio playback is unverified on-screen as of this writing** — it builds clean (0 warnings) but the
+  audio path (engine pulling, device output, sync-holds-over-time, fades/loop by ear) needs a gamma
+  session with an audio device wired to VL.Audio's engine/output. That is the immediate next step.
+- **README doesn't yet document the audio surface** (`+ Audio` track, audio clips, the `Audio`
+  output pin) — update it once the above is verified, so usage docs don't claim unverified behaviour.
 - **The playhead/timecode readout is drawn at the base font size** (`ReadoutTextScale = 1`). It was
   `2.4×`, but the node loads no font (`fonts: Spread<FontConfig?>.Empty`), so ImGui uses its default
   **bitmap atlas** font (ProggyClean, baked ~13px) — magnifying that looked pixelated. A crisp
@@ -347,15 +449,24 @@ inline edit is open).
 
 ## Next steps
 
-1. **On-screen verification in gamma** of all interactions (this is where iteration is now).
-2. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
-3. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
+1. **Verify audio in gamma** (M5 gate): wire the `Audio` `Spread<AudioSignal>` into VL.Audio's
+   engine/output, confirm sound, that the playhead/waveform stay locked to the audio over a long clip
+   (no drift), that fades ramp and the loop region wraps seamlessly by ear, and that No UI Mode plays
+   headless. Then finish M5: **update README** with the audio surface; decide which audio caveats to
+   address (async file dialog; rebuild the transport snapshot only on `Changed`; relative WAV paths).
+2. **On-screen verification in gamma** of all the non-audio interactions (ongoing).
+3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
+4. Audio nice-to-haves: **slip-edit** (drag inside an audio clip to move `FileInPoint` without moving
+   the clip); per-clip **waveform colour/scale**; a master **gain/meter**; embedding or
+   relative-path WAV references; scrub-audio preview while paused.
+5. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
    it's strict exact-fit); a crisp large readout font (see Known issues). (Done: shift-snapping;
    marquee multi-select; multi-clip copy/paste; group drag; cross-track drag; loop region + ribbon +
    `Loop In`/`Loop Out` pins; playhead **seek from the patch** via `Time` + rising-edge `Set`;
    playback **outputs** — `Current Frame` + per-track `Active Clip Name` / `Clip Frame` /
    `Clip Length` / `Fade Gain` / `Active Color` — and the real-time `dt × Fps` timebase with the
-   legacy mode behind `Frame Step Playback`.)
+   legacy mode behind `Frame Step Playback`; **audio tracks** — waveform authoring + a sample-accurate
+   stereo mixer with audio-master sync, built but pending gamma verification.)
 
 ## Build
 

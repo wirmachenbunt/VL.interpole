@@ -1,27 +1,26 @@
+using NAudio.Dsp;
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using VL.Audio;
 
 namespace VL.Interpole.Engine;
 
-// The audio side of Interpole: a sample-accurate mixer that plays the timeline's audio clips through
-// VL.Audio's engine. It is a MultiChannelSignal (stereo) — the VL.Audio engine pulls it on the audio
-// thread via FillBuffers, and its two Outputs are what the node exposes as a Spread<AudioSignal>.
+// The audio side of Interpole: a stereo mixer that plays the timeline's audio clips through VL.Audio's
+// engine. It is a MultiChannelSignal — the engine pulls it on the audio thread via FillBuffers, and
+// its two Outputs are what the node exposes as a Spread<AudioSignal>.
 //
-// Model:
-//   • The node builds an immutable AudioTransport (the clip layout in *seconds* + play/loop state)
-//     each frame on the main thread and hands it to the mixer via SetTransport — the audio thread
-//     only ever reads that reference, never the live document.
-//   • The mixer owns a sample position (engine-rate) that it advances while playing; the node reads
-//     PositionSeconds back to drive the visual playhead (audio-master clock).
-//   • Each clip gets an AudioClipSource (an NAudio file reader + resampler) opened off-thread and
-//     read sequentially in lock-step with the timeline; sources are pooled by clip id and disposed
-//     on the audio thread when their clip leaves the snapshot.
+// Sync model — "visual is master, audio loosely follows" (a soft-sync / varispeed chase):
+//   • The VISUAL playhead is driven by the node's wall clock exactly as a no-audio timeline is, so it
+//     (and every value output derived from it — fades, colours, clip frame) stays smooth and locked to
+//     vvvv's main loop. An earlier audio-master design drove the playhead FROM the audio sample clock,
+//     which made those outputs jitter against the rest of the patch — this replaces it.
+//   • The mixer is told the playhead's position each frame (TargetSec, sub-frame precise) and CHASES
+//     it: it keeps its own play position and, when it drifts, nudges playback speed a few percent
+//     (a tiny pitch bend, via a live resampler) to ease back into lock — no audible seeks. Only a LARGE
+//     jump (Play from stop, a seek, a loop wrap — where TargetSec leaps) triggers a hard reposition.
 //
-// Everything the audio thread touches (the source pool, the position) is touched *only* on the audio
-// thread; cross-thread hand-off is the volatile transport reference + a locked pending-seek + the
-// interlocked position. Timeline geometry is stored in seconds so it is independent of the engine
-// sample rate (which the mixer reads live and can change under us).
+// Threading: the node builds an immutable AudioTransport on the main thread and swaps it in via a
+// volatile reference; the audio thread only reads that. The source pool + play position are touched
+// only on the audio thread. Geometry is in seconds (rate-independent).
 
 // One audio clip as the audio thread needs it: geometry in seconds, plus a stable key (the clip id)
 // so its file source survives snapshot rebuilds. Immutable.
@@ -51,24 +50,21 @@ public sealed class AudioClipSnap
 public sealed class AudioTransport
 {
     public readonly bool Playing;
-    public readonly bool Looping;
-    public readonly double LoopInSec;
-    public readonly double LoopOutSec;
+    public readonly double TargetSec;   // the visual playhead (sub-frame precise) the audio chases
     public readonly IReadOnlyList<AudioClipSnap> Clips;
 
-    public AudioTransport(bool playing, bool looping, double loopInSec, double loopOutSec, IReadOnlyList<AudioClipSnap> clips)
+    public AudioTransport(bool playing, double targetSec, IReadOnlyList<AudioClipSnap> clips)
     {
-        Playing = playing; Looping = looping;
-        LoopInSec = loopInSec; LoopOutSec = loopOutSec;
-        Clips = clips;
+        Playing = playing; TargetSec = targetSec; Clips = clips;
     }
 
-    public static readonly AudioTransport Idle = new(false, false, 0, 0, Array.Empty<AudioClipSnap>());
+    public static readonly AudioTransport Idle = new(false, 0, Array.Empty<AudioClipSnap>());
 
-    // Build a transport snapshot from the live document (main thread). All timeline geometry is
-    // converted from integer frames to seconds here (via fps), so the mixer stays rate-independent.
-    // Only audio clips on any track are included (clip.IsAudio); non-audio clips are ignored.
-    public static AudioTransport Build(InterpoleDocument doc, int fps, bool playing, bool looping)
+    // Build a transport snapshot from the live document (main thread). Timeline geometry is converted
+    // from frames to seconds via fps (so the mixer is rate-independent). playheadFrames is the *sub-frame
+    // continuous* playhead (Playhead + fractional accumulator) so the chase target is smooth, not stepped.
+    // Only audio clips (clip.IsAudio) are included.
+    public static AudioTransport Build(InterpoleDocument doc, int fps, bool playing, double playheadFrames)
     {
         double f = Math.Max(1, fps);
         var clips = new List<AudioClipSnap>();
@@ -82,28 +78,26 @@ public sealed class AudioTransport
                     c.Start / f, c.Length / f, c.FileInPoint,
                     fi / f, fo / f, c.Gain));
             }
-
-        var (li, lo) = doc.EffectiveLoop();
-        return new AudioTransport(playing, looping, li / f, lo / f, clips);
+        return new AudioTransport(playing, playheadFrames / f, clips);
     }
 }
 
 public sealed class InterpoleMixerSignal : MultiChannelSignal
 {
+    // ---- chase tuning ----
+    private const double MaxCorrection = 0.03;   // max speed nudge (±3% pitch) while catching up
+    private const double DeadbandSec = 0.005;    // within 5 ms of the target, play at exactly 1.0
+    private const double CorrectionTau = 0.4;    // seconds — larger = gentler correction
+    private const double HardSyncSec = 0.15;     // drift beyond this snaps (Play / seek / loop wrap)
+    private const double ReseekTolSec = 0.004;   // a source is "still aligned" within this of expected
+
     // The current clip layout + transport (main thread writes, audio thread reads). Reference
     // assignment is atomic; volatile makes the audio thread see the latest.
     private volatile AudioTransport _transport = AudioTransport.Idle;
 
-    // Timeline position in engine-rate samples — owned by the audio thread, read by the node.
-    private long _positionSamples;
-
-    // A one-shot seek request (seconds), applied at the top of the next FillBuffers.
-    private readonly object _seekLock = new();
-    private double? _pendingSeekSec;
-
-    // Environment.TickCount64 of the last FillBuffers — the node uses recency to tell whether the
-    // VL.Audio engine is actually pulling us (so it knows to hand the clock over to audio).
-    private long _lastFillTick;
+    // Audio-thread-only play state.
+    private double _audioPosSec;
+    private bool _wasPlaying;
 
     // The source pool — audio-thread-only. Keyed by clip id.
     private readonly Dictionary<string, AudioClipSource> _sources = new();
@@ -114,25 +108,11 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
 
     public void SetTransport(AudioTransport t) => _transport = t;
 
-    public double PositionSeconds
-    {
-        get { int r = SampleRate; return r > 0 ? Interlocked.Read(ref _positionSamples) / (double)r : 0; }
-    }
-
-    // Jump the mixer's play position (seconds). Applied on the next audio buffer; forces every active
-    // source to reseek so playback resumes cleanly from the new spot.
-    public void RequestSeek(double sec) { lock (_seekLock) _pendingSeekSec = Math.Max(0, sec); }
-
-    // Milliseconds since the audio engine last pulled us; large/⧜ when nothing is wired to Outputs.
-    public long MillisSinceLastFill => Environment.TickCount64 - Interlocked.Read(ref _lastFillTick);
-
     protected override void FillBuffers(float[][] buffers, int offset, int count)
     {
-        Interlocked.Exchange(ref _lastFillTick, Environment.TickCount64);
-
-        // Start silent; clips add into [0, count). (FReadBuffers is the parent's 0-based scratch —
-        // the per-channel SingleSignal copies it out with the right offset, so we ignore `offset`
-        // here, exactly as FileStreamSignal does.)
+        // Start silent; clips add into [0, count). (FReadBuffers is the parent's 0-based scratch — the
+        // per-channel SingleSignal copies it out with the right offset, so we ignore `offset`, exactly
+        // as FileStreamSignal does.)
         int nch = buffers.Length;
         for (int c = 0; c < nch; c++) Array.Clear(buffers[c], 0, count);
 
@@ -140,85 +120,73 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
         if (rate <= 0) return;
 
         var t = _transport;
-
-        // Apply a pending seek before anything else.
-        double? seek = null;
-        lock (_seekLock) { if (_pendingSeekSec is double s) { seek = s; _pendingSeekSec = null; } }
-        if (seek is double sk) { Interlocked.Exchange(ref _positionSamples, (long)(sk * rate)); ForceReseekAll(); }
-
         PruneSources(t);
-        if (!t.Playing || t.Clips.Count == 0) return;
 
-        long pos = Interlocked.Read(ref _positionSamples);
-        int done = 0;
-        int guard = 0;
-        while (done < count)
+        if (!t.Playing || t.Clips.Count == 0)
         {
-            if (++guard > count + 4) break;   // paranoia against a zero-length loop region
-            int seg = count - done;
-
-            // Split the buffer at the loop-out boundary so each segment is contiguous in time.
-            if (t.Looping && t.LoopOutSec > t.LoopInSec)
-            {
-                long loIn = (long)(t.LoopInSec * rate);
-                long loOut = (long)(t.LoopOutSec * rate);
-                if (pos >= loOut) { pos = loIn; ForceReseekAll(); continue; }
-                seg = (int)Math.Min(seg, loOut - pos);
-                if (seg <= 0) { pos = loIn; ForceReseekAll(); continue; }
-            }
-
-            MixSegment(buffers, done, seg, pos, rate, t);
-            pos += seg;
-            done += seg;
+            _audioPosSec = t.TargetSec;   // stay parked on the playhead so resuming is aligned
+            _wasPlaying = false;
+            return;
         }
-        Interlocked.Exchange(ref _positionSamples, pos);
-    }
 
-    // Mix all clips that overlap [segStartPos, segStartPos+seg) (engine samples) into the output at
-    // [outOffset, outOffset+seg). Each source is read sequentially; it is reseeked only when the run
-    // is discontinuous (a fresh clip, a seek, or a loop wrap — signalled by NextTimelinePos != a).
-    private void MixSegment(float[][] buffers, int outOffset, int seg, long segStartPos, int rate, AudioTransport t)
-    {
-        int nch = buffers.Length;
+        // Chase the visual playhead. drift = how far the audio is ahead(+)/behind(-) the target.
+        double startSec = _audioPosSec;
+        double drift = startSec - t.TargetSec;
+        bool hard = !_wasPlaying || Math.Abs(drift) > HardSyncSec;
+        if (hard) { startSec = t.TargetSec; _audioPosSec = startSec; drift = 0; ForceReseekAll(); }
+        _wasPlaying = true;
+
+        // Speed correction: ahead → play <1.0 (slow down), behind → >1.0 (speed up). Small drift inside
+        // the deadband plays at exactly 1.0 so steady playback isn't constantly micro-pitched.
+        double corr = 0;
+        double ad = Math.Abs(drift);
+        if (ad > DeadbandSec) corr = -(ad - DeadbandSec) * Math.Sign(drift) / CorrectionTau;
+        double speed = Math.Clamp(1.0 + corr, 1.0 - MaxCorrection, 1.0 + MaxCorrection);
+
+        double secPerOut = speed / rate;                 // timeline seconds advanced per output sample
+        double spanSec = count * secPerOut;              // this buffer's timeline span
+        double endSec = startSec + spanSec;
+
         foreach (var clip in t.Clips)
         {
-            long clipStart = (long)(clip.StartSec * rate);
-            long clipEnd = (long)(clip.EndSec * rate);
-            long a = Math.Max(segStartPos, clipStart);
-            long b = Math.Min(segStartPos + seg, clipEnd);
-            if (b <= a) continue;   // clip not active in this segment
+            double a = Math.Max(startSec, clip.StartSec);
+            double b = Math.Min(endSec, clip.EndSec);
+            if (b <= a) continue;   // clip not active in this buffer
 
-            var src = EnsureSource(clip, rate);
+            var src = EnsureSource(clip);
             if (src is null || !src.Ready) continue;
 
-            int frames = (int)(b - a);
-            if (src.NextTimelinePos != a)   // discontinuous → reposition the file
+            int o0 = Math.Clamp((int)Math.Round((a - startSec) / spanSec * count), 0, count);
+            int o1 = Math.Clamp((int)Math.Round((b - startSec) / spanSec * count), 0, count);
+            int nOut = o1 - o0;
+            if (nOut <= 0) continue;
+
+            double aSec = startSec + o0 * secPerOut;   // timeline second at the first output sample
+            if (double.IsNaN(src.NextTimelineSec) || Math.Abs(aSec - src.NextTimelineSec) > ReseekTolSec)
             {
-                double fileSec = clip.InPointSec + (a - clipStart) / (double)rate;
-                src.SeekSeconds(fileSec);
-                src.NextTimelinePos = a;
+                src.Seek(clip.InPointSec + (aSec - clip.StartSec));   // reposition the file (discontinuity)
+                src.NextTimelineSec = aSec;
             }
 
             int ch = src.Channels;
-            EnsureTmp(frames * ch);
-            int got = src.ReadFrames(_tmp, frames);
-            src.NextTimelinePos += got;   // advance by what we actually read (0 past file end)
-
-            int localOff = (int)(a - segStartPos) + outOffset;
+            EnsureTmp(nOut * ch);
+            int got = src.ReadFrames(_tmp, nOut, speed, rate);
             for (int i = 0; i < got; i++)
             {
-                double ts = (a + i) / (double)rate;
-                float g = GainAt(clip, ts);
+                float g = GainAt(clip, aSec + i * secPerOut);
                 float l = _tmp[i * ch] * g;
                 float r = (ch > 1 ? _tmp[i * ch + 1] : _tmp[i * ch]) * g;
-                buffers[0][localOff + i] += l;
-                if (nch > 1) buffers[1][localOff + i] += r;
+                buffers[0][o0 + i] += l;
+                if (nch > 1) buffers[1][o0 + i] += r;
             }
+            src.NextTimelineSec = aSec + got * secPerOut;   // where this source expects to read next
         }
+
+        _audioPosSec = endSec;
     }
 
-    // Linear fade envelope (× clip gain) at a timeline time in seconds — the smooth, per-sample
-    // version of ClipData.GainAt, so audio fades don't zipper at frame boundaries.
+    // Linear fade envelope (× clip gain) at a timeline time in seconds — the smooth, per-sample version
+    // of ClipData.GainAt so audio fades don't zipper at frame boundaries.
     private static float GainAt(AudioClipSnap clip, double timelineSec)
     {
         double into = timelineSec - clip.StartSec;
@@ -229,7 +197,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
         return g < 0f ? 0f : g;
     }
 
-    private AudioClipSource? EnsureSource(AudioClipSnap clip, int rate)
+    private AudioClipSource? EnsureSource(AudioClipSnap clip)
     {
         if (_sources.TryGetValue(clip.Key, out var src))
         {
@@ -237,14 +205,14 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
             src.Dispose();                 // same clip now points at a different file
             _sources.Remove(clip.Key);
         }
-        var created = new AudioClipSource(clip.FilePath, rate);
+        var created = new AudioClipSource(clip.FilePath);
         _sources[clip.Key] = created;
         return created;
     }
 
     private void ForceReseekAll()
     {
-        foreach (var s in _sources.Values) s.NextTimelinePos = long.MinValue;
+        foreach (var s in _sources.Values) s.NextTimelineSec = double.NaN;
     }
 
     // Dispose + drop any pooled source whose clip is no longer in the snapshot.
@@ -270,29 +238,29 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
     }
 }
 
-// One clip's audio source: an NAudio file reader resampled to the engine rate, opened off-thread so
-// the audio thread never blocks on IO. Until the open completes (or if it fails) it reads as silence.
-// All playback calls (SeekSeconds/ReadFrames) happen on the audio thread; Open runs once on a Task.
+// One clip's audio source: an NAudio file reader played through a live-adjustable resampler (WdlResampler)
+// so the mixer can micro-pitch it to chase the playhead. Opened off-thread so the audio thread never
+// blocks on IO — until ready (or if the file is missing) it reads as silence. All playback calls
+// (Seek/ReadFrames) happen on the audio thread; Open runs once on a Task.
 internal sealed class AudioClipSource : IDisposable
 {
     public readonly string FilePath;
-    private readonly int _engineRate;
 
     private volatile bool _ready;
     private volatile bool _failed;
     private volatile bool _disposeRequested;
     private AudioFileReader? _reader;
-    private ISampleProvider? _chain;
+    private WdlResampler? _resampler;
+    private int _sourceRate = 44100;
     private int _channels = 2;
 
-    // Mixer bookkeeping (audio thread only): the timeline sample index this source is positioned to
-    // read next. long.MinValue means "unknown — reseek before reading".
-    public long NextTimelinePos = long.MinValue;
+    // Mixer bookkeeping (audio thread only): the timeline second this source is positioned to read next.
+    // NaN means "unknown — reseek before reading".
+    public double NextTimelineSec = double.NaN;
 
-    public AudioClipSource(string filePath, int engineRate)
+    public AudioClipSource(string filePath)
     {
         FilePath = filePath;
-        _engineRate = engineRate;
         Task.Run(Open);
     }
 
@@ -303,41 +271,43 @@ internal sealed class AudioClipSource : IDisposable
             var reader = new AudioFileReader(FilePath);
             _reader = reader;
             _channels = Math.Max(1, reader.WaveFormat.Channels);
-            BuildChain();
+            _sourceRate = reader.WaveFormat.SampleRate;
+
+            var r = new WdlResampler();
+            r.SetMode(true, 2, false);
+            r.SetFilterParms();
+            r.SetFeedMode(false);   // output-driven: we ask for N output samples
+            _resampler = r;
+
             _ready = true;
             if (_disposeRequested) DisposeInner();
         }
         catch { _failed = true; }
     }
 
-    // (Re)build the resample chain from the reader's current position, flushing any resampler state.
-    private void BuildChain()
-    {
-        var reader = _reader!;
-        _chain = reader.WaveFormat.SampleRate == _engineRate
-            ? reader
-            : new WdlResamplingSampleProvider(reader, _engineRate);
-    }
-
     public bool Ready => _ready && !_failed;
     public int Channels => _channels;
 
-    public void SeekSeconds(double sec)
+    // Reposition the underlying file to `fileSec` and flush the resampler.
+    public void Seek(double fileSec)
     {
         if (!_ready || _reader is null) return;
-        var t = TimeSpan.FromSeconds(Math.Max(0, sec));
+        var t = TimeSpan.FromSeconds(Math.Max(0, fileSec));
         if (t > _reader.TotalTime) t = _reader.TotalTime;
         _reader.CurrentTime = t;
-        BuildChain();   // flush the resampler so playback continues cleanly from the new spot
+        _resampler?.Reset();
     }
 
-    // Read up to frameCount interleaved frames (engine rate, Channels wide) into dst; returns the
-    // number of frames actually read (fewer at end of file).
-    public int ReadFrames(float[] dst, int frameCount)
+    // Produce up to `count` interleaved output frames (engine rate, Channels wide) into dst, playing the
+    // file at `speed`× (1.0 = natural). Returns frames actually produced (fewer at end of file). The
+    // resampler ratio E/O = speed sets the pitch/speed: output rate O = engineRate / speed.
+    public int ReadFrames(float[] dst, int count, double speed, int engineRate)
     {
-        if (!Ready || _chain is null) return 0;
-        int got = _chain.Read(dst, 0, frameCount * _channels);
-        return got / _channels;
+        if (!Ready || _reader is null || _resampler is null || count <= 0) return 0;
+        _resampler.SetRates(_sourceRate, engineRate / speed);
+        int inNeeded = _resampler.ResamplePrepare(count, _channels, out float[] inBuf, out int inOff);
+        int inRead = _reader.Read(inBuf, inOff, inNeeded * _channels) / _channels;
+        return _resampler.ResampleOut(dst, 0, inRead, count, _channels);
     }
 
     public void Dispose()
@@ -350,6 +320,6 @@ internal sealed class AudioClipSource : IDisposable
     {
         try { _reader?.Dispose(); } catch { }
         _reader = null;
-        _chain = null;
+        _resampler = null;
     }
 }
