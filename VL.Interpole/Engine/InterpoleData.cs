@@ -12,6 +12,11 @@ public sealed class InterpoleDocument
     public string Title { get; set; } = "Interpole";
     public List<TrackData> Tracks { get; set; } = new();
 
+    // Named points on the frame axis, drawn in a lane just below the ruler (global, not per-track).
+    // A marker with Stop set halts playback when the playhead reaches its frame. Default empty, and
+    // absent from JSON written before markers existed, so old documents load unchanged.
+    public List<MarkerData> Markers { get; set; } = new();
+
     // The playhead position in frames (>= 0). Editable by scrubbing in the ruler; persisted so
     // it survives reload and is available for a future Time output / per-track active clip.
     public int Playhead { get; set; }
@@ -40,6 +45,18 @@ public sealed class InterpoleDocument
         int lin = Math.Max(0, LoopIn);
         if (LoopOut > lin) return (lin, LoopOut);
         return (0, ContentEnd());
+    }
+
+    // The earliest "stop" marker strictly after 'from' and at or before 'to' (a half-open scan of the
+    // interval the playhead is about to cross this frame), or -1 if none. Used by playback to park the
+    // playhead on a stop-marker and halt. Ignores markers with Stop unset (plain labels never stop).
+    public int EarliestStopMarkerIn(int from, int to)
+    {
+        int best = -1;
+        foreach (var m in Markers)
+            if (m.Stop && m.Frame > from && m.Frame <= to && (best < 0 || m.Frame < best))
+                best = m.Frame;
+        return best;
     }
 
     private static readonly JsonSerializerOptions Options = new()
@@ -186,6 +203,22 @@ public sealed class ClipData
         if (fo > 0) g = Math.Min(g, (End - frame) / (float)fo);
         return Math.Clamp(g, 0f, 1f);
     }
+}
+
+// A named point on the frame axis, shown in the marker lane below the ruler. Global to the timeline
+// (not tied to a track). When Stop is true, playback halts as the playhead reaches Frame; otherwise
+// it is just a labelled cue. Also exposed to the patch as a dynamic-enum entry (name → Frame) so the
+// node's Jump input can seek to it. Serialized flat; back-compatible (whole list absent on old docs).
+public sealed class MarkerData
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int Frame { get; set; }
+    // When true, the playhead stops on this marker's frame during playback.
+    public bool Stop { get; set; }
+    // Index into the shared clip palette (0..9), same as ClipData.Color. Out-of-range falls back to 0
+    // (see InterpolePalette), so markers written before this field existed load as the default blue.
+    public int Color { get; set; }
 }
 
 // The fixed clip palette — the single source of truth shared by the editor (swatches + clip fill)

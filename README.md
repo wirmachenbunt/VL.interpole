@@ -41,6 +41,8 @@ Interpole/
 | in | `Loop Out` | int | end frame of the loop region (half-open `[Loop In, Loop Out)`). An invalid/empty range (`Loop Out <= Loop In`, e.g. both 0) means **loop the whole content**. |
 | in | `Time` | int | **seek target** in frames — the frame the playhead jumps to when `Set` fires. Read **only** at that moment; changing `Time` on its own does nothing. Clamped `>= 0`. |
 | in | `Set` | bool | **seek trigger**, rising edge (false→true) like the other transport pins — wire a bang or toggle a bool. On the edge the playhead jumps to the current `Time` value (a programmatic scrub). Does **not** stop playback (if playing, it continues from the new frame); works in **No UI Mode** too. |
+| in | `Marker` | InterpoleMarker (enum) | a **dropdown of the timeline's marker names**, kept in sync with the marker lane. Selecting one does nothing on its own — it's the target for `Jump`. (Dynamic enum; app-global, so with several nodes it reflects whichever synced last.) |
+| in | `Jump` | bool | **marker jump trigger**, rising edge (false→true): on the edge the playhead **seeks to the selected `Marker`'s frame and starts playing** from there. A named-cue convenience over `Time`/`Set`. |
 | in | `No Background` | bool | **inspector-only** (`PinVisibility.Optional`). When true the editor canvas is transparent (fill + ImGui window background dropped) so the renderer shows through. Default false = opaque. |
 | in | `Fps` | int | **inspector-only** (`PinVisibility.Optional`). The timeline's frame rate: it drives **real-time playback** (below) *and* the **timecode** display. The model stays in integer frames. Default **60**; clamped `>= 1`. |
 | in | `Frame Step Playback` | bool | **inspector-only** (`PinVisibility.Optional`). Playback timing mode. Default **false** = real-time: the playhead advances by elapsed time × `Fps`, so one second of playback is one wall-clock second regardless of render rate. **true** = legacy: advance one frame per rendered frame (bound to the renderer's FPS). Independent of the stopwatch ruler toggle. |
@@ -88,13 +90,19 @@ even in the renderer's **default** `Normalized` Space.
    drag the bar to slide the whole region, drag empty ribbon to draw a fresh one, **Alt/Middle-click**
    to clear it. When no region is authored the bar is faint and spans the **whole content** (the
    default loop range). The playhead is scrubbed by clicking the ruler **below** the loop strip.
-3. **Clip lanes** (right) aligned with the **track-header column** (left).
+3. **Marker lane** — a lane just below the ruler (same height as a track) holding named points on the
+   frame axis (global, not per-track), drawn as Unity-style pins in a chosen palette colour. Stop
+   markers get a bright outline (halt playback when reached). Double-click to create/edit, drag to
+   move, Alt/Middle to delete; **click a marker to edit it in the inspector**.
+4. **Clip lanes** (right) aligned with the **track-header column** (left).
 
 ### Inspector (right panel)
 
-A **collapsible inspector** on the right edits the **selected clip** — it **starts collapsed**;
-click the ▸/◂ **strip** at the far right to open/close it. When several clips are selected it shows a
-count and edits the **primary** (last-clicked) clip. It shows editable fields for the clip:
+A **collapsible inspector** on the right edits the **selected clip or marker** — it **starts
+collapsed**; click the ▸/◂ **strip** at the far right to open/close it. When several clips are selected
+it shows a count and edits the **primary** (last-clicked) clip. Selecting a marker (click it) gives the
+panel over to that marker instead, with fields for its **name**, **colour**, **frame**, **stop-playback**
+flag, and a **delete** button. For a clip it shows editable fields:
 
 - **Name** (text)
 - **Color** (the 10-swatch palette)
@@ -108,6 +116,18 @@ Tracks (header column):
 - **+ Track** button, or **double-click** empty header area → add a track
 - **double-click** a track header → rename it (inline)
 - **Alt-click** or **Middle-click** a track header → delete the track (and its clips)
+
+Markers (the lane just below the ruler) — named points on the frame axis, global to the timeline:
+- **double-click** empty marker-lane space → a modal asks for a **name**, a **colour** (the shared
+  clip palette), and whether to **stop playback when reached**, then places the marker (Cancel adds nothing)
+- **double-click** a marker → re-open that modal to edit its name / colour / stop flag
+- **drag** a marker → move it in time (hold **Shift** to snap to clip edges / the playhead)
+- **Alt-click** or **Middle-click** a marker → delete it
+- a **stop** marker (drawn with a bright outline) **halts playback** as the playhead reaches its frame
+  — like pressing Stop there; press Play again to continue past it. Plain markers are just cues. The
+  pin's fill is the marker's chosen palette colour.
+- markers are undoable (Ctrl+Z/Y), persist in the `Data` pin, and populate the `Marker` enum pin so
+  the patch can **`Jump`** to one (seek + play)
 
 Clips (lanes) — clips in a track can never overlap; all edits clamp to neighbours:
 - **click** a clip → select it (editable in the right-side **inspector**); **Shift/Ctrl-click** a
@@ -230,9 +250,15 @@ Done:
 - **Seek from the patch** — a rising-edge **`Set`** pin jumps the playhead to the **`Time`** pin's
   frame value (a programmatic scrub). `Time` is read only when `Set` fires; changing it alone does
   nothing. The seek doesn't stop playback and works in **No UI Mode** too.
+- **Markers** — named points on the frame axis in a lane below the ruler (global, not per-track),
+  drawn as Unity-style pins in a chosen **palette colour**. Double-click to create (a modal asks name
+  + colour + **stop-playback**) or edit, drag to move, Alt/Middle to delete; **stop markers halt
+  playback** (shown with a bright outline) when the playhead reaches them. Markers are undoable and
+  persist in `Data`; they populate the **`Marker`** enum pin, and a rising-edge **`Jump`** seeks to the
+  selected marker and plays from there.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
-  `Time` / `Set` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` / `Clip Frame` /
-  `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only
+  `Time` / `Set` / `Marker` / `Jump` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` /
+  `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only
   `No Background`, `Fps`, `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):

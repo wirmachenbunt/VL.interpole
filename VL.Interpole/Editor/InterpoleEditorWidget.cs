@@ -48,6 +48,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float TransportHeight = 88f;// transport toolbar (playhead readout + buttons)
     private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
     private const float LoopStripHeight = 14f;// loop-range ribbon, carved from the top of the ruler
+    private const float MarkerLaneHeight = TrackHeight;// marker strip; same height as a normal track lane
+    private const float MarkerPinHeight = MarkerLaneHeight - 10f;// pin height (fills the lane bar a small margin), centred vertically
     private const float TrackHeight = 54f;    // one lane
     private const float ClipPadY = 6f;        // vertical inset of a clip within its lane
     private const float ClipRounding = 4f;    // corner radius of a clip's rounded rect
@@ -92,17 +94,22 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _laneLeft;  // x where the clip lanes begin (= _origin.X + HeaderWidth)
     private float _rulerTop;    // y where the ruler begins (= _origin.Y + TransportHeight)
     private float _loopBottom;  // y where the loop strip ends inside the ruler (= _rulerTop + LoopStripHeight)
-    private float _lanesTop;    // y where the lanes begin (= _rulerTop + RulerHeight)
+    private float _rulerBottom; // y where the ruler ends (= _rulerTop + RulerHeight); the marker lane sits in [_rulerBottom, _lanesTop)
+    private float _lanesTop;    // y where the track lanes begin (= _rulerBottom + MarkerLaneHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker }
     private DragMode _drag;
     private string? _dragClipId;
+    private string? _dragMarkerId;  // MoveMarker: the marker being dragged along the frame axis
     private float _dragGrabFrame;   // MoveClip: (mouseFrame - clip.Start) captured at grab
     private float _loopGrabFrame;   // LoopMove: (mouseFrame - LoopIn) captured at grab
     private bool _panning;
     private string? _hoverClipId;
     private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
+    // The marker shown in the inspector, if any. Mutually exclusive with a clip selection: selecting a
+    // marker clears the clip selection and vice-versa, so the inspector edits exactly one thing.
+    private string? _selectedMarkerId;
     // Full multi-selection (marquee or Shift/Ctrl-click). Contains _selectedClipId when non-null.
     // Highlighted clips + the copy source. Ids, not references, so it survives the document rebuilds
     // that undo/redo do (clip Ids are stable across serialization).
@@ -154,6 +161,19 @@ public sealed class InterpoleEditorWidget : IDisposable
     private string _editId = "";
     private string _editBuffer = "";
     private bool _focusEdit;
+
+    // ---- marker create/edit modal ----
+    // A small ImGui popup (name field + "stop playback" checkbox) shown before a marker is placed —
+    // and reused to edit an existing one. _markerDialogId is null for a new marker (added on OK) or
+    // the id of the marker being edited. Interaction/shortcuts are suppressed while _markerDialogOpen.
+    private bool _markerDialogOpen;
+    private bool _markerDialogRequestOpen;   // set for one frame to trigger IG.OpenPopup
+    private bool _markerDialogFocus;          // focus the name field when the popup first appears
+    private string? _markerDialogId;          // null = creating; else the marker being edited
+    private int _markerDialogFrame;           // frame the new/edited marker sits on
+    private string _markerNameBuffer = "";
+    private bool _markerStopBuffer;
+    private int _markerColorBuffer;           // palette index chosen in the dialog
 
     // ---- undo / redo ----
     // In-editor history of *structural* document snapshots (JSON). The Data-pin autosave writes
@@ -222,7 +242,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         _laneLeft = _origin.X + HeaderWidth;
         _rulerTop = _origin.Y + TransportHeight;
         _loopBottom = _rulerTop + LoopStripHeight;
-        _lanesTop = _rulerTop + RulerHeight;
+        _rulerBottom = _rulerTop + RulerHeight;
+        _lanesTop = _rulerBottom + MarkerLaneHeight;
         // The timeline area ends at _canvasRight; the open/close strip lives in the far-right
         // ToggleStripPx column, and the inspector panel (when open) between them.
         _stripLeft = _origin.X + _size.X - ToggleStripPx;
@@ -253,6 +274,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag == DragMode.Marquee) DrawMarquee(dl);
         DrawRuler(dl);
         DrawLoopBar(dl);
+        DrawMarkerLane(dl, mouse);
         DrawHeaders(dl);
         DrawPlayhead(dl);
         DrawSnapGuide(dl);
@@ -264,11 +286,15 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         if (_editKind != EditKind.None)
             DrawInlineEdit();
-        else
+        else if (!_markerDialogOpen)
         {
             HandleShortcuts(io);
             HandleInteraction(hovered, mouse, io);
         }
+
+        // The marker create/edit modal (name + "stop playback") is drawn last so it sits over the
+        // canvas and owns input while open; interaction/shortcuts above are suppressed meanwhile.
+        DrawMarkerDialog();
 
         IG.End();
     }
@@ -276,7 +302,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void ClampScroll()
     {
         float contentH = Document.Tracks.Count * TrackHeight;
-        float viewH = _size.Y - TransportHeight - RulerHeight;
+        float viewH = _size.Y - TransportHeight - RulerHeight - MarkerLaneHeight;
         _scrollY = Math.Clamp(_scrollY, 0f, MathF.Max(0f, contentH - viewH));
         if (_scrollX < 0) _scrollX = 0;
     }
@@ -439,8 +465,8 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private void DrawRuler(ImDrawListPtr dl)
     {
-        dl.PushClipRect(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _lanesTop), true);
-        dl.AddRectFilled(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _lanesTop), Col(0.14f, 0.15f, 0.17f));
+        dl.PushClipRect(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _rulerBottom), true);
+        dl.AddRectFilled(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _rulerBottom), Col(0.14f, 0.15f, 0.17f));
 
         int step = NiceFrameStep(80f / _pxPerFrame);
         int first = (int)MathF.Floor(XToFrame(_laneLeft) / step) * step;
@@ -450,13 +476,13 @@ public sealed class InterpoleEditorWidget : IDisposable
             float x = FrameToX(f);
             if (x > LaneRight) break;
             if (x < _laneLeft) continue;
-            dl.AddLine(new Vector2(x, _lanesTop - 8), new Vector2(x, _lanesTop), Col(0.5f, 0.55f, 0.6f));
+            dl.AddLine(new Vector2(x, _rulerBottom - 8), new Vector2(x, _rulerBottom), Col(0.5f, 0.55f, 0.6f));
             // Vertically center the label in the ruler *below* the loop strip so the two don't collide.
             var lbl = _showTimecode ? FramesToTimecode(f, step) : f.ToString(CultureInfo.InvariantCulture);
-            float ty = _loopBottom + (_lanesTop - _loopBottom - IG.CalcTextSize(lbl).Y) * 0.5f;
+            float ty = _loopBottom + (_rulerBottom - _loopBottom - IG.CalcTextSize(lbl).Y) * 0.5f;
             dl.AddText(new Vector2(x + 4, ty), Col(0.7f, 0.75f, 0.8f), lbl);
         }
-        dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(LaneRight, _lanesTop), Col(0f, 0f, 0f, 0.5f));
+        dl.AddLine(new Vector2(_laneLeft, _rulerBottom), new Vector2(LaneRight, _rulerBottom), Col(0f, 0f, 0f, 0.5f));
         dl.PopClipRect();
     }
 
@@ -547,7 +573,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private void DrawCorner(ImDrawListPtr dl, Vector2 mouse)
     {
-        dl.AddRectFilled(new Vector2(_origin.X, _rulerTop), new Vector2(_laneLeft, _lanesTop), Col(0.13f, 0.14f, 0.16f));
+        dl.AddRectFilled(new Vector2(_origin.X, _rulerTop), new Vector2(_laneLeft, _rulerBottom), Col(0.13f, 0.14f, 0.16f));
         // Two "add track" buttons side by side: a standard clip track and an audio track. Audio
         // tracks are tinted green to match their header accent + default clip colour.
         DrawCornerButton(dl, mouse, AddTrackButtonRect(), "+ Track", Col(0.22f, 0.4f, 0.6f), Col(0.28f, 0.5f, 0.75f));
@@ -568,7 +594,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         const string help =
             "dbl-click header: add/rename track   dbl-click lane: add clip (audio track: pick a file)   drag clip: move, edges: resize   " +
             "dbl-click clip: rename   drag empty: box-select   Shift/Ctrl+click: add to selection   " +
-            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   loop bar: set loop (Alt: clear)   " +
+            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   marker lane: dbl-click add / drag move   loop bar: set loop (Alt: clear)   " +
             "B/N: loop in/out at playhead   wheel: zoom   right-drag: pan   Space: play/stop   Shift: snap   " +
             "Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste";
         var ts = IG.CalcTextSize(help);
@@ -579,9 +605,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     // point is shared so the two rects abut with a small gap.
     private float CornerSplitX => _origin.X + 8 + (_laneLeft - 16 - (_origin.X + 8)) * 0.56f;
     private (Vector2 min, Vector2 max) AddTrackButtonRect()
-        => (new Vector2(_origin.X + 8, _rulerTop + 4), new Vector2(CornerSplitX - 3, _lanesTop - 4));
+        => (new Vector2(_origin.X + 8, _rulerTop + 4), new Vector2(CornerSplitX - 3, _rulerBottom - 4));
     private (Vector2 min, Vector2 max) AddAudioTrackButtonRect()
-        => (new Vector2(CornerSplitX + 3, _rulerTop + 4), new Vector2(_laneLeft - 8, _lanesTop - 4));
+        => (new Vector2(CornerSplitX + 3, _rulerTop + 4), new Vector2(_laneLeft - 8, _rulerBottom - 4));
 
     // ---- inspector panel ----
 
@@ -632,10 +658,14 @@ public sealed class InterpoleEditorWidget : IDisposable
         IG.TextDisabled("INSPECTOR");
         IG.Separator();
 
+        // A selected marker owns the panel (mutually exclusive with a clip selection).
+        var selMarker = FindMarker(_selectedMarkerId);
+        if (selMarker is not null) { MarkerInspector(selMarker); return; }
+
         if (_selection.Count > 1) { IG.Spacing(); IG.TextDisabled(_selection.Count + " clips selected — editing primary"); IG.Spacing(); }
 
         var found = FindClip(_selectedClipId);
-        if (found is null) { IG.Spacing(); IG.TextDisabled("No clip selected.\nClick a clip, or drag a box to select several."); return; }
+        if (found is null) { IG.Spacing(); IG.TextDisabled("Nothing selected.\nClick a clip or a marker, or drag a box to select several clips."); return; }
         var (tr, clip) = found.Value;
 
         // Name — live preview into the clip, one undo step on commit. Re-seed the buffer from the
@@ -710,6 +740,52 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         IG.Spacing();
         IG.TextDisabled("track: " + (string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name));
+    }
+
+    // The inspector for a selected marker: name, colour (shared clip palette), frame, stop flag, delete.
+    // Same commit conventions as the clip inspector — live preview into the marker, one undo step when
+    // an edit finishes. Re-seeds the shared name buffer whenever the field isn't being typed in.
+    private void MarkerInspector(MarkerData m)
+    {
+        IG.TextDisabled("MARKER");
+        IG.Spacing();
+
+        IG.Text("Name");
+        IG.SetNextItemWidth(-1f);
+        if (!_inspNameActive || _inspNameId != m.Id) { _inspName = m.Name ?? ""; _inspNameId = m.Id; }
+        if (IG.InputText("##inspMkName", ref _inspName, 128)) m.Name = _inspName.Trim();
+        _inspNameActive = IG.IsItemActive();
+        if (IG.IsItemDeactivatedAfterEdit()) Commit();
+
+        IG.Spacing();
+        IG.Text("Color");
+        for (int i = 0; i < ClipPalette.Length; i++)
+        {
+            if (i % 5 != 0) IG.SameLine();
+            var (r, g, b) = ClipPalette[i];
+            if (IG.ColorButton($"##inspMkCol{i}", new Vector4(r, g, b, 1f),
+                    ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoDragDrop, new Vector2(30f, 24f)))
+            { m.Color = i; Commit(); }
+            if (m.Color == i)
+                IG.GetWindowDrawList().AddRect(IG.GetItemRectMin(), IG.GetItemRectMax(),
+                    Col(1f, 0.93f, 0.5f, 1f), 2f, ImDrawFlags.None, 2.5f);
+        }
+
+        IG.Spacing();
+        IG.Separator();
+        bool timeMode = _showTimecode;   // frame field follows the ruler's frames/timecode mode
+        IG.TextDisabled(timeMode ? "seconds (at " + Fps + " fps)" : "frames");
+        var fr = NumberField("Frame", "mkframe", m.Frame, timeMode, 0);
+        if (fr.changed) m.Frame = fr.value;
+        if (fr.done) Commit();
+
+        IG.Spacing();
+        bool stop = m.Stop;
+        if (IG.Checkbox("Stop playback when reached", ref stop)) { m.Stop = stop; Commit(); }
+
+        IG.Spacing();
+        IG.Separator();
+        if (IG.Button("Delete marker", new Vector2(-1f, 0f))) { RemoveMarker(m); _selectedMarkerId = null; }
     }
 
     // A labelled numeric field shown in frames or seconds (per the ruler mode). Returns the new
@@ -899,6 +975,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag == DragMode.Playhead) { ContinuePlayheadDrag(mouse); return; }
         if (_drag == DragMode.Marquee) { ContinueMarquee(mouse); return; }
         if (_drag is DragMode.LoopIn or DragMode.LoopOut or DragMode.LoopMove) { ContinueLoopDrag(mouse); return; }
+        if (_drag == DragMode.MoveMarker) { ContinueMarkerDrag(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
         if (_panning)
         {
@@ -974,13 +1051,39 @@ public sealed class InterpoleEditorWidget : IDisposable
             return;
         }
 
-        // Ruler strip (below the loop strip): click / drag to scrub the playhead.
-        if (mouse.X >= _laneLeft && mouse.Y >= _loopBottom && mouse.Y < _lanesTop)
+        // Ruler strip (below the loop strip, above the marker lane): click / drag to scrub the playhead.
+        if (mouse.X >= _laneLeft && mouse.Y >= _loopBottom && mouse.Y < _rulerBottom)
         {
             if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
                 _drag = DragMode.Playhead;
                 Document.Playhead = PlayheadFrameFromMouse(mouse.X, io.KeyShift, out _playheadSnapped);
+            }
+            return;
+        }
+
+        // Marker lane (between the ruler and the track lanes): double-click empty space to create a
+        // marker (opens the name/stop modal), double-click a marker to edit it, drag to move it,
+        // Alt/Middle-click to delete. Mirrors the clip gestures.
+        if (mouse.X >= _laneLeft && mouse.Y >= _rulerBottom && mouse.Y < _lanesTop)
+        {
+            var hitM = HitMarker(mouse);
+            if (hitM is not null)
+            {
+                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) { OpenEditMarkerDialog(hitM); return; }
+                if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+                { RemoveMarker(hitM); return; }
+                if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+                {
+                    SelectMarker(hitM.Id);   // show it in the inspector
+                    _drag = DragMode.MoveMarker;
+                    _dragMarkerId = hitM.Id;
+                    _dragGrabFrame = XToFrame(mouse.X) - hitM.Frame;
+                }
+            }
+            else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                OpenNewMarkerDialog(XToFrame(mouse.X));
             }
             return;
         }
@@ -1056,6 +1159,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 // Empty lane → start a marquee. Shift/Ctrl keeps the current selection to add to;
                 // otherwise it replaces it. A click with no drag bands nothing, so it deselects.
+                _selectedMarkerId = null;
                 _drag = DragMode.Marquee;
                 _marqueeAnchor = mouse;
                 _marqueeBase = (io.KeyShift || io.KeyCtrl) ? new HashSet<string>(_selection) : new HashSet<string>();
@@ -1074,12 +1178,22 @@ public sealed class InterpoleEditorWidget : IDisposable
         _selection.Clear();
         _selectedClipId = id;
         if (id is not null) _selection.Add(id);
+        if (id is not null) _selectedMarkerId = null;   // a clip takes the inspector from a marker
+    }
+
+    // Select a marker for the inspector, clearing any clip selection (they share the one panel).
+    private void SelectMarker(string id)
+    {
+        _selectedMarkerId = id;
+        _selection.Clear();
+        _selectedClipId = null;
     }
 
     // Add a clip to the selection if absent, else remove it; keep the primary pointing at a
     // still-selected clip.
     private void ToggleSelected(string id)
     {
+        _selectedMarkerId = null;
         if (_selection.Add(id)) _selectedClipId = id;
         else { _selection.Remove(id); if (_selectedClipId == id) _selectedClipId = _selection.FirstOrDefault(); }
     }
@@ -1742,6 +1856,217 @@ public sealed class InterpoleEditorWidget : IDisposable
         Commit();
     }
 
+    // ============================== markers ==============================
+
+    // The marker lane sits in [_rulerBottom, _lanesTop): a full-width strip of named points on the
+    // frame axis (global, not per-track). Each marker is a stem + a little flag with its label; "stop"
+    // markers are red with a notch at the bottom, plain markers amber. Hover/drag brightens one.
+    private void DrawMarkerLane(ImDrawListPtr dl, Vector2 mouse)
+    {
+        float top = _rulerBottom, bottom = _lanesTop;
+
+        dl.PushClipRect(new Vector2(_laneLeft, top), new Vector2(LaneRight, bottom), true);
+        dl.AddRectFilled(new Vector2(_laneLeft, top), new Vector2(LaneRight, bottom), Col(0.10f, 0.14f, 0.17f));
+
+        bool overLane = InRect(mouse, new Vector2(_laneLeft, top), new Vector2(LaneRight, bottom));
+        var hover = (overLane && _drag == DragMode.None && !_markerDialogOpen) ? HitMarker(mouse) : null;
+
+        const float mkHW = 8f;   // half-width of the marker pin (Unity-style: rounded-top rect → point)
+        foreach (var m in Document.Markers)
+        {
+            float x = FrameToX(m.Frame);
+            if (x < _laneLeft - 60f || x > LaneRight + 4f) continue;
+            bool hot = (hover is not null && hover.Id == m.Id) || _dragMarkerId == m.Id;
+            var (cr, cg, cb) = InterpolePalette.Rgb(m.Color);
+            uint col = Col(cr, cg, cb, hot ? 1f : 0.92f);
+
+            // Marker icon (Unity-style pin): a rounded-top rectangle for the upper ~60% of the pin that
+            // tapers to a point at the bottom, centred on the frame; a fixed height centred in the lane.
+            float mkTop = top + (MarkerLaneHeight - MarkerPinHeight) * 0.5f;
+            float mkBot = mkTop + MarkerPinHeight;
+            float mkMid = mkTop + MarkerPinHeight * 0.6f;
+            dl.AddRectFilled(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkMid), col, 1.5f, ImDrawFlags.RoundCornersTop);
+            dl.AddTriangleFilled(new Vector2(x - mkHW, mkMid), new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), col);
+            // Stop markers get a bright outline so "stops playback" reads independently of the fill colour.
+            if (m.Stop)
+            {
+                uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
+                dl.AddLine(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkTop), ring, 1.5f);
+                dl.AddLine(new Vector2(x + mkHW, mkTop), new Vector2(x + mkHW, mkMid), ring, 1.5f);
+                dl.AddLine(new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), ring, 1.5f);
+                dl.AddLine(new Vector2(x, mkBot), new Vector2(x - mkHW, mkMid), ring, 1.5f);
+                dl.AddLine(new Vector2(x - mkHW, mkMid), new Vector2(x - mkHW, mkTop), ring, 1.5f);
+            }
+
+            if (!string.IsNullOrEmpty(m.Name))
+            {
+                var ts = IG.CalcTextSize(m.Name);
+                dl.AddText(new Vector2(x + mkHW + 9f, top + (MarkerLaneHeight - ts.Y) * 0.5f),
+                           Col(0.92f, 0.94f, 0.96f, hot ? 1f : 0.85f), m.Name);
+            }
+        }
+        dl.PopClipRect();
+
+        // Header cell beside the lane.
+        dl.PushClipRect(new Vector2(_origin.X, top), new Vector2(_laneLeft, bottom), true);
+        dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_laneLeft, bottom), Col(0.12f, 0.15f, 0.18f));
+        var lt = IG.CalcTextSize("MARKERS");
+        dl.AddText(new Vector2(_origin.X + 14, top + (MarkerLaneHeight - lt.Y) * 0.5f), Col(0.55f, 0.62f, 0.70f), "MARKERS");
+        dl.PopClipRect();
+
+        dl.AddLine(new Vector2(_laneLeft, top), new Vector2(_laneLeft, bottom), Col(0f, 0f, 0f, 0.5f));
+        dl.AddLine(new Vector2(_origin.X, bottom), new Vector2(LaneRight, bottom), Col(0f, 0f, 0f, 0.4f));
+    }
+
+    // The marker under the cursor (its flag/stem or label), nearest flag wins when regions overlap;
+    // null if none. Only valid within the marker lane's y-band.
+    private MarkerData? HitMarker(Vector2 mouse)
+    {
+        if (mouse.Y < _rulerBottom || mouse.Y >= _lanesTop) return null;
+        MarkerData? best = null;
+        float bestDx = float.MaxValue;
+        foreach (var m in Document.Markers)
+        {
+            float x = FrameToX(m.Frame);
+            float w = string.IsNullOrEmpty(m.Name) ? 0f : IG.CalcTextSize(m.Name).X + 12f;
+            if (mouse.X >= x - 9f && mouse.X <= x + 9f + w)
+            {
+                float dx = MathF.Abs(mouse.X - x);
+                if (dx < bestDx) { bestDx = dx; best = m; }
+            }
+        }
+        return best;
+    }
+
+    private MarkerData? FindMarker(string? id)
+        => id is null ? null : Document.Markers.FirstOrDefault(m => m.Id == id);
+
+    // Open the modal to place a NEW marker at the given frame — nothing is added until OK is pressed.
+    private void OpenNewMarkerDialog(float frameF)
+    {
+        _markerDialogId = null;
+        _markerDialogFrame = Math.Max(0, (int)MathF.Round(frameF));
+        _markerNameBuffer = "marker " + (Document.Markers.Count + 1);
+        _markerStopBuffer = false;
+        _markerColorBuffer = 4;   // orange by default, distinct from the default blue clip
+        _markerDialogOpen = _markerDialogRequestOpen = _markerDialogFocus = true;
+    }
+
+    // Open the same modal to edit an existing marker (name + stop).
+    private void OpenEditMarkerDialog(MarkerData m)
+    {
+        _markerDialogId = m.Id;
+        _markerDialogFrame = m.Frame;
+        _markerNameBuffer = m.Name ?? "";
+        _markerStopBuffer = m.Stop;
+        _markerColorBuffer = m.Color;
+        _markerDialogOpen = _markerDialogRequestOpen = _markerDialogFocus = true;
+    }
+
+    // OK pressed: add the new marker (or apply the edits to the existing one) and commit one undo step.
+    private void CommitMarkerDialog()
+    {
+        string name = _markerNameBuffer.Trim();
+        if (_markerDialogId is null)
+            Document.Markers.Add(new MarkerData
+            {
+                Id = InterpoleDocument.NewId("mk"),
+                Name = name,
+                Frame = Math.Max(0, _markerDialogFrame),
+                Stop = _markerStopBuffer,
+                Color = _markerColorBuffer,
+            });
+        else
+        {
+            var m = FindMarker(_markerDialogId);
+            if (m is not null) { m.Name = name; m.Stop = _markerStopBuffer; m.Color = _markerColorBuffer; }
+        }
+        Commit();
+    }
+
+    private void RemoveMarker(MarkerData m)
+    {
+        Document.Markers.Remove(m);
+        if (_selectedMarkerId == m.Id) _selectedMarkerId = null;
+        Commit();
+    }
+
+    // Drag a marker along the frame axis (Shift snaps to clip edges / the playhead, like a clip move).
+    // Commits one undo step on release.
+    private void ContinueMarkerDrag(Vector2 mouse)
+    {
+        var m = FindMarker(_dragMarkerId);
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left) || m is null)
+        {
+            _drag = DragMode.None;
+            _dragMarkerId = null;
+            _clipSnapActive = false;
+            if (m is not null) Commit();
+            return;
+        }
+
+        int f = Math.Max(0, (int)MathF.Round(XToFrame(mouse.X) - _dragGrabFrame));
+        if (IG.GetIO().KeyShift)
+        {
+            CollectClipEdgeTargets(null);
+            _snapTargets.Add(Document.Playhead);
+            var s = Snap(f);
+            if (s.snapped) { f = s.frame; _clipSnapActive = true; _clipSnapFrame = f; }
+            else _clipSnapActive = false;
+        }
+        else _clipSnapActive = false;
+        m.Frame = f;
+    }
+
+    // The marker create/edit modal: a name field + a "stop playback" checkbox. Shown before a new
+    // marker is placed and reused to edit an existing one. Managed as an ImGui popup so it captures
+    // input while open; _markerDialogOpen gates the editor's own interaction/shortcuts meanwhile.
+    private void DrawMarkerDialog()
+    {
+        const string id = "Marker##interpole";
+        if (_markerDialogRequestOpen) { IG.OpenPopup(id); _markerDialogRequestOpen = false; }
+        if (!_markerDialogOpen) return;
+
+        Vector2 disp = IG.GetIO().DisplaySize;
+        IG.SetNextWindowPos(new Vector2(disp.X * 0.5f, disp.Y * 0.5f), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+        bool keepOpen = true;   // the title-bar close (X) flips this → treated as Cancel via IsPopupOpen below
+        if (IG.BeginPopupModal(id, ref keepOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings))
+        {
+            IG.TextDisabled((_markerDialogId is null ? "New marker at frame " : "Edit marker at frame ") + _markerDialogFrame);
+            IG.Dummy(new Vector2(0f, 4f));
+            IG.SetNextItemWidth(240f);
+            if (_markerDialogFocus) { IG.SetKeyboardFocusHere(); _markerDialogFocus = false; }
+            bool enter = IG.InputText("Name", ref _markerNameBuffer, 128, ImGuiInputTextFlags.EnterReturnsTrue);
+
+            // Colour swatches from the shared clip palette; the selected one gets a white outline.
+            IG.Dummy(new Vector2(0f, 2f));
+            IG.TextDisabled("Colour");
+            var pdl = IG.GetWindowDrawList();
+            for (int i = 0; i < InterpolePalette.Count; i++)
+            {
+                if (i > 0) IG.SameLine();
+                var (r, g, b) = InterpolePalette.Rgb(i);
+                if (IG.ColorButton("##mkcol" + i, new Vector4(r, g, b, 1f),
+                        ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoDragDrop, new Vector2(18f, 18f)))
+                    _markerColorBuffer = i;
+                if (_markerColorBuffer == i)
+                    pdl.AddRect(IG.GetItemRectMin() - new Vector2(1f, 1f), IG.GetItemRectMax() + new Vector2(1f, 1f),
+                                Col(1f, 1f, 1f, 0.95f), 0f, ImDrawFlags.None, 2f);
+            }
+            IG.Dummy(new Vector2(0f, 4f));
+
+            IG.Checkbox("Stop playback when reached", ref _markerStopBuffer);
+            IG.Dummy(new Vector2(0f, 6f));
+            bool ok = IG.Button("OK", new Vector2(100f, 0f)) || enter;
+            IG.SameLine();
+            bool cancel = IG.Button("Cancel", new Vector2(100f, 0f)) || IG.IsKeyPressed(ImGuiKey.Escape, false);
+            if (ok) { CommitMarkerDialog(); IG.CloseCurrentPopup(); }
+            else if (cancel) IG.CloseCurrentPopup();
+            IG.EndPopup();
+        }
+        if (!IG.IsPopupOpen(id)) _markerDialogOpen = false;
+    }
+
     // ============================== undo / redo ==============================
 
     // A structural edit just committed: record an undo step (if anything actually changed) and
@@ -1756,7 +2081,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Serialize just the structure (tracks), with the playhead normalized out, so history compares
     // and restores structure only — the live playhead is preserved across undo/redo.
     private string StructuralSnapshot()
-        => new InterpoleDocument { Title = Document.Title, Tracks = Document.Tracks, Playhead = 0 }.Serialize();
+        => new InterpoleDocument { Title = Document.Title, Tracks = Document.Tracks, Markers = Document.Markers, Playhead = 0 }.Serialize();
 
     private void PushUndo()
     {
@@ -1793,6 +2118,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         var snap = InterpoleDocument.Parse(json);
         Document.Title = snap.Title;
         Document.Tracks = snap.Tracks;         // playhead intentionally left as-is
+        Document.Markers = snap.Markers;       // markers are structural too (undo/redo covers them)
 
         _drag = DragMode.None;
         _dragClipId = null;
@@ -1896,6 +2222,26 @@ public sealed class InterpoleEditorWidget : IDisposable
             _playAccum -= advance;
         }
         if (advance <= 0) return;
+
+        // Halt on a "stop" marker the playhead is about to cross this frame: park on it and stop, as if
+        // Stop were pressed there. Checked before the wrap/end logic. When looping, only the span up to
+        // the loop-out is crossed linearly (it wraps at lo), so markers beyond it don't count this step.
+        // Markers strictly after the current frame qualify, so playback can resume off a stop marker.
+        {
+            long target = (long)Document.Playhead + advance;
+            int scanEnd = _loop
+                ? (int)Math.Min(target, (long)Document.EffectiveLoop().outFrame)
+                : (int)Math.Min(target, (long)end);
+            int stopAt = Document.EarliestStopMarkerIn(Document.Playhead, scanEnd);
+            if (stopAt >= 0)
+            {
+                Document.Playhead = stopAt;
+                _playing = false;
+                _playAccum = 0f;
+                Changed?.Invoke();
+                return;
+            }
+        }
 
         long np = (long)Document.Playhead + advance;
         if (_loop)

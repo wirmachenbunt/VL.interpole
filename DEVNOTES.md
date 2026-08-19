@@ -402,14 +402,21 @@ Everything is computed each frame from `_origin` + these constants:
 TransportHeight   transport toolbar (top, full width)
 RulerHeight       frame ruler
 LoopStripHeight   loop-range ribbon, carved from the TOP of the ruler
+MarkerLaneHeight  marker strip, between the ruler and the track lanes
 HeaderWidth       track-name column (left)
 TrackHeight       one lane
 
-_rulerTop   = _origin.Y + TransportHeight
-_loopBottom = _rulerTop + LoopStripHeight   (loop strip = [_rulerTop, _loopBottom); scrub/labels below)
-_lanesTop   = _rulerTop + RulerHeight
-_laneLeft   = _origin.X + HeaderWidth
+_rulerTop    = _origin.Y + TransportHeight
+_loopBottom  = _rulerTop + LoopStripHeight    (loop strip = [_rulerTop, _loopBottom); scrub/labels below)
+_rulerBottom = _rulerTop + RulerHeight        (ruler ends here; scrub band = [_loopBottom, _rulerBottom))
+_lanesTop    = _rulerBottom + MarkerLaneHeight (marker lane = [_rulerBottom, _lanesTop); tracks below)
+_laneLeft    = _origin.X + HeaderWidth
 ```
+
+The marker lane was slotted in by keeping `_lanesTop` meaning "top of the track lanes" (so all the
+track / clip math is untouched) and introducing `_rulerBottom` = the *old* `_lanesTop` for the ruler's
+own bottom. The lane simply pushes the tracks down by `MarkerLaneHeight`; `ClampScroll`'s view height
+subtracts it too. Cheapest possible insertion — the only track-side change was the `_lanesTop` formula.
 
 Time transform: `FrameToX(f) = _laneLeft + f*_pxPerFrame - _scrollX`; inverse `XToFrame`.
 Vertical: `TrackTop(i) = _lanesTop + i*TrackHeight - _scrollY`. Each region draws inside its
@@ -417,6 +424,50 @@ own `dl.PushClipRect(...)` so nothing bleeds across the dividers. Interaction is
 hit-testing over one big `InvisibleButton`; the only real ImGui widget used is the `InputText`
 overlay for inline rename (same trick as Automata — `HandleInteraction` is skipped while an
 inline edit is open).
+
+## Markers (2026-08-19)
+
+Named points on the frame axis in a **global** lane below the ruler (not per-track). `MarkerData`
+(`Id`/`Name`/`Frame`/`Stop`) lives in `InterpoleDocument.Markers` — default empty and absent from
+old JSON, so back-compat is free. Decisions worth remembering:
+
+- **Creation asks first.** Unlike clips/tracks (inline rename *after* placing), a marker needs a
+  name **and** a "stop playback" checkbox up front, so it uses the codebase's **first real ImGui
+  modal** (`BeginPopupModal`, `DrawMarkerDialog`) instead of the `InputText` overlay. Nothing is
+  added until **OK**; the same modal edits an existing marker (double-click). It also carries a
+  **colour** row (`MarkerData.Color`, an index into the shared `InterpolePalette`, drawn as ImGui
+  `ColorButton`s) so markers recolour like clips. `_markerDialogOpen`
+  gates `HandleInteraction`/`HandleShortcuts` the same way `_editKind` does for inline rename.
+  Gotcha: ImGui.NET has **no `BeginPopupModal(string, flags)` overload** — must pass `ref bool` (we
+  feed a throwaway `keepOpen`; the title-bar X just flips it and `IsPopupOpen` closes us next frame).
+- **Edit gestures mirror clips** (the user's call): drag to move (Shift-snaps via the shared
+  `Snap`/`CollectClipEdgeTargets`), double-click to edit, Alt/Middle-click to delete. New
+  `DragMode.MoveMarker`, intercepted before the clip-drag catch-all.
+- **Inspector editing.** Clicking a marker also selects it (`_selectedMarkerId`) — **mutually
+  exclusive** with a clip selection (each side clears the other) so the one panel edits exactly one
+  thing. `InspectorContents` checks the marker first and hands off to `MarkerInspector` (name / colour
+  / frame / stop / delete), reusing the clip inspector's commit conventions and shared name buffer.
+- **Lane height = `TrackHeight`** (the user wanted it to match a track row). The pin itself is a fixed
+  `MarkerPinHeight` centred in the lane, so it stays a compact Unity-style pin instead of stretching.
+- **Undo covers markers.** `StructuralSnapshot` and `ApplySnapshot` now include `Markers`, so
+  add/move/edit/delete are undoable — matching clips. (The playhead/loop stay out of history as before.)
+- **Halt-on-marker** is in `AdvancePlayback`, checked *before* the wrap/end logic:
+  `Document.EarliestStopMarkerIn(from, scanEnd)` finds the earliest **stop** marker strictly after the
+  current frame and ≤ the frame we'd reach this step; if found, park there + `_playing=false` +
+  `Changed` (persist like Stop). When looping, `scanEnd` is clamped to the **loop-out** (it wraps at
+  `lo`, so markers past it aren't crossed on this pass). Strictly-after means you can **resume off** a
+  stop marker. The pin is drawn in its palette colour (Unity-style: rounded-top rect → point); since
+  colour is now user-chosen, **stop** is shown by a bright outline instead of a fixed red fill. Note:
+  a stop marker inside the loop region halts every pass — the user picked plain
+  "halt on the frame", not a loop-override; easy to revisit if that's annoying.
+- **`Marker` enum + `Jump` pin.** Markers populate a **dynamic enum** (`InterpoleMarker` /
+  `InterpoleMarkerDefinition`, the VL.HDE template shape) synced from the document every node
+  `Update` via `InterpoleMarkerDefinition.Sync(name→frame)` (only pulses its change-trigger when the
+  name set actually differs). A rising-edge `Jump` resolves the selected name **from the document**
+  (not the enum tag) → `SeekTo` + `Play`. **Caveat: the enum definition is an app-global singleton**
+  (vvvv's model), so multiple Interpole nodes share one dropdown reflecting whichever synced last —
+  fine for the single-timeline case, documented as a limitation. Jump reuses `Play()`, so with Loop
+  on and the marker outside the loop region, `OnTransport(Play)` snaps to loop-in first (edge case).
 
 ## Known issues / rough edges
 

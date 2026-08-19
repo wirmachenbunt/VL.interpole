@@ -110,6 +110,9 @@ public class InterpoleNode : IDisposable
     // the playhead once per press (to the current Time value).
     private bool _prevSet;
 
+    // Previous Jump-pin state, rising-edge detection for the marker jump (seek to marker + play).
+    private bool _prevJump;
+
     public InterpoleNode(NodeContext nodeContext)
     {
         _nc = nodeContext;
@@ -151,6 +154,12 @@ public class InterpoleNode : IDisposable
         // a bool. On the edge the playhead jumps to the current Time value (a programmatic scrub). It
         // does not stop playback: if playing, playback continues from the new frame.
         bool set,
+        // The marker to jump to — a dropdown of the timeline's current marker names (kept in sync with
+        // the editor's marker lane). Selecting one does nothing on its own; it takes effect on Jump.
+        InterpoleMarker? marker,
+        // Jump trigger, rising-edge (false→true): on the edge the playhead seeks to the selected
+        // Marker's frame and playback starts from there. A convenience over Time/Set for named cues.
+        bool jump,
         out ILayer? editor,
         // The playhead position in frames — the current time on the timeline. Same value the
         // ruler shows; advanced by playback and scrubbing.
@@ -218,12 +227,22 @@ public class InterpoleNode : IDisposable
             // Set (rising edge): jump the playhead to the current Time value. A one-shot seek — reads
             // Time only here, doesn't touch playback. Works in No UI Mode too (just sets the playhead).
             if (set && !_prevSet) _editor.SeekTo(time);
+            // Jump (rising edge): seek to the selected marker's frame and play from there. Resolves the
+            // frame from the document by name, so it works even if the enum lags a frame behind an edit.
+            if (jump && !_prevJump && marker is not null)
+            {
+                var target = _editor.Document.Markers.FirstOrDefault(m => m.Name == marker.Value);
+                if (target is not null) { _editor.SeekTo(target.Frame); _editor.Play(); }
+            }
             // Loop pin changed in the patch → drive the editor's loop state.
             if (loop != _prevLoop) { _editor.Loop = loop; _prevLoop = loop; }
             // Push the loop region only on a pin change, so a ribbon edit isn't stomped every frame.
             if (loopIn != _prevLoopIn || loopOut != _prevLoopOut) _editor.SetLoopFromPins(loopIn, loopOut);
+
+            // Keep the Marker dropdown's entries in step with the document (name → frame).
+            InterpoleMarkerDefinition.Sync(_editor.Document.Markers.Select(m => (m.Name, m.Frame)));
         }
-        _prevPlay = play; _prevStop = stop; _prevRewind = rewind; _prevSet = set;
+        _prevPlay = play; _prevStop = stop; _prevRewind = rewind; _prevSet = set; _prevJump = jump;
         _prevLoopIn = loopIn; _prevLoopOut = loopOut;
 
         // Playback + the per-frame advance run in BOTH modes (No UI Mode skips only rendering, not the
