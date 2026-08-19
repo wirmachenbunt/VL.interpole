@@ -43,6 +43,7 @@ Interpole/
 | in | `Set` | bool | **seek trigger**, rising edge (false→true) like the other transport pins — wire a bang or toggle a bool. On the edge the playhead jumps to the current `Time` value (a programmatic scrub). Does **not** stop playback (if playing, it continues from the new frame); works in **No UI Mode** too. |
 | in | `Marker` | InterpoleMarker (enum) | a **dropdown of the timeline's marker names**, kept in sync with the marker lane. Selecting one does nothing on its own — it's the target for `Jump`. (Dynamic enum; app-global, so with several nodes it reflects whichever synced last.) |
 | in | `Jump` | bool | **marker jump trigger**, rising edge (false→true): on the edge the playhead **seeks to the selected `Marker`'s frame and starts playing** from there. A named-cue convenience over `Time`/`Set`. |
+| in | `Active State` | string | **follow an Automata state.** Wire VL.Automata's `GetActiveState` → here. Whenever this **changes** to a new state whose name **matches a marker**, Interpole seeks to that marker and plays — so an Automata state activating drives the timeline. Exact name match; empty / no match = nothing. Kept a plain string on purpose, so Interpole needs no reference to VL.Automata and any source can drive it. |
 | in | `No Background` | bool | **inspector-only** (`PinVisibility.Optional`). When true the editor canvas is transparent (fill + ImGui window background dropped) so the renderer shows through. Default false = opaque. |
 | in | `Fps` | int | **inspector-only** (`PinVisibility.Optional`). The timeline's frame rate: it drives **real-time playback** (below) *and* the **timecode** display. The model stays in integer frames. Default **60**; clamped `>= 1`. |
 | in | `Frame Step Playback` | bool | **inspector-only** (`PinVisibility.Optional`). Playback timing mode. Default **false** = real-time: the playhead advances by elapsed time × `Fps`, so one second of playback is one wall-clock second regardless of render rate. **true** = legacy: advance one frame per rendered frame (bound to the renderer's FPS). Independent of the stopwatch ruler toggle. |
@@ -52,6 +53,7 @@ Interpole/
 | out | `Active Clip Name` | Spread&lt;string&gt; | per track (aligned by track order): the label of the clip covering the playhead, or `""` in a gap. |
 | out | `Clip Frame` | Spread&lt;int&gt; | per track: the playhead's **0-based** position *within* the active clip (`playhead - clip.Start`; `0` at its first frame, `Length-1` at its last), or `-1` in a gap. |
 | out | `Clip Length` | Spread&lt;int&gt; | per track: the active clip's total length in frames, or `-1` in a gap. |
+| out | `Active Clip Progress` | Spread&lt;float&gt; | per track: the playhead's position within the active clip **normalized to `0..1`** — `0` at its first frame, `1` at its last (`Clip Frame / (Clip Length − 1)`); `0` in a gap and for a 1-frame clip. Aligned with the other per-track spreads. |
 | out | `Fade Gain` | Spread&lt;float&gt; | per track: the active clip's fade envelope at the playhead — `0..1`, ramping through the fade-in/out and `1` in between; `0` in a gap. |
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
@@ -257,14 +259,18 @@ Done:
   playback** (shown with a bright outline) when the playhead reaches them. Markers are undoable and
   persist in `Data`; they populate the **`Marker`** enum pin, and a rising-edge **`Jump`** seeks to the
   selected marker and plays from there.
+- **Follow an Automata state** — an `Active State` string input: wire VL.Automata's `GetActiveState`
+  into it, and whenever the active state changes to one whose **name matches a marker**, Interpole
+  seeks to that marker and plays. This is where the two plugins meet — decoupled by design (a plain
+  string, no cross-plugin reference), so any string source can drive it.
 - **One-cable `Info` output** — an `InterpoleInfo` record bundling all the value outputs (Current
   Frame, Is Playing, and the per-track spreads) so a patch can route the whole timeline state on a
   single wire, then unpack with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter
   nodes. Mirrors VL.Automata's `AutomataInfo`. Audio stays on its own pin.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
-  `Time` / `Set` / `Marker` / `Jump` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` /
-  `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` / `Audio` / `Info`
-  out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
+  `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` /
+  `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /
+  `Upcoming Clip Names` / `Audio` / `Info` out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).

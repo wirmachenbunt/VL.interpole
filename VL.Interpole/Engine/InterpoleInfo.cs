@@ -26,6 +26,9 @@ public sealed record InterpoleInfo(
     Spread<int> ClipFrame,
     // Per track: the active clip's total length in frames, or -1 in a gap.
     Spread<int> ClipLength,
+    // Per track: the playhead's position within the active clip normalized to 0..1 (0 at its first
+    // frame, 1 at its last), or 0 in a gap.
+    Spread<float> ClipProgress,
     // Per track: the active clip's fade envelope at the playhead (0..1), or 0 in a gap.
     Spread<float> FadeGain,
     // Per track: the active clip's palette colour, or transparent (alpha 0) in a gap.
@@ -38,5 +41,5 @@ public sealed record InterpoleInfo(
     public static readonly InterpoleInfo Empty = new(
         0, false,
         Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
-        Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty);
+        Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty);
 }

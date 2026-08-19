@@ -113,6 +113,10 @@ public class InterpoleNode : IDisposable
     // Previous Jump-pin state, rising-edge detection for the marker jump (seek to marker + play).
     private bool _prevJump;
 
+    // Previous Active State input, so following an Automata state fires once when it *changes* to a new
+    // state (not every frame it stays active). Starts "" so the first non-empty matching state fires.
+    private string _prevActiveState = "";
+
     public InterpoleNode(NodeContext nodeContext)
     {
         _nc = nodeContext;
@@ -160,6 +164,11 @@ public class InterpoleNode : IDisposable
         // Jump trigger, rising-edge (false→true): on the edge the playhead seeks to the selected
         // Marker's frame and playback starts from there. A convenience over Time/Set for named cues.
         bool jump,
+        // The active Automata state name to follow — wire VL.Automata's GetActiveState → here (kept a
+        // plain string on purpose, so this stays decoupled from VL.Automata and any source can drive it).
+        // Whenever this *changes* to a new state whose name matches a marker, Interpole seeks to that
+        // marker and plays — so an Automata state activating drives the timeline. Empty = follow nothing.
+        string? activeState,
         out ILayer? editor,
         // The playhead position in frames — the current time on the timeline. Same value the
         // ruler shows; advanced by playback and scrubbing.
@@ -179,6 +188,10 @@ public class InterpoleNode : IDisposable
         out Spread<string> activeClipName,
         out Spread<int> clipFrame,
         out Spread<int> clipLength,
+        //   clipProgress   — the playhead's position within the active clip normalized to 0..1
+        //                    (0 at its first frame, 1 at its last: clipFrame / (clipLength-1)), or 0
+        //                    in a gap (and 0 for a 1-frame clip). Same per-track alignment as the rest.
+        out Spread<float> clipProgress,
         out Spread<float> fadeGain,
         out Spread<Color4> activeColor,
         // Per track (aligned by track order): the name of that track's next clip to play — for
@@ -239,6 +252,19 @@ public class InterpoleNode : IDisposable
             {
                 var target = _editor.Document.Markers.FirstOrDefault(m => m.Name == marker.Value);
                 if (target is not null) { _editor.SeekTo(target.Frame); _editor.Play(); }
+            }
+            // Follow the active Automata state: when it changes to a new state whose name matches a
+            // marker, seek there and play (one-shot on the change, so it doesn't re-fire every frame).
+            // Re-entering a state (A→B→A) fires again because the value changed. Exact name match; no
+            // match → nothing. Independent of the Jump pin, so both can coexist.
+            if (activeState != _prevActiveState)
+            {
+                _prevActiveState = activeState ?? "";
+                if (!string.IsNullOrEmpty(activeState))
+                {
+                    var target = _editor.Document.Markers.FirstOrDefault(m => m.Name == activeState);
+                    if (target is not null) { _editor.SeekTo(target.Frame); _editor.Play(); }
+                }
             }
             // Loop pin changed in the patch → drive the editor's loop state.
             if (loop != _prevLoop) { _editor.Loop = loop; _prevLoop = loop; }
@@ -305,18 +331,18 @@ public class InterpoleNode : IDisposable
         // Domain outputs, evaluated at the (possibly just-advanced) playhead. Computed after the
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
-        EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor, out upcomingClipNames);
+        EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out clipProgress, out fadeGain, out activeColor, out upcomingClipNames);
 
         // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
         // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
-        info = new InterpoleInfo(currentFrame, isPlaying, activeClipName, clipFrame, clipLength, fadeGain, activeColor, upcomingClipNames);
+        info = new InterpoleInfo(currentFrame, isPlaying, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned
     // by track order, so index i corresponds to the same track across all of them.
     private void EvaluateOutputs(out int currentFrame, out Spread<string> names, out Spread<int> clipFrames,
-                                 out Spread<int> clipLengths, out Spread<float> gains, out Spread<Color4> colors,
-                                 out Spread<string> upcomingNames)
+                                 out Spread<int> clipLengths, out Spread<float> progresses, out Spread<float> gains,
+                                 out Spread<Color4> colors, out Spread<string> upcomingNames)
     {
         var doc = _editor?.Document;
         if (doc is null)
@@ -325,6 +351,7 @@ public class InterpoleNode : IDisposable
             names = Spread<string>.Empty;
             clipFrames = Spread<int>.Empty;
             clipLengths = Spread<int>.Empty;
+            progresses = Spread<float>.Empty;
             gains = Spread<float>.Empty;
             colors = Spread<Color4>.Empty;
             upcomingNames = Spread<string>.Empty;
@@ -343,6 +370,7 @@ public class InterpoleNode : IDisposable
         var nb = new SpreadBuilder<string>(doc.Tracks.Count);
         var fb = new SpreadBuilder<int>(doc.Tracks.Count);
         var lb = new SpreadBuilder<int>(doc.Tracks.Count);
+        var pb = new SpreadBuilder<float>(doc.Tracks.Count);
         var gb = new SpreadBuilder<float>(doc.Tracks.Count);
         var cb = new SpreadBuilder<Color4>(doc.Tracks.Count);
         var ub = new SpreadBuilder<string>(doc.Tracks.Count);
@@ -354,6 +382,7 @@ public class InterpoleNode : IDisposable
                 nb.Add("");
                 fb.Add(-1);   // sentinel: no active clip in this track at the playhead
                 lb.Add(-1);
+                pb.Add(0f);
                 gb.Add(0f);
                 cb.Add(new Color4(0f, 0f, 0f, 0f));
             }
@@ -363,6 +392,9 @@ public class InterpoleNode : IDisposable
                 nb.Add(clip.Label ?? "");
                 fb.Add(frame - clip.Start);   // 0-based position within the clip
                 lb.Add(clip.Length);          // total clip length in frames
+                // Normalized 0..1 across the clip's frames: 0 at the first, 1 at the last. A 1-frame
+                // clip has no span, so report 0. The playhead is always within the clip here.
+                pb.Add(clip.Length > 1 ? Math.Clamp((frame - clip.Start) / (float)(clip.Length - 1), 0f, 1f) : 0f);
                 gb.Add(clip.GainAt(frame));
                 cb.Add(new Color4(r, g, b, 1f));
             }
@@ -376,6 +408,7 @@ public class InterpoleNode : IDisposable
         names = nb.ToSpread();
         clipFrames = fb.ToSpread();
         clipLengths = lb.ToSpread();
+        progresses = pb.ToSpread();
         gains = gb.ToSpread();
         colors = cb.ToSpread();
         upcomingNames = ub.ToSpread();

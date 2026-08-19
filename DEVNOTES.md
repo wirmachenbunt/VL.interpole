@@ -469,6 +469,22 @@ old JSON, so back-compat is free. Decisions worth remembering:
   fine for the single-timeline case, documented as a limitation. Jump reuses `Play()`, so with Loop
   on and the marker outside the loop region, `OnTransport(Play)` snaps to loop-in first (edge case).
 
+## Following an Automata state (2026-08-20)
+
+The "where it all comes together" step: an `Active State` **string** input on the node. Each Update, if
+it **changed** since last frame and its value matches a marker name, the node `SeekTo`s that marker and
+`Play`s — an Automata state activating drives the Interpole playhead. Change-detection (`_prevActiveState`,
+starts `""`) makes it a one-shot per state change; re-entering a state (A→B→A) fires again because the
+string changed; exact name match; no match / empty → nothing. It's independent of the `Marker`/`Jump`
+pins (they can coexist).
+
+**Decoupling decision (the user's call):** kept a plain `string`, NOT an `AutomataInfo` input. A direct
+`AutomataInfo` pin would force VL.Interpole to hard-reference VL.Automata (they live in separate repos —
+`Documents/INTERPOLE` vs `Documents/AutomataX`), so Interpole couldn't build/load without it. The string
+delivers identical behaviour with zero coupling: in the patch you wire `Automata → GetActiveState →
+Interpole.Active State`, and any other string source works too. If a tighter one-wire integration is ever
+wanted, the clean route is a shared contract assembly both reference — not a direct cross-repo reference.
+
 ## One-cable `Info` output (2026-08-19)
 
 `InterpoleInfo` (`Engine/InterpoleInfo.cs`) is an immutable `record` bundling the node's value outputs
