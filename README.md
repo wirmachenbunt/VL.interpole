@@ -55,6 +55,7 @@ Interpole/
 | out | `Fade Gain` | Spread&lt;float&gt; | per track: the active clip's fade envelope at the playhead — `0..1`, ramping through the fade-in/out and `1` in between; `0` in a gap. |
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
+| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` is not bundled — it stays on its own pin as a live signal bus.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -256,10 +257,14 @@ Done:
   playback** (shown with a bright outline) when the playhead reaches them. Markers are undoable and
   persist in `Data`; they populate the **`Marker`** enum pin, and a rising-edge **`Jump`** seeks to the
   selected marker and plays from there.
+- **One-cable `Info` output** — an `InterpoleInfo` record bundling all the value outputs (Current
+  Frame, Is Playing, and the per-track spreads) so a patch can route the whole timeline state on a
+  single wire, then unpack with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter
+  nodes. Mirrors VL.Automata's `AutomataInfo`. Audio stays on its own pin.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
   `Time` / `Set` / `Marker` / `Jump` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` /
-  `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` out; inspector-only
-  `No Background`, `Fps`, `Frame Step Playback`.
+  `Clip Frame` / `Clip Length` / `Fade Gain` / `Active Color` / `Upcoming Clip Names` / `Audio` / `Info`
+  out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).

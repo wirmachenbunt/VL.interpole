@@ -190,6 +190,12 @@ public class InterpoleNode : IDisposable
         // every audio track, summed with its fade envelope + gain and played in sync with the playhead.
         // Stable regardless of which clips are active — wire it straight into VL.Audio's engine/output.
         out Spread<AudioSignal> audio,
+        // One-cable bundle of the value outputs above (Current Frame, Is Playing, and the per-track
+        // spreads) as a single immutable InterpoleInfo — pass "the whole timeline state" downstream on
+        // one wire and unpack only what you need (see the Get… splitter nodes). Built from the same
+        // computed values, so it costs one small record per frame and shares the spreads by reference.
+        // Audio is not included — it stays on its own pin as a live signal bus.
+        out InterpoleInfo info,
         // Inspector-only (like No Background). Frames per second the editor uses to derive
         // timecode for the "time / frames" ruler toggle — a display timebase only, it does not
         // change the model (which stays in integer frames). Default 60; clamped >= 1 in the editor.
@@ -300,6 +306,10 @@ public class InterpoleNode : IDisposable
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
         EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out fadeGain, out activeColor, out upcomingClipNames);
+
+        // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
+        // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
+        info = new InterpoleInfo(currentFrame, isPlaying, activeClipName, clipFrame, clipLength, fadeGain, activeColor, upcomingClipNames);
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned

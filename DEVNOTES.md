@@ -469,6 +469,18 @@ old JSON, so back-compat is free. Decisions worth remembering:
   fine for the single-timeline case, documented as a limitation. Jump reuses `Play()`, so with Loop
   on and the marker outside the loop region, `OnTransport(Play)` snaps to loop-in first (edge case).
 
+## One-cable `Info` output (2026-08-19)
+
+`InterpoleInfo` (`Engine/InterpoleInfo.cs`) is an immutable `record` bundling the node's value outputs
+(Current Frame, Is Playing, and the per-track spreads) so a patch can route the whole timeline state on
+one wire — a direct port of VL.Automata's `AutomataInfo`. It's a **snapshot**, not a live handle:
+`Update` builds a fresh record each frame from the values it already computed (`EvaluateOutputs`), so
+scalars are copied and the spreads are shared **by reference** (they're immutable) — one small record
+per frame, no list copying. Splitter getters (`GetTransport` / `GetActiveClips` / `GetUpcomingClips`,
+zero-field `[ProcessNode]`s that tolerate a null input) unpack it downstream, same convention as
+Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
+bus wired straight into VL.Audio, not information to route/unpack, so it keeps its own pin.
+
 ## Known issues / rough edges
 
 - **DPI: the editor renders 2× on 200% Windows scaling** (shared with Automata — see the
