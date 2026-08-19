@@ -412,11 +412,57 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRect(hmin, hmax, Col(0f, 0f, 0f, 0.55f), 2f);
     }
 
+    // Per-clip cache of the waveform's per-column min/max envelope, so it isn't recomputed every
+    // frame. The envelope as a function of clip-relative pixel is invariant to scroll/position — it
+    // depends only on the file's peaks, the trim (FileInPoint), the zoom (pxPerFrame), Fps and the
+    // clip length — so we rebuild only when one of those changes. Columns outside the file hold NaN.
+    private sealed class WaveEnvelope
+    {
+        public double FileInPoint;
+        public float PxPerFrame;
+        public int Fps;
+        public int LengthFrames;
+        public WaveformPeaks? Peaks;
+        public float[] Min = Array.Empty<float>();   // Min[d] = NaN → that column is outside the file
+        public float[] Max = Array.Empty<float>();
+    }
+    private readonly Dictionary<string, WaveEnvelope> _waveEnv = new();
+    // Above this width we don't cache: a very long clip zoomed in would need a huge array, and in that
+    // regime each column reads ~one bucket, so the direct path is already cheap. The cache earns its
+    // keep zoomed out, where the clip is few pixels wide but each column sums many buckets.
+    private const int WaveEnvMaxColumns = 100_000;
+
+    // The cached column envelope for a clip, rebuilt only when its key changes; null when the clip is
+    // too wide to cache (draw it directly then — see DrawWaveform).
+    private WaveEnvelope? GetWaveEnvelope(ClipData clip, WaveformPeaks peaks)
+    {
+        int cols = (int)MathF.Ceiling(clip.Length * _pxPerFrame) + 1;
+        if (cols > WaveEnvMaxColumns) { _waveEnv.Remove(clip.Id); return null; }
+
+        if (!_waveEnv.TryGetValue(clip.Id, out var e)) { e = new WaveEnvelope(); _waveEnv[clip.Id] = e; }
+        bool fresh = ReferenceEquals(e.Peaks, peaks) && e.FileInPoint == clip.FileInPoint
+                  && e.PxPerFrame == _pxPerFrame && e.Fps == _fps && e.LengthFrames == clip.Length
+                  && e.Min.Length == cols;
+        if (fresh) return e;
+
+        if (e.Min.Length != cols) { e.Min = new float[cols]; e.Max = new float[cols]; }
+        double secPerPx = 1.0 / (_pxPerFrame * _fps);   // file-seconds spanned by one screen pixel
+        for (int d = 0; d < cols; d++)
+        {
+            double tA = clip.FileInPoint + d * secPerPx;
+            if (peaks.Envelope(tA, tA + secPerPx, out float mn, out float mx)) { e.Min[d] = mn; e.Max[d] = mx; }
+            else e.Min[d] = float.NaN;
+        }
+        e.Peaks = peaks; e.FileInPoint = clip.FileInPoint; e.PxPerFrame = _pxPerFrame; e.Fps = _fps; e.LengthFrames = clip.Length;
+        return e;
+    }
+
     // Draw an audio clip's waveform as a per-pixel min/max envelope. Each screen column maps to the
     // file-time window it covers (from the clip's FileInPoint, at natural rate) and draws a vertical
     // line between that window's min and max sample. Columns past the file's end (a clip longer than
     // its media) are left blank. While the peaks are still decoding — or if the file is missing — a
-    // small status label is shown instead. The peak data comes from the async WaveformCache.
+    // small status label is shown instead. The peak data comes from the async WaveformCache; the
+    // per-column envelope from the frame-to-frame cache above (GetWaveEnvelope).
     private void DrawWaveform(ImDrawListPtr dl, ClipData clip, float x0, float x1, float y0, float y1)
     {
         var state = WaveformCache.Get(clip.FilePath!, out var peaks);
@@ -434,14 +480,34 @@ public sealed class InterpoleEditorWidget : IDisposable
         float vx0 = MathF.Max(x0, _laneLeft);
         float vx1 = MathF.Min(x1, LaneRight);
         uint wcol = Col(1f, 1f, 1f, 0.5f);
-        double secPerPx = 1.0 / (_pxPerFrame * _fps);   // file-seconds spanned by one screen pixel
+
+        var env = GetWaveEnvelope(clip, peaks);
+        if (env is not null)
+        {
+            // Index the cache by clip-relative pixel (d = x − clip-left), so scrolling never rebuilds it.
+            for (float x = vx0; x <= vx1; x += 1f)
+            {
+                int d = (int)(x - x0 + 0.5f);
+                if (d < 0 || d >= env.Min.Length) continue;
+                float mn = env.Min[d];
+                if (float.IsNaN(mn)) continue;   // column outside the file
+                float yTop = midY - env.Max[d] * halfH;
+                float yBot = midY - mn * halfH;
+                if (yBot - yTop < 1f) { yTop -= 0.5f; yBot += 0.5f; }   // keep near-silence visible
+                dl.AddLine(new Vector2(x, yTop), new Vector2(x, yBot), wcol, 1f);
+            }
+            return;
+        }
+
+        // Uncached fallback (clip too wide to cache; cheap in that zoomed-in regime).
+        double secPerPx = 1.0 / (_pxPerFrame * _fps);
         for (float x = vx0; x <= vx1; x += 1f)
         {
             double tA = clip.FileInPoint + (XToFrame(x) - clip.Start) / (double)_fps;
             if (!peaks.Envelope(tA, tA + secPerPx, out float mn, out float mx)) continue;
             float yTop = midY - mx * halfH;
             float yBot = midY - mn * halfH;
-            if (yBot - yTop < 1f) { yTop -= 0.5f; yBot += 0.5f; }   // keep near-silence visible
+            if (yBot - yTop < 1f) { yTop -= 0.5f; yBot += 0.5f; }
             dl.AddLine(new Vector2(x, yTop), new Vector2(x, yBot), wcol, 1f);
         }
     }
@@ -1755,6 +1821,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         tr.Clips.Remove(clip);
         _selection.Remove(clip.Id);
+        _waveEnv.Remove(clip.Id);   // drop any cached waveform envelope for this clip
         if (_selectedClipId == clip.Id) _selectedClipId = _selection.FirstOrDefault();
         Commit();
     }
@@ -1766,6 +1833,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         int removed = 0;
         foreach (var tr in Document.Tracks)
             removed += tr.Clips.RemoveAll(c => _selection.Contains(c.Id));
+        foreach (var id in _selection) _waveEnv.Remove(id);   // drop cached waveform envelopes
         _selection.Clear();
         _selectedClipId = null;
         if (removed > 0) Commit();

@@ -497,6 +497,33 @@ zero-field `[ProcessNode]`s that tolerate a null input) unpack it downstream, sa
 Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
 bus wired straight into VL.Audio, not information to route/unpack, so it keeps its own pin.
 
+## Rendering performance (2026-08-20)
+
+The editor is immediate-mode: every frame `InterpoleNode.Update` calls `_toSkia.Update(...)`, which
+re-runs the whole `Draw()` pass and re-tessellates it (No UI Mode skips exactly this). There's no
+partial cache *within* a frame. Two levers, in order of impact:
+
+- **Idle-skip rendering (biggest, not yet done).** Skip the ImGui frame when nothing changed (not
+  playing, no drag/edit/dialog, no hover change, pointer not over the editor, no resize, no waveform
+  just-decoded). The catch is "wake on input" gating — ImGui needs io pumped to stay responsive — so
+  it needs a real gamma test before shipping. This dwarfs everything else; the whole UI re-tessellates
+  every frame today.
+- **Waveform envelope cache (done).** `DrawWaveform` used to recompute a per-pixel min/max envelope
+  every frame (each column summing peak buckets — costly zoomed out on long files). Now `GetWaveEnvelope`
+  caches the per-column min/max per clip (`_waveEnv`, keyed by clip Id), rebuilt only when peaks /
+  FileInPoint / pxPerFrame / Fps / length change; drawing indexes it by **clip-relative pixel** so
+  scrolling never rebuilds it. Capped at `WaveEnvMaxColumns` (100k) — a very long clip zoomed in falls
+  back to direct drawing, which is cheap in that regime (≈one bucket per column). Cache entries are
+  dropped on clip delete. Output is pixel-identical to before.
+
+**Texture prerender — investigated, NOT viable here.** The obvious idea (render the waveform once to an
+`ImTextureID` and `dl.AddImage` one quad) doesn't work in this backend: an `ImTextureID` must be minted
+by the renderer, and VL.ImGui.Skia's `SkiaContext` (which owns `AddLayer`/`TextureId`) is **`internal`**
+— confirmed by compiling a probe against the pack (`SkiaContext.AddLayer(SkiaWidget, Vector2, Vector2)`,
+inaccessible). The only public route is the retained `SkiaWidget` (set `.Layer` to an `ILayer`), which
+clashes with our all-imperative draw-list editor. Don't retry the texture route without either an
+internal API opening up or a widget-tree rewrite.
+
 ## Known issues / rough edges
 
 - **DPI: the editor renders 2× on 200% Windows scaling** (shared with Automata — see the
