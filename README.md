@@ -143,7 +143,9 @@ Clips (lanes) — clips in a track can never overlap; all edits clamp to neighbo
 - **double-click** empty lane → add a clip there
 - **drag** a clip body → move it in time; **drag a selected clip** → move the **whole selection**
   together; **drag up/down onto another track** → move the clip(s) to that track (only when the
-  whole selection fits there without overlapping — otherwise it stays put and just slides in time)
+  whole selection fits there without overlapping — otherwise it stays put and just slides in time).
+  Clips can only move **between tracks of the same kind** — audio clips stay on audio tracks and
+  standard clips on standard tracks (the same restriction applies to paste)
 - **drag** a clip's **left/right edge** → resize it (min length 1 frame; resize stays single-clip)
 - **hold Shift** while moving/resizing → snap the clip edge to other clips' edges/fades, frame 0,
   or the **playhead** (a cyan guide marks the snap)

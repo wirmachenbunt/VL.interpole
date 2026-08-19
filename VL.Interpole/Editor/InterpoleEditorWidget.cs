@@ -316,7 +316,12 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             float top = TrackTop(i), bottom = top + TrackHeight;
             if (bottom < _lanesTop || top > LanesBottom) continue;
-            uint bg = (i % 2 == 0) ? Col(0.135f, 0.145f, 0.155f) : Col(0.115f, 0.125f, 0.135f);
+            // Audio-track rows are simply a little darker than standard rows (same neutral hue, no
+            // colour) so the two kinds read apart without a tint.
+            bool audio = Document.Tracks[i].Kind == TrackKind.Audio;
+            uint bg = (i % 2 == 0)
+                ? (audio ? Col(0.105f, 0.115f, 0.125f) : Col(0.135f, 0.145f, 0.155f))
+                : (audio ? Col(0.085f, 0.095f, 0.105f) : Col(0.115f, 0.125f, 0.135f));
             dl.AddRectFilled(new Vector2(_laneLeft, top), new Vector2(LaneRight, bottom), bg);
             dl.AddLine(new Vector2(_laneLeft, bottom), new Vector2(LaneRight, bottom), Col(0f, 0f, 0f, 0.35f));
         }
@@ -622,11 +627,15 @@ public sealed class InterpoleEditorWidget : IDisposable
             float top = TrackTop(i), bottom = top + TrackHeight;
             if (bottom < _lanesTop || top > LanesBottom) continue;
             var tr = Document.Tracks[i];
-            uint bg = (i % 2 == 0) ? Col(0.17f, 0.18f, 0.20f) : Col(0.15f, 0.16f, 0.18f);
+            bool audio = tr.Kind == TrackKind.Audio;
+            uint bg = (i % 2 == 0)
+                ? (audio ? Col(0.140f, 0.150f, 0.170f) : Col(0.17f, 0.18f, 0.20f))
+                : (audio ? Col(0.120f, 0.130f, 0.150f) : Col(0.15f, 0.16f, 0.18f));
             dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_laneLeft, bottom), bg);
             dl.AddLine(new Vector2(_origin.X, bottom), new Vector2(_laneLeft, bottom), Col(0f, 0f, 0f, 0.35f));
-            // accent tab — green for audio tracks, blue for standard, so the kinds read at a glance
-            uint accent = tr.Kind == TrackKind.Audio ? Col(0.25f, 0.72f, 0.55f) : Col(0.25f, 0.55f, 0.85f);
+            // accent tab — neutral grey for audio tracks (distinguished only by their darker rows),
+            // blue for standard.
+            uint accent = tr.Kind == TrackKind.Audio ? Col(0.42f, 0.44f, 0.48f) : Col(0.25f, 0.55f, 0.85f);
             dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5, bottom), accent);
             string name = string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name;
             var ts = IG.CalcTextSize(name);
@@ -1602,6 +1611,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             int ti = Document.Tracks.IndexOf(tr) + trackDelta;
             if (ti < 0 || ti >= Document.Tracks.Count) return false;
+            // Clips can't cross between audio and standard tracks — audio clips stay on audio tracks
+            // and vice versa. A destination of a different kind blocks the whole vertical shift.
+            if (Document.Tracks[ti].Kind != tr.Kind) return false;
             int s = clip.Start + timeDelta, e = s + clip.Length;
             if (s < 0) return false;
             foreach (var o in Document.Tracks[ti].Clips)
@@ -1890,6 +1902,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             if (e.TrackIndex >= Document.Tracks.Count) continue;   // track gone (fewer tracks now)
             var tr = Document.Tracks[e.TrackIndex];
+            // Keep the audio/standard invariant even if the track layout changed since copying: an
+            // audio clip only pastes onto an audio track and a standard clip only onto a standard one.
+            if ((tr.Kind == TrackKind.Audio) != (e.Clip.FilePath is not null)) continue;
             int start = baseStart + e.StartOffset;
 
             bool covered = false;
