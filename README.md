@@ -94,9 +94,10 @@ even in the renderer's **default** `Normalized` Space.
    to clear it. When no region is authored the bar is faint and spans the **whole content** (the
    default loop range). The playhead is scrubbed by clicking the ruler **below** the loop strip.
 3. **Marker lane** — a lane just below the ruler (same height as a track) holding named points on the
-   frame axis (global, not per-track), drawn as Unity-style pins in a chosen palette colour. Stop
-   markers get a bright outline (halt playback when reached). Double-click to create/edit, drag to
-   move, Alt/Middle to delete; **click a marker to edit it in the inspector**.
+   frame axis (global, not per-track), drawn as Unity-style pins in a chosen palette colour. A marker
+   can carry one **on-reach action**: Stop (bright outline — halts playback) or Jump to another marker
+   (chevron — seeks there and keeps playing). Double-click to create/edit, drag to move, Alt/Middle to
+   delete; **click a marker to edit it in the inspector**.
 4. **Clip lanes** (right) aligned with the **track-header column** (left).
 
 ### Inspector (right panel)
@@ -104,8 +105,8 @@ even in the renderer's **default** `Normalized` Space.
 A **collapsible inspector** on the right edits the **selected clip or marker** — it **starts
 collapsed**; click the ▸/◂ **strip** at the far right to open/close it. When several clips are selected
 it shows a count and edits the **primary** (last-clicked) clip. Selecting a marker (click it) gives the
-panel over to that marker instead, with fields for its **name**, **colour**, **frame**, **stop-playback**
-flag, and a **delete** button. For a clip it shows editable fields:
+panel over to that marker instead, with fields for its **name**, **colour**, **frame**, its **on-reach
+action** (**stop** or **jump to marker**), and a **delete** button. For a clip it shows editable fields:
 
 - **Name** (text)
 - **Color** (the 10-swatch palette)
@@ -122,13 +123,18 @@ Tracks (header column):
 
 Markers (the lane just below the ruler) — named points on the frame axis, global to the timeline:
 - **double-click** empty marker-lane space → a modal asks for a **name**, a **colour** (the shared
-  clip palette), and whether to **stop playback when reached**, then places the marker (Cancel adds nothing)
-- **double-click** a marker → re-open that modal to edit its name / colour / stop flag
+  clip palette), and an **on-reach action** — **stop playback** or **jump to marker** (mutually
+  exclusive) — then places the marker (Cancel adds nothing)
+- **double-click** a marker → re-open that modal to edit its name / colour / action
 - **drag** a marker → move it in time (hold **Shift** to snap to clip edges / the playhead)
 - **Alt-click** or **Middle-click** a marker → delete it
-- a **stop** marker (drawn with a bright outline) **halts playback** as the playhead reaches its frame
-  — like pressing Stop there; press Play again to continue past it. Plain markers are just cues. The
-  pin's fill is the marker's chosen palette colour.
+- a **stop** marker (bright outline) **halts playback** as the playhead reaches its frame — like
+  pressing Stop there; press Play again to continue past it.
+- a **jump** marker (chevron pointing the seek direction) **seeks to another marker and keeps playing**
+  when reached. A **backward** target (loop-back) repeats **forever** until something else moves the
+  playhead — a stop marker, an `Active State` change, `Set`/`Jump`, or Rewind. The target is stored by
+  reference, so it follows the target marker as you move or rename it.
+- markers with neither action are just cues. The pin's fill is always the marker's chosen palette colour.
 - markers are undoable (Ctrl+Z/Y), persist in the `Data` pin, and populate the `Marker` enum pin so
   the patch can **`Jump`** to one (seek + play)
 
@@ -257,10 +263,11 @@ Done:
   nothing. The seek doesn't stop playback and works in **No UI Mode** too.
 - **Markers** — named points on the frame axis in a lane below the ruler (global, not per-track),
   drawn as Unity-style pins in a chosen **palette colour**. Double-click to create (a modal asks name
-  + colour + **stop-playback**) or edit, drag to move, Alt/Middle to delete; **stop markers halt
-  playback** (shown with a bright outline) when the playhead reaches them. Markers are undoable and
-  persist in `Data`; they populate the **`Marker`** enum pin, and a rising-edge **`Jump`** seeks to the
-  selected marker and plays from there.
+  + colour + an **on-reach action**) or edit, drag to move, Alt/Middle to delete. A marker's action is
+  **stop** (bright outline — halts playback) or **jump to another marker** (chevron — seeks there and
+  keeps playing; a backward target loops forever until something else moves the playhead), mutually
+  exclusive. Markers are undoable and persist in `Data`; they populate the **`Marker`** enum pin, and a
+  rising-edge **`Jump`** pin seeks to the selected marker and plays from there.
 - **Follow an Automata state** — an `Active State` string input: wire VL.Automata's `GetActiveState`
   into it, and whenever the active state changes to one whose **name matches a marker**, Interpole
   seeks to that marker and plays. This is where the two plugins meet — decoupled by design (a plain

@@ -446,20 +446,32 @@ old JSON, so back-compat is free. Decisions worth remembering:
 - **Inspector editing.** Clicking a marker also selects it (`_selectedMarkerId`) — **mutually
   exclusive** with a clip selection (each side clears the other) so the one panel edits exactly one
   thing. `InspectorContents` checks the marker first and hands off to `MarkerInspector` (name / colour
-  / frame / stop / delete), reusing the clip inspector's commit conventions and shared name buffer.
+  / frame / on-reach action / delete), reusing the clip inspector's commit conventions and shared name
+  buffer. The on-reach action is **Stop or Jump-to-marker, mutually exclusive** (see below); both the
+  inspector and the create/edit modal enforce it (setting one clears the other's buffer/field).
 - **Lane height = `TrackHeight`** (the user wanted it to match a track row). The pin itself is a fixed
   `MarkerPinHeight` centred in the lane, so it stays a compact Unity-style pin instead of stretching.
 - **Undo covers markers.** `StructuralSnapshot` and `ApplySnapshot` now include `Markers`, so
   add/move/edit/delete are undoable — matching clips. (The playhead/loop stay out of history as before.)
-- **Halt-on-marker** is in `AdvancePlayback`, checked *before* the wrap/end logic:
-  `Document.EarliestStopMarkerIn(from, scanEnd)` finds the earliest **stop** marker strictly after the
-  current frame and ≤ the frame we'd reach this step; if found, park there + `_playing=false` +
-  `Changed` (persist like Stop). When looping, `scanEnd` is clamped to the **loop-out** (it wraps at
-  `lo`, so markers past it aren't crossed on this pass). Strictly-after means you can **resume off** a
-  stop marker. The pin is drawn in its palette colour (Unity-style: rounded-top rect → point); since
-  colour is now user-chosen, **stop** is shown by a bright outline instead of a fixed red fill. Note:
-  a stop marker inside the loop region halts every pass — the user picked plain
-  "halt on the frame", not a loop-override; easy to revisit if that's annoying.
+- **Action-on-marker** is in `AdvancePlayback`, checked *before* the wrap/end logic:
+  `Document.EarliestActionMarkerIn(from, scanEnd)` finds the earliest **action** marker (Stop *or*
+  Jump) strictly after the current frame and ≤ the frame we'd reach this step. Strictly-after means you
+  can **resume off / land back onto** an action marker without it re-firing the same frame. When
+  looping, `scanEnd` is clamped to the **loop-out** (it wraps at `lo`, so markers past it aren't crossed
+  on this pass).
+  - **Stop** (or a jump whose target was deleted): park on the frame + `_playing=false` + `Changed`
+    (persist like Stop). Drawn with a **bright outline** (the pin fill is the user-chosen palette colour,
+    so the action can't be the fill). A stop marker inside the loop region halts every pass — the user
+    picked plain "halt on the frame", not a loop-override.
+  - **Jump** (`MarkerData.JumpTargetId`, another marker's **Id** so it follows moves/renames): seek to
+    `Document.FrameOfMarker(target)` and keep playing. A **backward** target loops **forever** by design
+    — the only exits are the other transport paths that reseat the playhead (Stop marker, `Active State`
+    change, `Set`/`Jump` pins, Rewind), exactly as the user specified; no loop-count, no dedicated pin.
+    `_playAccum` is reset on the jump so this frame's fractional overshoot isn't carried across. Drawn
+    with a **chevron** pointing the seek direction (left = loop-back, right = forward skip).
+  - Stop and Jump are **mutually exclusive** per marker (`MarkerData.HasAction = Stop || JumpTargetId`);
+    the editor clears one when you set the other, and `RemoveMarker` clears any `JumpTargetId`
+    referencing the deleted marker so no jump dangles. Old docs (no `JumpTargetId`) load unchanged.
 - **`Marker` enum + `Jump` pin.** Markers populate a **dynamic enum** (`InterpoleMarker` /
   `InterpoleMarkerDefinition`, the VL.HDE template shape) synced from the document every node
   `Update` via `InterpoleMarkerDefinition.Sync(name→frame)` (only pulses its change-trigger when the

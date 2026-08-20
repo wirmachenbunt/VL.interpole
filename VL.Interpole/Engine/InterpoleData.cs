@@ -47,16 +47,27 @@ public sealed class InterpoleDocument
         return (0, ContentEnd());
     }
 
-    // The earliest "stop" marker strictly after 'from' and at or before 'to' (a half-open scan of the
-    // interval the playhead is about to cross this frame), or -1 if none. Used by playback to park the
-    // playhead on a stop-marker and halt. Ignores markers with Stop unset (plain labels never stop).
-    public int EarliestStopMarkerIn(int from, int to)
+    // The earliest marker carrying a playback action (Stop or Jump) strictly after 'from' and at or
+    // before 'to' — a half-open scan of the interval the playhead is about to cross this frame — or
+    // null if none. Playback uses it to halt on a stop marker or seek on a jump marker. Plain labelled
+    // markers (no action) are ignored. Strictly-after 'from' means the playhead can sit on / resume off
+    // an action marker without immediately re-triggering it.
+    public MarkerData? EarliestActionMarkerIn(int from, int to)
     {
-        int best = -1;
+        MarkerData? best = null;
         foreach (var m in Markers)
-            if (m.Stop && m.Frame > from && m.Frame <= to && (best < 0 || m.Frame < best))
-                best = m.Frame;
+            if (m.HasAction && m.Frame > from && m.Frame <= to && (best is null || m.Frame < best.Frame))
+                best = m;
         return best;
+    }
+
+    // The frame of the marker with the given Id, or -1 if there is no such marker. Used to resolve a
+    // jump marker's target (stored by Id so it follows the target as it is moved / renamed).
+    public int FrameOfMarker(string id)
+    {
+        foreach (var m in Markers)
+            if (m.Id == id) return m.Frame;
+        return -1;
     }
 
     private static readonly JsonSerializerOptions Options = new()
@@ -206,9 +217,11 @@ public sealed class ClipData
 }
 
 // A named point on the frame axis, shown in the marker lane below the ruler. Global to the timeline
-// (not tied to a track). When Stop is true, playback halts as the playhead reaches Frame; otherwise
-// it is just a labelled cue. Also exposed to the patch as a dynamic-enum entry (name → Frame) so the
-// node's Jump input can seek to it. Serialized flat; back-compatible (whole list absent on old docs).
+// (not tied to a track). A marker can carry one playback action as the playhead reaches Frame: Stop
+// halts there, or JumpTargetId seeks to another marker and keeps playing (a jump / loop-back). The
+// two are mutually exclusive (the editor clears one when you set the other). With neither set it is
+// just a labelled cue. Also exposed to the patch as a dynamic-enum entry (name → Frame) so the node's
+// Jump input can seek to it. Serialized flat; back-compatible (whole list absent on old docs).
 public sealed class MarkerData
 {
     public string Id { get; set; } = "";
@@ -216,9 +229,18 @@ public sealed class MarkerData
     public int Frame { get; set; }
     // When true, the playhead stops on this marker's frame during playback.
     public bool Stop { get; set; }
+    // When non-empty, the Id of another marker: on reaching this marker's Frame during playback the
+    // playhead seeks to that target and keeps playing. A backward target loops forever until some other
+    // event moves the playhead (Stop, an Automata state change, a Set/Jump, Rewind). Mutually exclusive
+    // with Stop. Empty (and absent on markers written before this field existed) = no jump.
+    public string JumpTargetId { get; set; } = "";
     // Index into the shared clip palette (0..9), same as ClipData.Color. Out-of-range falls back to 0
     // (see InterpolePalette), so markers written before this field existed load as the default blue.
     public int Color { get; set; }
+
+    // True when crossing this marker does something to playback (halts or jumps) rather than just
+    // labelling the frame. Not serialized.
+    [JsonIgnore] public bool HasAction => Stop || !string.IsNullOrEmpty(JumpTargetId);
 }
 
 // The fixed clip palette — the single source of truth shared by the editor (swatches + clip fill)

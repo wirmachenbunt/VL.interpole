@@ -173,6 +173,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private int _markerDialogFrame;           // frame the new/edited marker sits on
     private string _markerNameBuffer = "";
     private bool _markerStopBuffer;
+    private string _markerJumpTargetBuffer = "";  // jump-to marker Id chosen in the dialog ("" = none)
     private int _markerColorBuffer;           // palette index chosen in the dialog
 
     // ---- undo / redo ----
@@ -855,13 +856,45 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (fr.done) Commit();
 
         IG.Spacing();
+        IG.TextDisabled("On reach");
+
+        // Stop and Jump are mutually exclusive actions: setting one clears the other.
         bool stop = m.Stop;
-        if (IG.Checkbox("Stop playback when reached", ref stop)) { m.Stop = stop; Commit(); }
+        if (IG.Checkbox("Stop playback when reached", ref stop))
+        {
+            m.Stop = stop;
+            if (stop) m.JumpTargetId = "";
+            Commit();
+        }
+
+        // Jump: seek to another marker and keep playing. A backward target loops forever until some
+        // other event (Stop / Automata state change / Set / Rewind) moves the playhead elsewhere.
+        IG.Text("Jump to marker");
+        IG.SetNextItemWidth(-1f);
+        if (IG.BeginCombo("##inspMkJump", MarkerLabel(FindMarker(m.JumpTargetId))))
+        {
+            if (IG.Selectable("(none)", string.IsNullOrEmpty(m.JumpTargetId)))
+            { m.JumpTargetId = ""; Commit(); }
+            foreach (var t in Document.Markers)
+            {
+                if (t.Id == m.Id) continue;   // a marker can't jump to itself
+                if (IG.Selectable(MarkerLabel(t) + "##" + t.Id, m.JumpTargetId == t.Id))
+                { m.JumpTargetId = t.Id; m.Stop = false; Commit(); }
+            }
+            IG.EndCombo();
+        }
 
         IG.Spacing();
         IG.Separator();
         if (IG.Button("Delete marker", new Vector2(-1f, 0f))) { RemoveMarker(m); _selectedMarkerId = null; }
     }
+
+    // A human label for a marker in menus/combos: its name, or a frame-tagged placeholder when unnamed,
+    // or "(none)" for a missing/unset reference. Used by the marker inspector's Jump-to dropdown.
+    private static string MarkerLabel(MarkerData? m)
+        => m is null ? "(none)"
+         : !string.IsNullOrWhiteSpace(m.Name) ? m.Name
+         : "(unnamed @" + m.Frame + ")";
 
     // A labelled numeric field shown in frames or seconds (per the ruler mode). Returns the new
     // frame value, whether it changed this frame, and whether the edit just finished (for Commit).
@@ -1942,8 +1975,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     // ============================== markers ==============================
 
     // The marker lane sits in [_rulerBottom, _lanesTop): a full-width strip of named points on the
-    // frame axis (global, not per-track). Each marker is a stem + a little flag with its label; "stop"
-    // markers are red with a notch at the bottom, plain markers amber. Hover/drag brightens one.
+    // frame axis (global, not per-track). Each marker is a palette-coloured Unity-style pin with its
+    // label; action markers add a bright accent — a full outline for Stop, a direction chevron for
+    // Jump. Hover/drag brightens one.
     private void DrawMarkerLane(ImDrawListPtr dl, Vector2 mouse)
     {
         float top = _rulerBottom, bottom = _lanesTop;
@@ -1970,7 +2004,9 @@ public sealed class InterpoleEditorWidget : IDisposable
             float mkMid = mkTop + MarkerPinHeight * 0.6f;
             dl.AddRectFilled(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkMid), col, 1.5f, ImDrawFlags.RoundCornersTop);
             dl.AddTriangleFilled(new Vector2(x - mkHW, mkMid), new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), col);
-            // Stop markers get a bright outline so "stops playback" reads independently of the fill colour.
+            // Action markers get a bright accent so the behaviour reads independently of the fill colour.
+            // Stop: a full outline around the pin. Jump: a chevron pointing the way the playhead seeks
+            // (left = a backward loop-back, right = a forward skip).
             if (m.Stop)
             {
                 uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
@@ -1979,6 +2015,18 @@ public sealed class InterpoleEditorWidget : IDisposable
                 dl.AddLine(new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), ring, 1.5f);
                 dl.AddLine(new Vector2(x, mkBot), new Vector2(x - mkHW, mkMid), ring, 1.5f);
                 dl.AddLine(new Vector2(x - mkHW, mkMid), new Vector2(x - mkHW, mkTop), ring, 1.5f);
+            }
+            else if (!string.IsNullOrEmpty(m.JumpTargetId))
+            {
+                uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
+                int tgt = Document.FrameOfMarker(m.JumpTargetId);
+                bool back = tgt >= 0 && tgt < m.Frame;   // loop-back vs forward skip
+                float cy = mkTop + MarkerPinHeight * 0.30f;
+                const float a = 3.5f;
+                float tipX = back ? x - a * 0.5f : x + a * 0.5f;
+                float tailX = back ? x + a * 0.5f : x - a * 0.5f;
+                dl.AddLine(new Vector2(tailX, cy - a), new Vector2(tipX, cy), ring, 1.5f);
+                dl.AddLine(new Vector2(tipX, cy), new Vector2(tailX, cy + a), ring, 1.5f);
             }
 
             if (!string.IsNullOrEmpty(m.Name))
@@ -2031,17 +2079,19 @@ public sealed class InterpoleEditorWidget : IDisposable
         _markerDialogFrame = Math.Max(0, (int)MathF.Round(frameF));
         _markerNameBuffer = "marker " + (Document.Markers.Count + 1);
         _markerStopBuffer = false;
+        _markerJumpTargetBuffer = "";
         _markerColorBuffer = 4;   // orange by default, distinct from the default blue clip
         _markerDialogOpen = _markerDialogRequestOpen = _markerDialogFocus = true;
     }
 
-    // Open the same modal to edit an existing marker (name + stop).
+    // Open the same modal to edit an existing marker (name, colour, and the Stop/Jump action).
     private void OpenEditMarkerDialog(MarkerData m)
     {
         _markerDialogId = m.Id;
         _markerDialogFrame = m.Frame;
         _markerNameBuffer = m.Name ?? "";
         _markerStopBuffer = m.Stop;
+        _markerJumpTargetBuffer = m.JumpTargetId ?? "";
         _markerColorBuffer = m.Color;
         _markerDialogOpen = _markerDialogRequestOpen = _markerDialogFocus = true;
     }
@@ -2057,12 +2107,20 @@ public sealed class InterpoleEditorWidget : IDisposable
                 Name = name,
                 Frame = Math.Max(0, _markerDialogFrame),
                 Stop = _markerStopBuffer,
+                JumpTargetId = _markerStopBuffer ? "" : _markerJumpTargetBuffer,
                 Color = _markerColorBuffer,
             });
         else
         {
             var m = FindMarker(_markerDialogId);
-            if (m is not null) { m.Name = name; m.Stop = _markerStopBuffer; m.Color = _markerColorBuffer; }
+            // Stop and Jump are mutually exclusive actions; the dialog keeps the buffers consistent.
+            if (m is not null)
+            {
+                m.Name = name;
+                m.Stop = _markerStopBuffer;
+                m.JumpTargetId = _markerStopBuffer ? "" : _markerJumpTargetBuffer;
+                m.Color = _markerColorBuffer;
+            }
         }
         Commit();
     }
@@ -2071,6 +2129,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         Document.Markers.Remove(m);
         if (_selectedMarkerId == m.Id) _selectedMarkerId = null;
+        // Drop any jump references to the marker just removed, so no marker points at a gone target.
+        foreach (var other in Document.Markers)
+            if (other.JumpTargetId == m.Id) other.JumpTargetId = "";
         Commit();
     }
 
@@ -2101,8 +2162,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         m.Frame = f;
     }
 
-    // The marker create/edit modal: a name field + a "stop playback" checkbox. Shown before a new
-    // marker is placed and reused to edit an existing one. Managed as an ImGui popup so it captures
+    // The marker create/edit modal: name, colour, and the on-reach action (Stop or Jump-to-marker,
+    // mutually exclusive). Shown before a new marker is placed and reused to edit an existing one.
+    // Managed as an ImGui popup so it captures
     // input while open; _markerDialogOpen gates the editor's own interaction/shortcuts meanwhile.
     private void DrawMarkerDialog()
     {
@@ -2138,7 +2200,27 @@ public sealed class InterpoleEditorWidget : IDisposable
             }
             IG.Dummy(new Vector2(0f, 4f));
 
-            IG.Checkbox("Stop playback when reached", ref _markerStopBuffer);
+            // Stop and Jump are mutually exclusive actions on reaching the marker: setting one clears
+            // the other's buffer so OK never commits both.
+            if (IG.Checkbox("Stop playback when reached", ref _markerStopBuffer) && _markerStopBuffer)
+                _markerJumpTargetBuffer = "";
+
+            IG.Dummy(new Vector2(0f, 2f));
+            IG.TextDisabled("Jump to marker");
+            IG.SetNextItemWidth(240f);
+            if (IG.BeginCombo("##mkJump", MarkerLabel(FindMarker(_markerJumpTargetBuffer))))
+            {
+                if (IG.Selectable("(none)", string.IsNullOrEmpty(_markerJumpTargetBuffer)))
+                    _markerJumpTargetBuffer = "";
+                foreach (var t in Document.Markers)
+                {
+                    if (t.Id == _markerDialogId) continue;   // a marker can't jump to itself
+                    if (IG.Selectable(MarkerLabel(t) + "##" + t.Id, _markerJumpTargetBuffer == t.Id))
+                    { _markerJumpTargetBuffer = t.Id; _markerStopBuffer = false; }
+                }
+                IG.EndCombo();
+            }
+
             IG.Dummy(new Vector2(0f, 6f));
             bool ok = IG.Button("OK", new Vector2(100f, 0f)) || enter;
             IG.SameLine();
@@ -2306,19 +2388,31 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
         if (advance <= 0) return;
 
-        // Halt on a "stop" marker the playhead is about to cross this frame: park on it and stop, as if
-        // Stop were pressed there. Checked before the wrap/end logic. When looping, only the span up to
-        // the loop-out is crossed linearly (it wraps at lo), so markers beyond it don't count this step.
-        // Markers strictly after the current frame qualify, so playback can resume off a stop marker.
+        // Act on the earliest action marker the playhead is about to cross this frame — checked before
+        // the wrap/end logic. When looping, only the span up to the loop-out is crossed linearly (it
+        // wraps at lo), so markers beyond it don't count this step. Markers strictly after the current
+        // frame qualify, so playback can resume off (or jump straight back onto) an action marker.
         {
             long target = (long)Document.Playhead + advance;
             int scanEnd = _loop
                 ? (int)Math.Min(target, (long)Document.EffectiveLoop().outFrame)
                 : (int)Math.Min(target, (long)end);
-            int stopAt = Document.EarliestStopMarkerIn(Document.Playhead, scanEnd);
-            if (stopAt >= 0)
+            var action = Document.EarliestActionMarkerIn(Document.Playhead, scanEnd);
+            if (action is not null)
             {
-                Document.Playhead = stopAt;
+                int jumpTo = action.Stop ? -1 : Document.FrameOfMarker(action.JumpTargetId);
+                if (jumpTo >= 0)
+                {
+                    // Jump marker: seek to the target marker's frame and keep playing. A backward target
+                    // loops forever until another event (Stop / state change / Set / Rewind) moves us.
+                    Document.Playhead = jumpTo;
+                    _playAccum = 0f;   // don't carry this frame's fractional overshoot across the jump
+                    Changed?.Invoke();
+                    return;
+                }
+                // Stop marker (or a jump whose target has been deleted): park on it and halt, as if Stop
+                // were pressed there.
+                Document.Playhead = action.Frame;
                 _playing = false;
                 _playAccum = 0f;
                 Changed?.Invoke();
