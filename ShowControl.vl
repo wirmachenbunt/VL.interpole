@@ -1,0 +1,94 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="IHFGpoY8y8WLBcY0yYUmGM" LanguageVersion="2025.7.4" Version="0.128">
+  <NugetDependency Id="SBuzDM1ZenWNUBqbztjfTL" Location="VL.CoreLib" Version="2025.7.4" />
+  <Patch Id="RKOQK76tJ0yOvLJ6R9mlJ7">
+    <Canvas Id="P9tGESOZ5OvP1fdNAba7Vl" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="J2ufd0m3WhLNF6Jt3SIIMF">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="VZkY586dEgBMOjChdrbr3F">
+        <Canvas Id="LypdcTQqp5KN0I0WecLfyD" CanvasType="Group">
+          <Node Bounds="193,120,245,19" Id="Pxl0EN9zU3SNlmWa4pr5aL">
+            <p:NodeReference LastCategoryFullName="Interpole" LastDependency="VL.Interpole.csproj">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Interpole" />
+            </p:NodeReference>
+            <Pin Id="KL9P415wAR2M8w8BDjd4dg" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DluHzbmzmYyQWRLkSuyc0R" Name="Data" Kind="InputPin" DefaultValue="{&#xD;&#xA;  &quot;Title&quot;: &quot;Interpole&quot;,&#xD;&#xA;  &quot;Tracks&quot;: [&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-1a8b8a54&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen01&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-df90ac1a&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen02&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-a52e1d8e&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen03&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-2830d07a&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;ScreenCenter&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: [&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-094205b5&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;CurrentSituation&quot;,&#xD;&#xA;          &quot;Start&quot;: 59,&#xD;&#xA;          &quot;Length&quot;: 107,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-a355faae&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_Intro&quot;,&#xD;&#xA;          &quot;Start&quot;: 166,&#xD;&#xA;          &quot;Length&quot;: 84,&#xD;&#xA;          &quot;Color&quot;: 5,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-1e2929ad&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_Supplier&quot;,&#xD;&#xA;          &quot;Start&quot;: 250,&#xD;&#xA;          &quot;Length&quot;: 84,&#xD;&#xA;          &quot;Color&quot;: 5,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-49b9787b&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_SupplierQ1&quot;,&#xD;&#xA;          &quot;Start&quot;: 334,&#xD;&#xA;          &quot;Length&quot;: 84,&#xD;&#xA;          &quot;Color&quot;: 7,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-788ececc&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_SupplierQ2&quot;,&#xD;&#xA;          &quot;Start&quot;: 418,&#xD;&#xA;          &quot;Length&quot;: 84,&#xD;&#xA;          &quot;Color&quot;: 7,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-f38ae154&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_Market&quot;,&#xD;&#xA;          &quot;Start&quot;: 502,&#xD;&#xA;          &quot;Length&quot;: 135,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        },&#xD;&#xA;        {&#xD;&#xA;          &quot;Id&quot;: &quot;cl-987f7800&quot;,&#xD;&#xA;          &quot;Label&quot;: &quot;Tasklist_MarketQ1&quot;,&#xD;&#xA;          &quot;Start&quot;: 637,&#xD;&#xA;          &quot;Length&quot;: 135,&#xD;&#xA;          &quot;Color&quot;: 0,&#xD;&#xA;          &quot;FadeIn&quot;: 0,&#xD;&#xA;          &quot;FadeOut&quot;: 0,&#xD;&#xA;          &quot;FileInPoint&quot;: 0,&#xD;&#xA;          &quot;Gain&quot;: 1&#xD;&#xA;        }&#xD;&#xA;      ]&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-c06ac03c&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen05&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-6800dd3f&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen06&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-40a6ed45&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Screen07&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    },&#xD;&#xA;    {&#xD;&#xA;      &quot;Id&quot;: &quot;tr-010c4a84&quot;,&#xD;&#xA;      &quot;Name&quot;: &quot;Mother&quot;,&#xD;&#xA;      &quot;Kind&quot;: 0,&#xD;&#xA;      &quot;Clips&quot;: []&#xD;&#xA;    }&#xD;&#xA;  ],&#xD;&#xA;  &quot;Markers&quot;: [],&#xD;&#xA;  &quot;Playhead&quot;: 16,&#xD;&#xA;  &quot;LoopIn&quot;: 0,&#xD;&#xA;  &quot;LoopOut&quot;: 0&#xD;&#xA;}" />
+            <Pin Id="A6lhpB9hA5NQFqUgf4deWr" Name="No UIMode" Kind="InputPin" />
+            <Pin Id="C0jMNiIT33vNtJEUZVQGml" Name="No Background" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JpOqy1MuvidPIa9b3iWizV" Name="Play" Kind="InputPin" />
+            <Pin Id="HJ7rEWBCNBZLBUrItdCy2O" Name="Stop" Kind="InputPin" />
+            <Pin Id="OouhkzrT8VMNdojTgFHLB3" Name="Rewind" Kind="InputPin" />
+            <Pin Id="JjvTO1vNF2wNvaAReCDu1Z" Name="Loop" Kind="InputPin" />
+            <Pin Id="AmZMWlSbEphL6voVqbpUPA" Name="Loop In" Kind="InputPin" />
+            <Pin Id="Ou7W9IbwEXuLu3NuErt0VQ" Name="Loop Out" Kind="InputPin" />
+            <Pin Id="UAnUHJ3OOF7NTcCxeo6S2G" Name="Time" Kind="InputPin" />
+            <Pin Id="Qttrd8m86TGPbRvVEmEMCE" Name="Set" Kind="InputPin" />
+            <Pin Id="COPA0HRIaQULlXt8W03j0L" Name="Marker" Kind="InputPin" />
+            <Pin Id="KdDEJgRXgVYOe6Ycd1QQmQ" Name="Jump" Kind="InputPin" />
+            <Pin Id="J6299ndjfl4MofMhDVQwiE" Name="Active State" Kind="InputPin" />
+            <Pin Id="V75NlTxEUjpMNRK6yQSgmm" Name="Editor" Kind="OutputPin" />
+            <Pin Id="NT0m9X6OK4DPjqffgFpv5a" Name="Current Frame" Kind="OutputPin" />
+            <Pin Id="KzNbGR9H9gWMQdLLb3H5LL" Name="Is Playing" Kind="OutputPin" />
+            <Pin Id="VKHDMouZtlNOPhgw3MrdGo" Name="Active Clip Name" Kind="OutputPin" />
+            <Pin Id="NqVGEMICIVeOdQ4qArPfJ8" Name="Clip Frame" Kind="OutputPin" />
+            <Pin Id="POpwRHLBkG5OEVrC6Ca7Er" Name="Clip Length" Kind="OutputPin" />
+            <Pin Id="KkiOaVWk5NdOlmupJTakcM" Name="Clip Progress" Kind="OutputPin" />
+            <Pin Id="K9oiWsRiqjeNvKJ9viZIZx" Name="Fade Gain" Kind="OutputPin" />
+            <Pin Id="OgUGminKAgoOZWAFFsOFHe" Name="Active Color" Kind="OutputPin" />
+            <Pin Id="Gt9enoYepFXPVB2IrAmcPW" Name="Upcoming Clip Names" Kind="OutputPin" />
+            <Pin Id="IKF8CswVo7KP2TuhaNHNhl" Name="Audio" Kind="OutputPin" />
+            <Pin Id="SnSXel941IWL01tixNKl8j" Name="Info" Kind="OutputPin" />
+            <Pin Id="HqBLq8xBuhILay7x9cgGjc" Name="Fps" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GSz8MagSVoSMGC92nJE90V" Name="Frame Step Playback" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="193,330,145,19" Id="TltQXF694vrO71Cy2z5wEZ">
+            <p:NodeReference LastCategoryFullName="Graphics.Skia" LastDependency="VL.Skia.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="PKO9FbBMA6yL0krGUcdqLT" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DBYyfFAnhs5P5XUDB8kHPL" Name="Bounds" Kind="InputPin" DefaultValue="450, 154, 1656, 446" IsHidden="true" />
+            <Pin Id="MjJkt59Y0ujL3DeXizpOiY" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UCyX4JeYo2NO9SraiPT35m" Name="Bound to Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="S2WQ1f8dsJ2LZlGHDeYrVM" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FLAFzD7keSDPCJlUtg7vIW" Name="Always On Top" Kind="InputPin" IsHidden="true" />
+            <Pin Id="I4eTdK7t4XJOvoQYeu9QC9" Name="Extend Into Title Bar" Kind="InputPin" IsHidden="true" />
+            <Pin Id="U34UpU4hJgzOsrhLbCdMGS" Name="Input" Kind="InputPin" />
+            <Pin Id="AjNBCgB3yAmOMAc7nEXmJB" Name="Title" Kind="InputPin" />
+            <Pin Id="VZEQaGfyQkoM04CWUbx9Cn" Name="Title Bar Interaction Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BvWzddu4PX6MnhxhuSsPgL" Name="Color" Kind="InputPin" />
+            <Pin Id="DX0AGlObfcYQFnQlfTYPIu" Name="Clear" Kind="InputPin" />
+            <Pin Id="C04D0xVUNEOPX3XYJbER94" Name="Space" Kind="InputPin" />
+            <Pin Id="Bjn8upbjlHQPRWHkINhYnQ" Name="Show Cursor" Kind="InputPin" />
+            <Pin Id="QHZZcMQPETcNofyMjifsdC" Name="VSync" Kind="InputPin" />
+            <Pin Id="Vz2k7g4PDakLJ2jEabtyO4" Name="Commands" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VnMydMi0paXMFAWArfxayR" Name="Enable Keyboard Shortcuts" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Qj0IzgPHOO4MCp6IL5O8kM" Name="Enabled" Kind="InputPin" />
+            <Pin Id="UAgT4U08ruVNgxchi3zgmq" Name="Form Bounds Notifications" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="C2HAJlc4yYUQVAOXfT25O8" Name="Form" Kind="OutputPin" />
+            <Pin Id="ISREJ0XCExyNm7BHNJOwmE" Name="ClientBounds" Kind="OutputPin" />
+            <Pin Id="RDa2ZVpB4qQMtwlInJgOCo" Name="Render Time" Kind="OutputPin" />
+          </Node>
+        </Canvas>
+        <Patch Id="KrGjlrfUg2JNdwDP3Ta3QL" Name="Create" />
+        <Patch Id="Kk2j7bGs6GIPtXT91CAlFg" Name="Update" />
+        <ProcessDefinition Id="GSK7H9Q7mktPFhgK0eZM65">
+          <Fragment Id="JYY1QRUv8I8ONo5h3wLa6P" Patch="KrGjlrfUg2JNdwDP3Ta3QL" Enabled="true" />
+          <Fragment Id="U2zBY5i2Fu6Mt4JQc6D65R" Patch="Kk2j7bGs6GIPtXT91CAlFg" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="Bbvqa6ocq4oQU9Arxjcn5E" Ids="V75NlTxEUjpMNRK6yQSgmm,U34UpU4hJgzOsrhLbCdMGS" />
+      </Patch>
+    </Node>
+  </Patch>
+  <ProjectDependency Location="./VL.Interpole/VL.Interpole.csproj" />
+  <NugetDependency Id="FhE3v0bTZ6EPHmMylQZYvc" Location="VL.Skia" Version="2025.7.4" />
+</Document>
