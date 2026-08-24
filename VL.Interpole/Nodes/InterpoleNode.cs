@@ -49,6 +49,17 @@ public class InterpoleNode : IDisposable
 
     private readonly NodeContext _nc;
 
+    // Two baked fonts: the system UI face at its normal size (index 0 → the default the widget draws
+    // with, so IG.GetFontSize() stays as today), plus the same face baked LARGE (index 1) for the
+    // timecode readout. ImGui glyphs are bitmaps — drawing the big readout from this large bake at its
+    // native size is crisp, where scaling the small default up was pixelated. Size is hecto-DIP
+    // (1 = 100 DIP). On non-Windows (Default null) → empty spread and VL.ImGui bakes its own default.
+    public const float ReadoutFontSize = 0.34f;   // big readout bake size; tune by eye
+    private static readonly Spread<FontConfig?> EditorFonts =
+        FontConfig.Default is { } def
+            ? new FontConfig?[] { def, def with { Size = ReadoutFontSize, Name = "readout" } }.ToSpread()
+            : Spread<FontConfig?>.Empty;
+
     // Wraps the ImGui editor widget as a Skia layer so the node outputs an ILayer directly —
     // no ToSkiaLayer node needed in the patch.
     private readonly ToSkiaLayer _toSkia = new();
@@ -301,7 +312,7 @@ public class InterpoleNode : IDisposable
         else
         {
             _editor.ShowBackground = !noBackground;
-            _toSkia.Update(_editor.Widget, dockingEnabled: false, fonts: Spread<FontConfig?>.Empty, fullscreenWindow: false, Style: null);
+            _toSkia.Update(_editor.Widget, dockingEnabled: false, fonts: EditorFonts, fullscreenWindow: false, Style: null);
             editor = _editorLayer;
         }
 

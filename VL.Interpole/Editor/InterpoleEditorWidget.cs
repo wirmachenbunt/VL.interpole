@@ -1067,6 +1067,14 @@ public sealed class InterpoleEditorWidget : IDisposable
         return (new Vector2(x1 - h, bmin.Y), new Vector2(x1, bmax.Y));
     }
 
+    // The larger baked font used for the playhead readout (font index 1 — see InterpoleNode.EditorFonts).
+    // Falls back to the default font when only one font is baked (e.g. no custom fonts on non-Windows).
+    private static ImFontPtr ReadoutFont()
+    {
+        var fonts = IG.GetIO().Fonts.Fonts;
+        return fonts.Size > 1 ? fonts[1] : IG.GetFont();
+    }
+
     private void DrawTransport(ImDrawListPtr dl, Vector2 mouse)
     {
         dl.AddRectFilled(_origin, new Vector2(LaneRight, _rulerTop), Col(0.16f, 0.17f, 0.19f));
@@ -1077,8 +1085,10 @@ public sealed class InterpoleEditorWidget : IDisposable
         string txt = _showTimecode
             ? FramesToTimecode(Document.Playhead, 1)   // step 1 => always show the frame subfield
             : Document.Playhead.ToString("000000", CultureInfo.InvariantCulture);
-        var font = IG.GetFont();
-        float sz = IG.GetFontSize() * ReadoutTextScale;
+        // Draw with the larger baked readout font (index 1) at its native size — crisp, where scaling
+        // the default font up was pixelated. ReadoutTextScale still trims it a touch if needed.
+        var font = ReadoutFont();
+        float sz = font.FontSize * ReadoutTextScale;
         var ts = font.CalcTextSizeA(sz, float.MaxValue, 0f, txt);
         dl.AddText(font, sz, new Vector2(_origin.X + ReadoutPadX, _origin.Y + (TransportHeight - ts.Y) * 0.5f), Col(0.85f, 0.9f, 0.95f), txt);
 
