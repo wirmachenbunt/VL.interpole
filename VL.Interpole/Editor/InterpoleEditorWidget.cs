@@ -100,10 +100,11 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _lanesTop;    // y where the track lanes begin (= _rulerBottom + MarkerLaneHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker, MoveTrack }
     private DragMode _drag;
     private string? _dragClipId;
     private string? _dragMarkerId;  // MoveMarker: the marker being dragged along the frame axis
+    private string? _dragTrackId;   // MoveTrack: the track header being dragged to reorder
     private float _dragGrabFrame;   // MoveClip: (mouseFrame - clip.Start) captured at grab
     private float _loopGrabFrame;   // LoopMove: (mouseFrame - LoopIn) captured at grab
     private bool _panning;
@@ -293,6 +294,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         DrawLoopBar(dl);
         DrawMarkerLane(dl, mouse);
         DrawHeaders(dl);
+        DrawTrackDragFeedback(dl);
         DrawPlayhead(dl);
         DrawSnapGuide(dl);
         DrawCorner(dl, mouse);
@@ -691,6 +693,22 @@ public sealed class InterpoleEditorWidget : IDisposable
         // column divider
         dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0f, 0f, 0f, 0.5f));
         dl.PopClipRect();
+    }
+
+    // While a track header is being dragged to reorder, tint its (live-reflowed) row across the full
+    // width and draw a bright insertion line at its top and bottom edges so the drop slot is obvious.
+    private void DrawTrackDragFeedback(ImDrawListPtr dl)
+    {
+        if (_drag != DragMode.MoveTrack) return;
+        int i = Document.Tracks.FindIndex(t => t.Id == _dragTrackId);
+        if (i < 0) return;
+        float top = TrackTop(i), bottom = top + TrackHeightOf(i);
+        if (bottom < _lanesTop || top > LanesBottom) return;
+        float ct = MathF.Max(top, _lanesTop), cb = MathF.Min(bottom, LanesBottom);   // clamp into the lanes viewport
+        dl.AddRectFilled(new Vector2(_origin.X, ct), new Vector2(LaneRight, cb), Col(0.30f, 0.55f, 0.85f, 0.16f));
+        uint line = Col(0.35f, 0.70f, 1f, 0.95f);
+        if (top >= _lanesTop) dl.AddLine(new Vector2(_origin.X, top), new Vector2(LaneRight, top), line, 2f);
+        if (bottom <= LanesBottom) dl.AddLine(new Vector2(_origin.X, bottom), new Vector2(LaneRight, bottom), line, 2f);
     }
 
     private void DrawCorner(ImDrawListPtr dl, Vector2 mouse)
@@ -1127,6 +1145,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag == DragMode.Marquee) { ContinueMarquee(mouse); return; }
         if (_drag is DragMode.LoopIn or DragMode.LoopOut or DragMode.LoopMove) { ContinueLoopDrag(mouse); return; }
         if (_drag == DragMode.MoveMarker) { ContinueMarkerDrag(mouse); return; }
+        if (_drag == DragMode.MoveTrack) { ContinueTrackDrag(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
         if (_panning)
         {
@@ -1262,6 +1281,8 @@ public sealed class InterpoleEditorWidget : IDisposable
                 if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditTrackName(tr);
                 else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
                     RemoveTrack(tr.Id);
+                else if (IG.IsMouseClicked(ImGuiMouseButton.Left))   // plain click-drag reorders the track
+                    { _drag = DragMode.MoveTrack; _dragTrackId = tr.Id; }
             }
             else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) AddTrack();
             return;
@@ -2209,6 +2230,35 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
         else _clipSnapActive = false;
         m.Frame = f;
+    }
+
+    // Drag a track header up/down to reorder it. The row under the cursor is the drop target; the
+    // dragged track is spliced into that slot live so lanes reflow beneath the mouse. A single Commit
+    // on release makes the whole reorder one undo step (unchanged order pushes no history).
+    private void ContinueTrackDrag(Vector2 mouse)
+    {
+        int from = Document.Tracks.FindIndex(t => t.Id == _dragTrackId);
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left) || from < 0)
+        {
+            _drag = DragMode.None;
+            _dragTrackId = null;
+            if (from >= 0) Commit();
+            return;
+        }
+
+        // Reorder only when the cursor crosses fully past the dragged row's top / bottom edge, so a
+        // plain click (cursor still inside its own row) never moves it and there's no mid-row jump.
+        // Loop the single-step swaps so a fast drag spanning several rows still keeps up.
+        while (from > 0 && mouse.Y < TrackTop(from))
+        {
+            (Document.Tracks[from - 1], Document.Tracks[from]) = (Document.Tracks[from], Document.Tracks[from - 1]);
+            from--;
+        }
+        while (from < Document.Tracks.Count - 1 && mouse.Y > TrackTop(from) + TrackHeightOf(from))
+        {
+            (Document.Tracks[from + 1], Document.Tracks[from]) = (Document.Tracks[from], Document.Tracks[from + 1]);
+            from++;
+        }
     }
 
     // The marker create/edit modal: name, colour, and the on-reach action (Stop or Jump-to-marker,
