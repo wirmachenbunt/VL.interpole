@@ -90,6 +90,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
     private const double CorrectionTau = 0.4;    // seconds — larger = gentler correction
     private const double HardSyncSec = 0.15;     // drift beyond this snaps (Play / seek / loop wrap)
     private const double ReseekTolSec = 0.004;   // a source is "still aligned" within this of expected
+    private const double PreloadSec = 2.0;       // open + warm a clip's file this far ahead of its start
 
     // The current clip layout + transport (main thread writes, audio thread reads). Reference
     // assignment is atomic; volatile makes the audio thread see the latest.
@@ -121,6 +122,15 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
 
         var t = _transport;
         PruneSources(t);
+
+        // Preload upcoming clips: open + warm their file (off the audio thread) before playback reaches
+        // them, so the source is Ready and OS-cached in time — this is what kills the first-play click.
+        // Anchored on the current audio position when playing, else the parked playhead (so a clip near a
+        // stopped playhead is primed before Play is pressed).
+        double anchor = t.Playing ? _audioPosSec : t.TargetSec;
+        foreach (var clip in t.Clips)
+            if (clip.EndSec > anchor - 0.25 && clip.StartSec < anchor + PreloadSec)
+                EnsureSource(clip);
 
         if (!t.Playing || t.Clips.Count == 0)
         {
@@ -205,7 +215,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
             src.Dispose();                 // same clip now points at a different file
             _sources.Remove(clip.Key);
         }
-        var created = new AudioClipSource(clip.FilePath);
+        var created = new AudioClipSource(clip.FilePath, clip.InPointSec);
         _sources[clip.Key] = created;
         return created;
     }
@@ -258,9 +268,18 @@ internal sealed class AudioClipSource : IDisposable
     // NaN means "unknown — reseek before reading".
     public double NextTimelineSec = double.NaN;
 
-    public AudioClipSource(string filePath)
+    // Declick: samples produced since the last discontinuity (seek / first start). While below the ramp
+    // length (~5 ms, computed from the engine rate in ReadFrames) the output is faded up from zero, so
+    // playback never steps straight from silence onto a non-zero sample. Starts "done" (no ramp) until a
+    // Seek arms it. Audio-thread only.
+    private int _declickPos = int.MaxValue;
+
+    private readonly double _primeFileSec;   // file position warm-read on open (the clip's in-point)
+
+    public AudioClipSource(string filePath, double primeFileSec = 0)
     {
         FilePath = filePath;
+        _primeFileSec = primeFileSec;
         Task.Run(Open);
     }
 
@@ -269,7 +288,6 @@ internal sealed class AudioClipSource : IDisposable
         try
         {
             var reader = new AudioFileReader(FilePath);
-            _reader = reader;
             _channels = Math.Max(1, reader.WaveFormat.Channels);
             _sourceRate = reader.WaveFormat.SampleRate;
 
@@ -279,6 +297,19 @@ internal sealed class AudioClipSource : IDisposable
             r.SetFeedMode(false);   // output-driven: we ask for N output samples
             _resampler = r;
 
+            // Warm the OS file cache + decoder path around the in-point on THIS background thread, so the
+            // audio thread's first Read isn't a cold, blocking disk decode (the first-play click). The
+            // mixer reseeks before reading anyway, so the post-warm file position doesn't matter.
+            try
+            {
+                double t0 = Math.Clamp(_primeFileSec, 0, reader.TotalTime.TotalSeconds);
+                reader.CurrentTime = TimeSpan.FromSeconds(t0);
+                var warm = new float[Math.Max(1, _sourceRate * _channels / 5)];   // ~200 ms
+                reader.Read(warm, 0, warm.Length);
+            }
+            catch { }
+
+            _reader = reader;      // publish only once warmed and fully set up
             _ready = true;
             if (_disposeRequested) DisposeInner();
         }
@@ -288,7 +319,8 @@ internal sealed class AudioClipSource : IDisposable
     public bool Ready => _ready && !_failed;
     public int Channels => _channels;
 
-    // Reposition the underlying file to `fileSec` and flush the resampler.
+    // Reposition the underlying file to `fileSec` and flush the resampler. A seek is a discontinuity, so
+    // arm the declick ramp to fade the next few ms up from zero.
     public void Seek(double fileSec)
     {
         if (!_ready || _reader is null) return;
@@ -296,6 +328,7 @@ internal sealed class AudioClipSource : IDisposable
         if (t > _reader.TotalTime) t = _reader.TotalTime;
         _reader.CurrentTime = t;
         _resampler?.Reset();
+        _declickPos = 0;   // ramp in after the reposition
     }
 
     // Produce up to `count` interleaved output frames (engine rate, Channels wide) into dst, playing the
@@ -307,7 +340,18 @@ internal sealed class AudioClipSource : IDisposable
         _resampler.SetRates(_sourceRate, engineRate / speed);
         int inNeeded = _resampler.ResamplePrepare(count, _channels, out float[] inBuf, out int inOff);
         int inRead = _reader.Read(inBuf, inOff, inNeeded * _channels) / _channels;
-        return _resampler.ResampleOut(dst, 0, inRead, count, _channels);
+        int got = _resampler.ResampleOut(dst, 0, inRead, count, _channels);
+
+        // Declick: fade the first ~5 ms after a discontinuity up from zero, so the source never enters at
+        // a non-zero sample. Steady playback (no seek) leaves _declickPos past the ramp → untouched.
+        int rampLen = Math.Max(1, engineRate / 200);
+        for (int i = 0; i < got && _declickPos < rampLen; i++, _declickPos++)
+        {
+            float f = (float)_declickPos / rampLen;
+            int b = i * _channels;
+            for (int c = 0; c < _channels; c++) dst[b + c] *= f;
+        }
+        return got;
     }
 
     public void Dispose()

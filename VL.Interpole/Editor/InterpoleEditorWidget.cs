@@ -57,7 +57,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float EdgeGrabPx = 6f;      // width of a clip's resize handle
     private const float FadeHandlePx = 11f;   // size of a clip's top-corner fade handle
     private const int DefaultClipLen = 30;    // frames, for a freshly added clip
-    private const float MinPxPerFrame = 0.5f, MaxPxPerFrame = 40f;
+    private const float MinPxPerFrame = 0.06f, MaxPxPerFrame = 40f;   // 0.06/6 ≈ 1% zoom floor
     private const float DefaultPxPerFrame = 6f;  // the 100% zoom reference
     private const float ReadoutTextScale = 1f; // playhead/timecode readout size, x the base font
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
@@ -109,6 +109,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _loopGrabFrame;   // LoopMove: (mouseFrame - LoopIn) captured at grab
     private bool _panning;
     private string? _hoverClipId;
+    private ClipZone? _hoverZone;   // grab zone under the cursor on the hovered clip, for the edge cue
     private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
     // The marker shown in the inspector, if any. Mutually exclusive with a clip selection: selecting a
     // marker clears the clip selection and vice-versa, so the inspector edits exactly one thing.
@@ -280,10 +281,15 @@ public sealed class InterpoleEditorWidget : IDisposable
         // here we only keep the playhead in view while playing (needs this frame's geometry).
         if (_playing && !_panning) EnsurePlayheadVisible();
 
-        // Which clip is highlighted: the one being dragged, else the one under the cursor.
-        _hoverClipId = _drag != DragMode.None
-            ? _dragClipId
-            : (hovered && _editKind == EditKind.None && InLanes(mouse) ? HitClip(mouse)?.clip.Id : null);
+        // Which clip is highlighted: the one being dragged, else the one under the cursor. Capture the
+        // grab zone too so DrawClip can flag a resize edge before the press.
+        if (_drag != DragMode.None) { _hoverClipId = _dragClipId; _hoverZone = null; }
+        else
+        {
+            var hit = (hovered && _editKind == EditKind.None && InLanes(mouse)) ? HitClip(mouse) : null;
+            _hoverClipId = hit?.clip.Id;
+            _hoverZone = hit?.zone;
+        }
 
         if (ShowBackground)
             dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
@@ -434,6 +440,25 @@ public sealed class InterpoleEditorWidget : IDisposable
         uint hfill = hov ? Col(1f, 1f, 1f, 0.95f) : Col(1f, 1f, 1f, 0.55f);
         DrawFadeHandle(dl, clip, true, x0, x1, y0, hfill);
         DrawFadeHandle(dl, clip, false, x0, x1, y0, hfill);
+
+        // Resize-edge cue: a bright vertical grip on the in/out edge when the cursor is over that
+        // edge (or while it's being dragged), so it's clear a drag will trim the clip, not move it.
+        // (The host's ImGui backend doesn't drive the OS cursor, so we signal it in-canvas instead.)
+        bool draggingThis = _dragClipId == clip.Id;
+        bool gripL = (hov && _drag == DragMode.None && _hoverZone == ClipZone.ResizeL) || (draggingThis && _drag == DragMode.ResizeL);
+        bool gripR = (hov && _drag == DragMode.None && _hoverZone == ClipZone.ResizeR) || (draggingThis && _drag == DragMode.ResizeR);
+        if (gripL) DrawEdgeGrip(dl, x0, y0, y1, true);
+        if (gripR) DrawEdgeGrip(dl, x1, y0, y1, false);
+    }
+
+    // A bright vertical grip hugging the inside of a clip's in/out edge — the resize affordance.
+    private void DrawEdgeGrip(ImDrawListPtr dl, float edgeX, float y0, float y1, bool left)
+    {
+        const float w = 3.5f;
+        float gx0 = left ? edgeX : edgeX - w;
+        float gx1 = left ? edgeX + w : edgeX;
+        dl.AddRectFilled(new Vector2(gx0, y0 + 1f), new Vector2(gx1, y1 - 1f), Col(1f, 1f, 1f, 0.9f),
+                         ClipRounding, left ? ImDrawFlags.RoundCornersLeft : ImDrawFlags.RoundCornersRight);
     }
 
     // Cheap "this is audio" cue for clips whose waveform isn't rendered: a small speaker glyph
@@ -602,6 +627,23 @@ public sealed class InterpoleEditorWidget : IDisposable
             float ty = _loopBottom + (_rulerBottom - _loopBottom - IG.CalcTextSize(lbl).Y) * 0.5f;
             dl.AddText(new Vector2(x + 4, ty), Col(0.7f, 0.75f, 0.8f), lbl);
         }
+
+        // Above 100% zoom, mark each individual frame with a small dot between the labelled ticks, so
+        // single frames become readable. Since a frame is > DefaultPxPerFrame px apart here, the dots
+        // spread further (higher resolution) the more you zoom in.
+        if (_pxPerFrame > DefaultPxPerFrame)
+        {
+            float dy = _rulerBottom - 3f;
+            uint dcol = Col(0.5f, 0.55f, 0.6f, 0.65f);
+            for (int f = Math.Max(0, (int)MathF.Floor(XToFrame(_laneLeft))); ; f++)
+            {
+                float x = FrameToX(f);
+                if (x > LaneRight) break;
+                if (x < _laneLeft || f % step == 0) continue;   // skip off-screen + already-labelled ticks
+                dl.AddCircleFilled(new Vector2(x, dy), 1.2f, dcol);
+            }
+        }
+
         dl.AddLine(new Vector2(_laneLeft, _rulerBottom), new Vector2(LaneRight, _rulerBottom), Col(0f, 0f, 0f, 0.5f));
         dl.PopClipRect();
     }
@@ -1140,6 +1182,15 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private void HandleInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
     {
+        // Keep the edit cursor visible for the whole gesture: resize/fade show a horizontal
+        // double-arrow, a whole-clip move shows the four-way move cursor.
+        switch (_drag)
+        {
+            case DragMode.ResizeL: case DragMode.ResizeR: IG.SetMouseCursor(ImGuiMouseCursor.ResizeEW); break;
+            case DragMode.FadeIn: case DragMode.FadeOut: IG.SetMouseCursor(ImGuiMouseCursor.Hand); break;
+            case DragMode.MoveClip: IG.SetMouseCursor(ImGuiMouseCursor.ResizeAll); break;
+        }
+
         // Continue an in-progress drag / pan first.
         if (_drag == DragMode.Playhead) { ContinuePlayheadDrag(mouse); return; }
         if (_drag == DragMode.Marquee) { ContinueMarquee(mouse); return; }
@@ -1295,14 +1346,23 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (hit is not null)
             {
                 var (tr, clip, zone) = hit.Value;
+                // Hover cue: the cursor previews the gesture — resize the edges, adjust a fade handle,
+                // or move the whole clip — so it's clear before pressing which one you'll get.
+                IG.SetMouseCursor(zone switch
+                {
+                    ClipZone.ResizeL or ClipZone.ResizeR => ImGuiMouseCursor.ResizeEW,
+                    ClipZone.FadeIn or ClipZone.FadeOut => ImGuiMouseCursor.Hand,
+                    _ => ImGuiMouseCursor.ResizeAll,
+                });
                 if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) { StartEditClipLabel(clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
                 { RemoveClip(tr, clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
-                    // Shift/Ctrl-click toggles this clip in the selection (no drag); a plain click
-                    // selects just this clip and begins a move / resize / fade drag.
-                    if (io.KeyShift || io.KeyCtrl) { ToggleSelected(clip.Id); return; }
+                    // Ctrl-click toggles this clip in the selection (no drag). Shift is the snap
+                    // modifier for the drag (as on the playhead), so it must NOT block the grab —
+                    // a Shift-press starts a normal move / resize / fade drag that snaps.
+                    if (io.KeyCtrl) { ToggleSelected(clip.Id); return; }
                     // Grabbing a clip that's already in a multi-selection keeps the selection so the
                     // whole group drags together; grabbing any other clip selects just it.
                     if (!_selection.Contains(clip.Id)) SelectSingle(clip.Id);
@@ -1559,6 +1619,22 @@ public sealed class InterpoleEditorWidget : IDisposable
         return (best, bestDx, s);
     }
 
+    // Source-file duration in seconds for clamping audio resizes. Uses the value captured at creation;
+    // for older documents (0) it back-fills from the decoded peaks once they're ready. Returns +inf
+    // when unknown or non-audio, i.e. no length clamp.
+    private double AudioSourceSeconds(ClipData clip)
+    {
+        if (!clip.IsAudio) return double.PositiveInfinity;
+        if (clip.FileDurationSeconds > 0) return clip.FileDurationSeconds;
+        if (clip.FilePath is not null && WaveformCache.Get(clip.FilePath, out var pk) == WaveformState.Ready
+            && pk is not null && pk.DurationSeconds > 0)
+        {
+            clip.FileDurationSeconds = pk.DurationSeconds;   // self-heal so it persists on next save
+            return pk.DurationSeconds;
+        }
+        return double.PositiveInfinity;
+    }
+
     private void ContinueClipDrag(Vector2 mouse)
     {
         var found = FindClip(_dragClipId);
@@ -1585,6 +1661,9 @@ public sealed class InterpoleEditorWidget : IDisposable
             case DragMode.ResizeL:
             {
                 int end = ClipEnd(clip), lo = LeftBound(tr, clip);
+                // Audio: the left edge can pull the trimmed-in head back out only to the file's start
+                // (FileInPoint 0), never before it — so the clip can't grow past the media at the head.
+                if (clip.IsAudio) lo = Math.Max(lo, clip.Start - (int)MathF.Round((float)(clip.FileInPoint * _fps)));
                 int raw = (int)MathF.Round(mf);
                 if (shift) { var s = Snap(raw); if (s.snapped) { raw = s.frame; _clipSnapActive = true; _clipSnapFrame = s.frame; } }
                 int ns = Math.Clamp(raw, lo, end - 1);
@@ -1601,9 +1680,14 @@ public sealed class InterpoleEditorWidget : IDisposable
             case DragMode.ResizeR:
             {
                 int hi = RightBound(tr, clip);
+                // Audio: the right edge can extend only until the file runs out (from the current
+                // in-point), so the clip can't grow past the end of the media it plays.
+                double dur = AudioSourceSeconds(clip);
+                if (!double.IsPositiveInfinity(dur))
+                    hi = Math.Min(hi, clip.Start + (int)MathF.Round((float)((dur - clip.FileInPoint) * _fps)));
                 int raw = (int)MathF.Round(mf);
                 if (shift) { var s = Snap(raw); if (s.snapped) { raw = s.frame; _clipSnapActive = true; _clipSnapFrame = s.frame; } }
-                int ne = Math.Clamp(raw, clip.Start + 1, hi);
+                int ne = Math.Clamp(raw, clip.Start + 1, Math.Max(clip.Start + 1, hi));
                 if (_clipSnapActive && ne != _clipSnapFrame) _clipSnapActive = false;
                 clip.Length = ne - clip.Start;
                 ClampFades(clip);
@@ -1924,7 +2008,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             Label = System.IO.Path.GetFileNameWithoutExtension(path),
             Start = start, Length = len,
             Color = 2,   // green-ish default so audio clips read as audio; recolour freely
-            FilePath = path, FileInPoint = 0, Gain = 1f,
+            FilePath = path, FileInPoint = 0, Gain = 1f, FileDurationSeconds = dur,
         };
         tr.Clips.Add(nc);
         WaveformCache.Get(path, out _);   // kick off the background peak decode now
@@ -1960,7 +2044,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         Label = c.Label, Start = c.Start, Length = c.Length,
         Color = c.Color, FadeIn = c.FadeIn, FadeOut = c.FadeOut,
-        FilePath = c.FilePath, FileInPoint = c.FileInPoint, Gain = c.Gain
+        FilePath = c.FilePath, FileInPoint = c.FileInPoint, Gain = c.Gain,
+        FileDurationSeconds = c.FileDurationSeconds
     };
 
     // Copy every selected clip (or, if nothing is selected, the hovered one) to the clipboard,
@@ -2028,7 +2113,8 @@ public sealed class InterpoleEditorWidget : IDisposable
                 Id = InterpoleDocument.NewId("cl"),
                 Label = e.Clip.Label, Start = start, Length = len,
                 Color = e.Clip.Color, FadeIn = e.Clip.FadeIn, FadeOut = e.Clip.FadeOut,
-                FilePath = e.Clip.FilePath, FileInPoint = e.Clip.FileInPoint, Gain = e.Clip.Gain
+                FilePath = e.Clip.FilePath, FileInPoint = e.Clip.FileInPoint, Gain = e.Clip.Gain,
+                FileDurationSeconds = e.Clip.FileDurationSeconds
             };
             ClampFades(nc);   // a trimmed paste may no longer fit both fades
             tr.Clips.Add(nc);

@@ -182,6 +182,11 @@ public sealed class ClipData
     public double FileInPoint { get; set; }
     // Linear gain applied to this clip's audio (on top of the fade envelope). Default 1 = unity.
     public float Gain { get; set; } = 1f;
+    // Total duration of the source file in seconds, captured when the clip is created. Bounds edge
+    // resizes so an audio clip can never be stretched past the media it plays: the file window
+    // [FileInPoint, FileInPoint + Length/Fps] must stay within [0, FileDurationSeconds]. 0 = unknown
+    // (pre-existing docs / not yet probed) → the editor falls back to the decoded peaks' duration.
+    public double FileDurationSeconds { get; set; }
 
     // True when this clip references a sound file (i.e. lives on an audio track).
     [JsonIgnore]
