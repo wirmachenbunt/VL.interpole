@@ -50,13 +50,15 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float LoopStripHeight = 14f;// loop-range ribbon, carved from the top of the ruler
     private const float MarkerLaneHeight = TrackHeight;// marker strip; same height as a normal track lane
     private const float MarkerPinHeight = MarkerLaneHeight - 10f;// pin height (fills the lane bar a small margin), centred vertically
-    private const float TrackHeight = 54f;    // one lane
+    private const float TrackHeight = 54f;    // one standard lane
+    private const float AudioTrackScale = 1.2f; // audio tracks/clips are 20% taller
     private const float ClipPadY = 6f;        // vertical inset of a clip within its lane
     private const float ClipRounding = 4f;    // corner radius of a clip's rounded rect
     private const float EdgeGrabPx = 6f;      // width of a clip's resize handle
     private const float FadeHandlePx = 11f;   // size of a clip's top-corner fade handle
     private const int DefaultClipLen = 30;    // frames, for a freshly added clip
     private const float MinPxPerFrame = 0.5f, MaxPxPerFrame = 40f;
+    private const float DefaultPxPerFrame = 6f;  // the 100% zoom reference
     private const float ReadoutTextScale = 1f; // playhead/timecode readout size, x the base font
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
     private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
@@ -84,7 +86,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     public Widget Widget { get; }
 
     // ---- view transform (time axis) ----
-    private float _pxPerFrame = 6f;
+    private float _pxPerFrame = DefaultPxPerFrame;
     private float _scrollX;   // pixels scrolled along time, >= 0
     private float _scrollY;   // pixels scrolled through the track stack, >= 0
 
@@ -214,7 +216,21 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float XToFrame(float x) => (x - _laneLeft + _scrollX) / _pxPerFrame;
     private float LaneRight => _canvasRight;
     private float LanesBottom => _origin.Y + _size.Y;
-    private float TrackTop(int i) => _lanesTop + i * TrackHeight - _scrollY;
+    // Audio tracks (and the clips in them) are 20% taller than standard tracks, so heights vary and
+    // the vertical layout is a running sum rather than i * TrackHeight.
+    private float TrackHeightOf(int i) => Document.Tracks[i].Kind == TrackKind.Audio ? TrackHeight * AudioTrackScale : TrackHeight;
+    private float TrackTop(int i)
+    {
+        float y = _lanesTop - _scrollY;
+        for (int k = 0; k < i; k++) y += TrackHeightOf(k);
+        return y;
+    }
+    private float TracksTotalHeight()
+    {
+        float h = 0f;
+        for (int i = 0; i < Document.Tracks.Count; i++) h += TrackHeightOf(i);
+        return h;
+    }
     private static int ClipEnd(ClipData c) => c.Start + c.Length;
 
     // ============================== draw ==============================
@@ -281,7 +297,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         DrawSnapGuide(dl);
         DrawCorner(dl, mouse);
         DrawTransport(dl, mouse);
-        DrawHelp(dl);
+        DrawZoomReadout(dl);
         DrawInspectorStrip(dl, mouse);
         if (_inspectorOpen) DrawInspector(dl);
 
@@ -302,7 +318,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private void ClampScroll()
     {
-        float contentH = Document.Tracks.Count * TrackHeight;
+        float contentH = TracksTotalHeight();
         float viewH = _size.Y - TransportHeight - RulerHeight - MarkerLaneHeight;
         _scrollY = Math.Clamp(_scrollY, 0f, MathF.Max(0f, contentH - viewH));
         if (_scrollX < 0) _scrollX = 0;
@@ -315,7 +331,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Row backgrounds + separators.
         for (int i = 0; i < Document.Tracks.Count; i++)
         {
-            float top = TrackTop(i), bottom = top + TrackHeight;
+            float top = TrackTop(i), bottom = top + TrackHeightOf(i);
             if (bottom < _lanesTop || top > LanesBottom) continue;
             // Audio-track rows are simply a little darker than standard rows (same neutral hue, no
             // colour) so the two kinds read apart without a tint.
@@ -333,9 +349,10 @@ public sealed class InterpoleEditorWidget : IDisposable
         for (int i = 0; i < Document.Tracks.Count; i++)
         {
             float top = TrackTop(i);
-            if (top + TrackHeight < _lanesTop || top > LanesBottom) continue;
+            float th = TrackHeightOf(i);
+            if (top + th < _lanesTop || top > LanesBottom) continue;
             foreach (var clip in Document.Tracks[i].Clips)
-                DrawClip(dl, clip, top);
+                DrawClip(dl, clip, top, th);
         }
 
         dl.PopClipRect();
@@ -355,11 +372,11 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
     }
 
-    private void DrawClip(ImDrawListPtr dl, ClipData clip, float trackTop)
+    private void DrawClip(ImDrawListPtr dl, ClipData clip, float trackTop, float trackH)
     {
         float x0 = FrameToX(clip.Start), x1 = FrameToX(ClipEnd(clip));
         if (x1 < _laneLeft || x0 > LaneRight) return;
-        float y0 = trackTop + ClipPadY, y1 = trackTop + TrackHeight - ClipPadY;
+        float y0 = trackTop + ClipPadY, y1 = trackTop + trackH - ClipPadY;
         bool hov = _hoverClipId == clip.Id;
         var (cr, cg, cb) = ClipRgb(clip.Color);
         float lift = hov ? 0.10f : 0f;   // brighten a touch on hover
@@ -367,8 +384,14 @@ public sealed class InterpoleEditorWidget : IDisposable
         uint border = Col(MathF.Min(1f, cr + 0.35f), MathF.Min(1f, cg + 0.35f), MathF.Min(1f, cb + 0.35f), 0.9f);
         dl.AddRectFilled(new Vector2(x0, y0), new Vector2(x1, y1), fill, ClipRounding);
 
-        // Audio clips draw their waveform over the fill (under the fade ramps + label).
-        if (clip.IsAudio) DrawWaveform(dl, clip, x0, x1, y0, y1);
+        // Audio clips draw their waveform over the fill (under the fade ramps + label). Only the
+        // selected or hovered clip renders its waveform — decoding/enveloping every audio clip every
+        // frame is the expensive part, so other clips get a cheap speaker badge instead.
+        if (clip.IsAudio)
+        {
+            if (IsSelected(clip.Id) || _hoverClipId == clip.Id) DrawWaveform(dl, clip, x0, x1, y0, y1);
+            else DrawAudioBadge(dl, x0, x1, y0, y1);
+        }
 
         // Fade ramps: dim the attenuated corner triangle and draw the gain line from the bottom
         // corner (level 0) up to the fade handle on the top edge (level 1). The corner-anchored
@@ -409,6 +432,25 @@ public sealed class InterpoleEditorWidget : IDisposable
         uint hfill = hov ? Col(1f, 1f, 1f, 0.95f) : Col(1f, 1f, 1f, 0.55f);
         DrawFadeHandle(dl, clip, true, x0, x1, y0, hfill);
         DrawFadeHandle(dl, clip, false, x0, x1, y0, hfill);
+    }
+
+    // Cheap "this is audio" cue for clips whose waveform isn't rendered: a small speaker glyph
+    // centered in the clip. A few DrawList primitives, constant cost per clip — no peak decode /
+    // envelope work.
+    private void DrawAudioBadge(ImDrawListPtr dl, float x0, float x1, float y0, float y1)
+    {
+        if (x1 - x0 < 22f || y1 - y0 < 14f) return;   // too small to read; skip
+        float ax = (x0 + x1) * 0.5f - 7.5f;           // center the glyph (spans ~15px wide)
+        float cy = (y0 + y1) * 0.5f;
+        uint col = Col(1f, 1f, 1f, 0.55f);
+        // Driver box + cone (throat at the box, widening to the right).
+        dl.AddRectFilled(new Vector2(ax, cy - 2.5f), new Vector2(ax + 3f, cy + 2.5f), col);
+        dl.AddTriangleFilled(new Vector2(ax + 3f, cy), new Vector2(ax + 8f, cy - 5f), new Vector2(ax + 8f, cy + 5f), col);
+        // Two sound-wave arcs radiating from the cone mouth.
+        dl.PathArcTo(new Vector2(ax + 8f, cy), 4.5f, -0.9f, 0.9f, 8);
+        dl.PathStroke(col, ImDrawFlags.None, 1.2f);
+        dl.PathArcTo(new Vector2(ax + 8f, cy), 7f, -0.9f, 0.9f, 10);
+        dl.PathStroke(col, ImDrawFlags.None, 1.2f);
     }
 
     private void DrawFadeHandle(ImDrawListPtr dl, ClipData clip, bool fadeIn, float x0, float x1, float y0, uint fillCol)
@@ -540,7 +582,11 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.PushClipRect(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _rulerBottom), true);
         dl.AddRectFilled(new Vector2(_laneLeft, _rulerTop), new Vector2(LaneRight, _rulerBottom), Col(0.14f, 0.15f, 0.17f));
 
-        int step = NiceFrameStep(80f / _pxPerFrame);
+        // In timecode mode use a whole-second step so labels stay hh:mm:ss (no frame subfield,
+        // keeps the ruler uncramped); in frames mode step on nice frame counts.
+        int step = _showTimecode
+            ? NiceSecondStep((80f / _pxPerFrame) / _fps) * _fps
+            : NiceFrameStep(80f / _pxPerFrame);
         int first = (int)MathF.Floor(XToFrame(_laneLeft) / step) * step;
         if (first < 0) first = 0;
         for (int f = first; ; f += step)
@@ -625,7 +671,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         for (int i = 0; i < Document.Tracks.Count; i++)
         {
-            float top = TrackTop(i), bottom = top + TrackHeight;
+            float top = TrackTop(i), bottom = top + TrackHeightOf(i);
             if (bottom < _lanesTop || top > LanesBottom) continue;
             var tr = Document.Tracks[i];
             bool audio = tr.Kind == TrackKind.Audio;
@@ -640,7 +686,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5, bottom), accent);
             string name = string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name;
             var ts = IG.CalcTextSize(name);
-            dl.AddText(new Vector2(_origin.X + 14, top + TrackHeight * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
+            dl.AddText(new Vector2(_origin.X + 14, (top + bottom) * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
         }
         // column divider
         dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0f, 0f, 0f, 0.5f));
@@ -665,16 +711,13 @@ public sealed class InterpoleEditorWidget : IDisposable
                    Col(0.95f, 0.98f, 1f), label);
     }
 
-    private void DrawHelp(ImDrawListPtr dl)
+    // Current time-axis zoom, shown bottom-right of the lanes (px per frame).
+    private void DrawZoomReadout(ImDrawListPtr dl)
     {
-        const string help =
-            "dbl-click header: add/rename track   dbl-click lane: add clip (audio track: pick a file)   drag clip: move, edges: resize   " +
-            "dbl-click clip: rename   drag empty: box-select   Shift/Ctrl+click: add to selection   " +
-            "Alt/Middle: delete   Del: delete selected   drag ruler: playhead   marker lane: dbl-click add / drag move   loop bar: set loop (Alt: clear)   " +
-            "B/N: loop in/out at playhead   wheel: zoom   right-drag: pan   Space: play/stop   Shift: snap   " +
-            "Ctrl+Z/Y: undo/redo   Ctrl+C/V: copy/paste";
-        var ts = IG.CalcTextSize(help);
-        dl.AddText(new Vector2(_laneLeft + 8, LanesBottom - ts.Y - 6), Col(0.5f, 0.55f, 0.6f), help);
+        int pct = (int)MathF.Round(_pxPerFrame / DefaultPxPerFrame * 100f);
+        string txt = "zoom " + pct + "%";
+        var ts = IG.CalcTextSize(txt);
+        dl.AddText(new Vector2(LaneRight - ts.X - 8, LanesBottom - ts.Y - 6), Col(0.5f, 0.55f, 0.6f), txt);
     }
 
     // The corner splits into two buttons: "+ Track" (left, wider) and "+ Audio" (right). The split
@@ -1322,7 +1365,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         _selection.UnionWith(_marqueeBase);
         for (int i = 0; i < Document.Tracks.Count; i++)
         {
-            float top = TrackTop(i) + ClipPadY, bottom = TrackTop(i) + TrackHeight - ClipPadY;
+            float top = TrackTop(i) + ClipPadY, bottom = TrackTop(i) + TrackHeightOf(i) - ClipPadY;
             if (bottom < min.Y || top > max.Y) continue;
             foreach (var clip in Document.Tracks[i].Clips)
             {
@@ -1730,8 +1773,14 @@ public sealed class InterpoleEditorWidget : IDisposable
     private int TrackIndexAtY(float y)
     {
         if (y < _lanesTop) return -1;
-        int i = (int)MathF.Floor((y - _lanesTop + _scrollY) / TrackHeight);
-        return (i >= 0 && i < Document.Tracks.Count) ? i : -1;
+        float cursor = _lanesTop - _scrollY;
+        for (int i = 0; i < Document.Tracks.Count; i++)
+        {
+            float h = TrackHeightOf(i);
+            if (y < cursor + h) return y >= cursor ? i : -1;
+            cursor += h;
+        }
+        return -1;
     }
 
     private TrackData? TrackAtY(float y)
@@ -1750,7 +1799,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (i < 0) return null;
         var tr = Document.Tracks[i];
         float top = TrackTop(i);
-        float y0 = top + ClipPadY, y1 = top + TrackHeight - ClipPadY;
+        float y0 = top + ClipPadY, y1 = top + TrackHeightOf(i) - ClipPadY;
         if (mouse.Y < y0 || mouse.Y > y1) return null;
 
         foreach (var clip in tr.Clips)
@@ -2483,7 +2532,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             int i = Document.Tracks.FindIndex(t => t.Id == _editId);
             if (i < 0) { _editKind = EditKind.None; return; }
             float top = TrackTop(i);
-            pos = new Vector2(_origin.X + 10, top + TrackHeight * 0.5f - IG.GetFrameHeight() * 0.5f);
+            pos = new Vector2(_origin.X + 10, top + TrackHeightOf(i) * 0.5f - IG.GetFrameHeight() * 0.5f);
             width = HeaderWidth - 18;
         }
         else
@@ -2581,8 +2630,22 @@ public sealed class InterpoleEditorWidget : IDisposable
     private string FramesToTimecode(int frame, int step)
     {
         int totalSec = frame / _fps;
-        int mm = totalSec / 60, ss = totalSec % 60, ff = frame % _fps;
-        return step % _fps == 0 ? $"{mm}:{ss:00}" : $"{mm}:{ss:00}:{ff:00}";
+        int hh = totalSec / 3600, mm = totalSec / 60 % 60, ss = totalSec % 60, ff = frame % _fps;
+        string hms = hh > 0 ? $"{hh}:{mm:00}:{ss:00}" : $"{mm}:{ss:00}";
+        return step % _fps == 0 ? hms : $"{hms}:{ff:00}";
+    }
+
+    // A "nice" whole-second step (1,2,5,10,15,30,60,...) at least as large as raw seconds, so
+    // timecode-mode ruler labels land on readable second boundaries regardless of zoom.
+    private static int NiceSecondStep(float rawSec)
+    {
+        if (rawSec < 1) return 1;
+        int[] steps = { 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200 };
+        foreach (var s in steps)
+            if (s >= rawSec) return s;
+        int big = 7200;
+        while (big < rawSec) big *= 2;
+        return big;
     }
 
     // A "nice" frame step (1,2,5,10,15,20,30,60,...) at least as large as raw, so ruler ticks
