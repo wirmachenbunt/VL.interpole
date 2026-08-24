@@ -2046,8 +2046,8 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // The marker lane sits in [_rulerBottom, _lanesTop): a full-width strip of named points on the
     // frame axis (global, not per-track). Each marker is a palette-coloured Unity-style pin with its
-    // label; action markers add a bright accent — a full outline for Stop, a direction chevron for
-    // Jump. Hover/drag brightens one.
+    // label; a Stop marker is drawn as an outline-only pin (no fill) so it reads distinctly, and a
+    // Jump marker adds a direction chevron. Hover/drag brightens one.
     private void DrawMarkerLane(ImDrawListPtr dl, Vector2 mouse)
     {
         float top = _rulerBottom, bottom = _lanesTop;
@@ -2072,31 +2072,39 @@ public sealed class InterpoleEditorWidget : IDisposable
             float mkTop = top + (MarkerLaneHeight - MarkerPinHeight) * 0.5f;
             float mkBot = mkTop + MarkerPinHeight;
             float mkMid = mkTop + MarkerPinHeight * 0.6f;
-            dl.AddRectFilled(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkMid), col, 1.5f, ImDrawFlags.RoundCornersTop);
-            dl.AddTriangleFilled(new Vector2(x - mkHW, mkMid), new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), col);
-            // Action markers get a bright accent so the behaviour reads independently of the fill colour.
-            // Stop: a full outline around the pin. Jump: a chevron pointing the way the playhead seeks
-            // (left = a backward loop-back, right = a forward skip).
+            // Stop markers render as an outline-only pin (no fill) so they read distinctly as a stop;
+            // every other marker is a solid palette-coloured pin. Jump markers add a direction chevron.
             if (m.Stop)
             {
-                uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
-                dl.AddLine(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkTop), ring, 1.5f);
-                dl.AddLine(new Vector2(x + mkHW, mkTop), new Vector2(x + mkHW, mkMid), ring, 1.5f);
-                dl.AddLine(new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), ring, 1.5f);
-                dl.AddLine(new Vector2(x, mkBot), new Vector2(x - mkHW, mkMid), ring, 1.5f);
-                dl.AddLine(new Vector2(x - mkHW, mkMid), new Vector2(x - mkHW, mkTop), ring, 1.5f);
+                // Outline-only pin (no fill), traced around the rounded-top-rect-plus-point shape.
+                float t = hot ? 2f : 1.5f;
+                var tl = new Vector2(x - mkHW, mkTop); var tr = new Vector2(x + mkHW, mkTop);
+                var ml = new Vector2(x - mkHW, mkMid); var mr = new Vector2(x + mkHW, mkMid);
+                var pt = new Vector2(x, mkBot);
+                dl.AddLine(tl, tr, col, t);
+                dl.AddLine(tr, mr, col, t);
+                dl.AddLine(mr, pt, col, t);
+                dl.AddLine(pt, ml, col, t);
+                dl.AddLine(ml, tl, col, t);
             }
-            else if (!string.IsNullOrEmpty(m.JumpTargetId))
+            else
             {
-                uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
-                int tgt = Document.FrameOfMarker(m.JumpTargetId);
-                bool back = tgt >= 0 && tgt < m.Frame;   // loop-back vs forward skip
-                float cy = mkTop + MarkerPinHeight * 0.30f;
-                const float a = 3.5f;
-                float tipX = back ? x - a * 0.5f : x + a * 0.5f;
-                float tailX = back ? x + a * 0.5f : x - a * 0.5f;
-                dl.AddLine(new Vector2(tailX, cy - a), new Vector2(tipX, cy), ring, 1.5f);
-                dl.AddLine(new Vector2(tipX, cy), new Vector2(tailX, cy + a), ring, 1.5f);
+                dl.AddRectFilled(new Vector2(x - mkHW, mkTop), new Vector2(x + mkHW, mkMid), col, 1.5f, ImDrawFlags.RoundCornersTop);
+                dl.AddTriangleFilled(new Vector2(x - mkHW, mkMid), new Vector2(x + mkHW, mkMid), new Vector2(x, mkBot), col);
+                // Jump markers get a bright chevron pointing the way the playhead seeks (left = a backward
+                // loop-back, right = a forward skip), so the behaviour reads independently of the fill colour.
+                if (!string.IsNullOrEmpty(m.JumpTargetId))
+                {
+                    uint ring = Col(0.97f, 0.97f, 0.98f, hot ? 1f : 0.85f);
+                    int tgt = Document.FrameOfMarker(m.JumpTargetId);
+                    bool back = tgt >= 0 && tgt < m.Frame;   // loop-back vs forward skip
+                    float cy = mkTop + MarkerPinHeight * 0.30f;
+                    const float a = 3.5f;
+                    float tipX = back ? x - a * 0.5f : x + a * 0.5f;
+                    float tailX = back ? x + a * 0.5f : x - a * 0.5f;
+                    dl.AddLine(new Vector2(tailX, cy - a), new Vector2(tipX, cy), ring, 1.5f);
+                    dl.AddLine(new Vector2(tipX, cy), new Vector2(tailX, cy + a), ring, 1.5f);
+                }
             }
 
             if (!string.IsNullOrEmpty(m.Name))
