@@ -337,10 +337,25 @@ internal sealed class AudioClipSource : IDisposable
     public int ReadFrames(float[] dst, int count, double speed, int engineRate)
     {
         if (!Ready || _reader is null || _resampler is null || count <= 0) return 0;
-        _resampler.SetRates(_sourceRate, engineRate / speed);
-        int inNeeded = _resampler.ResamplePrepare(count, _channels, out float[] inBuf, out int inOff);
-        int inRead = _reader.Read(inBuf, inOff, inNeeded * _channels) / _channels;
-        int got = _resampler.ResampleOut(dst, 0, inRead, count, _channels);
+
+        int got;
+        if (_sourceRate == engineRate)
+        {
+            // Source is already at the engine rate → copy straight through, NO resampler. WdlResampler is
+            // pathological at ratio ≈ 1.0 (it injects periodic discontinuities — the constant crackle a
+            // same-rate file produced), and a same-rate source needs no conversion anyway. We ignore
+            // `speed` here (play at natural 1.0); any varispeed correction the mixer wanted still lands,
+            // because the mixer advances the timeline by `speed`, so the file drifts vs the timeline and
+            // the existing reseek (with its declick ramp) catches it — inaudibly — instead of pitch-bending.
+            got = _reader.Read(dst, 0, count * _channels) / _channels;
+        }
+        else
+        {
+            _resampler.SetRates(_sourceRate, engineRate / speed);
+            int inNeeded = _resampler.ResamplePrepare(count, _channels, out float[] inBuf, out int inOff);
+            int inRead = _reader.Read(inBuf, inOff, inNeeded * _channels) / _channels;
+            got = _resampler.ResampleOut(dst, 0, inRead, count, _channels);
+        }
 
         // Declick: fade the first ~5 ms after a discontinuity up from zero, so the source never enters at
         // a non-zero sample. Steady playback (no seek) leaves _declickPos past the ramp → untouched.

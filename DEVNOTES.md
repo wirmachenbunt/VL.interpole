@@ -367,6 +367,21 @@ InterpoleAudioEngine.cs`, `Engine/WaveformCache.cs`, or the audio branches in th
   **audio-thread-owned** (`EnsureSource` creates lazily, `PruneSources` disposes any whose clip left the
   snapshot — no cross-thread lifetime races). `Seek` sets `reader.CurrentTime` + `resampler.Reset()`.
   *Caveat:* MP3/compressed decode on the audio thread; WAV/PCM (the focus) is cheap.
+- **Same-rate sources BYPASS the resampler (crackle fix, 2026-08-25).** `ReadFrames` branches: when
+  `sourceRate == engineRate` it copies the reader straight into `dst` (no `WdlResampler`); only a
+  different-rate source goes through the resampler. **Why:** `WdlResampler` is *pathological at ratio ≈
+  1.0* — driven at unity it injects periodic sample discontinuities, an audible constant "digital
+  crackle." A same-rate file (which needs no conversion) hit exactly that, because the varispeed chase
+  parks `speed` at 1.0 in the deadband → `SetRates(rate, rate/1.0)` → unity. A *different*-rate file
+  (e.g. 44.1 k into a 48 k engine) sits at ratio ≈ 0.92 and is clean, which is why the bug looked
+  backwards ("48 k crackles, 44.1 k fine") until the engine rate was measured. **The engine runs at the
+  audio *device* rate (48 k here), not a fixed 44.1 k** — `SampleRate` is read live and can be anything;
+  never assume. Bypassing plays the source bit-for-bit (verified: error = 16-bit rounding only). The
+  bypass ignores `speed` (plays at natural 1.0); any varispeed correction still lands because the mixer
+  advances the timeline by `speed`, so the file drifts vs the timeline and the existing declicked reseek
+  absorbs it — no pitch-bend, no crackle. Diagnosed by instrumenting the live `FillBuffers` (buffer
+  size/rate/call-timing/short-reads to a Desktop log) after the artifact proved impossible to reproduce
+  offline; that log is what revealed engine rate = 48 k and pinned the unity-ratio resampler.
 - **Waveform peaks are a separate read path.** `FileStreamSignal`/`AudioFileReaderVVVV` expose **no
   raw samples**, so `WaveformCache` decodes the file a second time (NAudio) into fixed-bucket min/max
   envelope pairs (256 source frames/bucket), **off-thread**, cached by `path + lastWriteTime`, shared
