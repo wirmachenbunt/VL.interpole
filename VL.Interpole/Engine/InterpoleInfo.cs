@@ -20,6 +20,10 @@ public sealed record InterpoleInfo(
     int CurrentFrame,
     // True while the timeline is playing (Play pressed, not yet stopped / reached the end).
     bool IsPlaying,
+    // The name of the marker the playhead is on, or "" when on none. Chiefly for stop markers: while
+    // playback is halted on one it holds that marker's name; a plain marker shows only for the single
+    // frame the playhead sits on / crosses it (a one-frame pulse).
+    string ActiveMarker,
     // Per track (aligned by track order): the active clip's label, or "" where the playhead is in a gap.
     Spread<string> ActiveClipName,
     // Per track: the playhead's 0-based frame position within the active clip, or -1 in a gap.
@@ -39,7 +43,7 @@ public sealed record InterpoleInfo(
 {
     // A harmless empty snapshot (e.g. before the first Update, or a null/unconnected input).
     public static readonly InterpoleInfo Empty = new(
-        0, false,
+        0, false, "",
         Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
         Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty);
 }

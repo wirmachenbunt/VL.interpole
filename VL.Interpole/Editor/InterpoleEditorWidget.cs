@@ -149,6 +149,12 @@ public sealed class InterpoleEditorWidget : IDisposable
     private bool _playing;
     private bool _loop;
     private float _playAccum;   // fractional-frame accumulator for real-time (delta) playback
+    // The name of a marker the playhead crossed during the most recent advance step without landing on
+    // it — a plain marker jumped over between two frames when the advance was more than one frame. Set in
+    // AdvancePlayback (reset at its top), so it is valid only for the single frame it was set and only
+    // while playing; the node reports it via ActiveMarkerName so a skipped marker still flags active for
+    // that one frame. A marker the playhead actually lands/parks on is reported from the playhead instead.
+    private string? _crossedMarkerName;
     // Wall-clock source for playback timing. Playback is advanced from the node's Update (via Tick),
     // NOT from the ImGui frame — so it keeps running in No UI Mode, where there is no frame and thus
     // no ImGui io.DeltaTime. _lastTickSec is refreshed every Tick so the delta stays a single frame.
@@ -2524,6 +2530,23 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Whether the timeline is currently playing — exposed for the node's "Is Playing" output.
     public bool IsPlaying => _playing;
 
+    // The "active" marker for the node's Active Marker output: the name of the marker the playhead is on
+    // this frame. A stop marker parks the playhead on its frame, so it stays active for as long as
+    // playback is halted there — the intended use ("which marker stopped me"). A plain marker is active
+    // only for the single frame the playhead sits on or crosses it during playback (_crossedMarkerName
+    // catches one skipped over by a multi-frame advance). "" when the playhead is on no marker. Resolved
+    // from the live document, so a rename is reflected; if several markers share the frame, the first wins.
+    public string ActiveMarkerName
+    {
+        get
+        {
+            int f = Document.Playhead;
+            foreach (var m in Document.Markers)
+                if (m.Frame == f) return m.Name;
+            return _playing ? (_crossedMarkerName ?? "") : "";
+        }
+    }
+
     private void OnTransport(TButton b)
     {
         switch (b)
@@ -2577,6 +2600,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     // (that would call SetPinValue every frame); the position is saved on Stop / Rewind / scrub.
     private void AdvancePlayback(float dt)
     {
+        // A crossed plain marker is only ever valid for the single advance step that set it.
+        _crossedMarkerName = null;
+
         int end = ContentEnd();
         if (end <= 0) { _playing = false; _playAccum = 0f; return; }
 
@@ -2595,33 +2621,41 @@ public sealed class InterpoleEditorWidget : IDisposable
         // the wrap/end logic. When looping, only the span up to the loop-out is crossed linearly (it
         // wraps at lo), so markers beyond it don't count this step. Markers strictly after the current
         // frame qualify, so playback can resume off (or jump straight back onto) an action marker.
+        int prev = Document.Playhead;
+        long target = (long)prev + advance;
+        int scanEnd = _loop
+            ? (int)Math.Min(target, (long)Document.EffectiveLoop().outFrame)
+            : (int)Math.Min(target, (long)end);
+        var action = Document.EarliestActionMarkerIn(prev, scanEnd);
+        if (action is not null)
         {
-            long target = (long)Document.Playhead + advance;
-            int scanEnd = _loop
-                ? (int)Math.Min(target, (long)Document.EffectiveLoop().outFrame)
-                : (int)Math.Min(target, (long)end);
-            var action = Document.EarliestActionMarkerIn(Document.Playhead, scanEnd);
-            if (action is not null)
+            int jumpTo = action.Stop ? -1 : Document.FrameOfMarker(action.JumpTargetId);
+            if (jumpTo >= 0)
             {
-                int jumpTo = action.Stop ? -1 : Document.FrameOfMarker(action.JumpTargetId);
-                if (jumpTo >= 0)
-                {
-                    // Jump marker: seek to the target marker's frame and keep playing. A backward target
-                    // loops forever until another event (Stop / state change / Set / Rewind) moves us.
-                    Document.Playhead = jumpTo;
-                    _playAccum = 0f;   // don't carry this frame's fractional overshoot across the jump
-                    Changed?.Invoke();
-                    return;
-                }
-                // Stop marker (or a jump whose target has been deleted): park on it and halt, as if Stop
-                // were pressed there.
-                Document.Playhead = action.Frame;
-                _playing = false;
-                _playAccum = 0f;
+                // Jump marker: seek to the target marker's frame and keep playing. A backward target
+                // loops forever until another event (Stop / state change / Set / Rewind) moves us.
+                Document.Playhead = jumpTo;
+                _playAccum = 0f;   // don't carry this frame's fractional overshoot across the jump
                 Changed?.Invoke();
                 return;
             }
+            // Stop marker (or a jump whose target has been deleted): park on it and halt, as if Stop
+            // were pressed there. The node reports it as the active marker via the parked playhead.
+            Document.Playhead = action.Frame;
+            _playing = false;
+            _playAccum = 0f;
+            Changed?.Invoke();
+            return;
         }
+
+        // No action marker in the crossed span: note the last plain marker the playhead passes this step
+        // (largest frame in (prev, scanEnd]), so the node can flag it active for this one frame even when
+        // a multi-frame advance skipped its exact frame. A marker we land on is reported via the playhead.
+        MarkerData? crossed = null;
+        foreach (var m in Document.Markers)
+            if (m.Frame > prev && m.Frame <= scanEnd && (crossed is null || m.Frame > crossed.Frame))
+                crossed = m;
+        _crossedMarkerName = crossed?.Name;
 
         long np = (long)Document.Playhead + advance;
         if (_loop)

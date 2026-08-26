@@ -50,6 +50,7 @@ Interpole/
 | out | `Editor` | ILayer (Skia) | the editor as a Skia layer — wire straight into a renderer. |
 | out | `Current Frame` | int | the playhead position in frames — the current time on the timeline (advanced by playback / scrubbing). |
 | out | `Is Playing` | bool | true while the timeline is playing (Play pressed, not yet stopped or run to the end). |
+| out | `Active Marker` | string | the name of the marker the playhead is **on**, or `""` when on none. Chiefly for **stop markers**: while playback is halted on one this holds *which* marker stopped it, for as long as the playhead stays parked there. Other markers are reported too, but a plain marker shows only for the **single frame** the playhead sits on / crosses it during playback (treat it as a one-frame pulse). |
 | out | `Active Clip Name` | Spread&lt;string&gt; | per track (aligned by track order): the label of the clip covering the playhead, or `""` in a gap. |
 | out | `Clip Frame` | Spread&lt;int&gt; | per track: the playhead's **0-based** position *within* the active clip (`playhead - clip.Start`; `0` at its first frame, `Length-1` at its last), or `-1` in a gap. |
 | out | `Clip Length` | Spread&lt;int&gt; | per track: the active clip's total length in frames, or `-1` in a gap. |
@@ -57,7 +58,7 @@ Interpole/
 | out | `Fade Gain` | Spread&lt;float&gt; | per track: the active clip's fade envelope at the playhead — `0..1`, ramping through the fade-in/out and `1` in between; `0` in a gap. |
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
-| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` is not bundled — it stays on its own pin as a live signal bus.) |
+| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` is not bundled — it stays on its own pin as a live signal bus.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -252,7 +253,8 @@ Done:
   timecode on by default.
 - **Undo / redo** — editor-local, structural edits only, **Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z**.
 - **Persistence** — the whole timeline lives on the `Data` pin, saved inside the `.vl` patch.
-- **Domain output pins** — `Current Frame`, `Is Playing`, and per-track (aligned `Spread`s)
+- **Domain output pins** — `Current Frame`, `Is Playing`, `Active Marker` (the name of the marker the
+  playhead is on — chiefly the stop marker that halted playback, `""` otherwise), and per-track (aligned `Spread`s)
   `Active Clip Name`, `Clip Frame` (0-based position within the active clip, `-1` in a gap),
   `Clip Length` (active clip's length in frames, `-1` in a gap), `Fade Gain` (0..1, evaluated at the
   playhead), `Active Color` (palette colour of the active clip), and `Upcoming Clip Names` (that
@@ -273,11 +275,11 @@ Done:
   seeks to that marker and plays. This is where the two plugins meet — decoupled by design (a plain
   string, no cross-plugin reference), so any string source can drive it.
 - **One-cable `Info` output** — an `InterpoleInfo` record bundling all the value outputs (Current
-  Frame, Is Playing, and the per-track spreads) so a patch can route the whole timeline state on a
+  Frame, Is Playing, Active Marker, and the per-track spreads) so a patch can route the whole timeline state on a
   single wire, then unpack with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter
   nodes. Mirrors VL.Automata's `AutomataInfo`. Audio stays on its own pin.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
-  `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Clip Name` /
+  `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Marker` / `Active Clip Name` /
   `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /
   `Upcoming Clip Names` / `Audio` / `Info` out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
 

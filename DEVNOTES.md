@@ -487,6 +487,19 @@ old JSON, so back-compat is free. Decisions worth remembering:
   - Stop and Jump are **mutually exclusive** per marker (`MarkerData.HasAction = Stop || JumpTargetId`);
     the editor clears one when you set the other, and `RemoveMarker` clears any `JumpTargetId`
     referencing the deleted marker so no jump dangles. Old docs (no `JumpTargetId`) load unchanged.
+- **`Active Marker` output (2026-08-26).** A `string` out pin reporting the name of the marker the
+  playhead is **on** this frame, `""` when on none. Its point is stop markers: when `AdvancePlayback`
+  parks on one, `Document.Playhead == marker.Frame`, so the output naturally holds *which* marker halted
+  playback for as long as it stays parked — the patch reads the stop's name with no extra state. The
+  value is computed on demand in `InterpoleEditorWidget.ActiveMarkerName` (resolved from the live
+  document, so a rename shows through): first any marker whose `Frame == Playhead` (covers a stop-parked,
+  a scrub-onto, or a landed-on marker), else — **only while playing** — `_crossedMarkerName`. That field
+  catches a **plain marker skipped by a multi-frame advance**: `AdvancePlayback` resets it each step and,
+  when no action marker fired, sets it to the last plain marker in `(prev, scanEnd]` (largest frame), so a
+  non-stop marker still pulses active for the one frame it's crossed even if the playhead never lands on
+  its exact frame. Gating on `_playing` means a stale crossed name can't leak while parked. Also added to
+  `InterpoleInfo` + unpacked by `GetTransport` (transport scalars). Kept out of the model/undo — pure
+  derived output, like `Is Playing`.
 - **`Marker` enum + `Jump` pin.** Markers populate a **dynamic enum** (`InterpoleMarker` /
   `InterpoleMarkerDefinition`, the VL.HDE template shape) synced from the document every node
   `Update` via `InterpoleMarkerDefinition.Sync(name→frame)` (only pulses its change-trigger when the
@@ -515,7 +528,7 @@ wanted, the clean route is a shared contract assembly both reference — not a d
 ## One-cable `Info` output (2026-08-19)
 
 `InterpoleInfo` (`Engine/InterpoleInfo.cs`) is an immutable `record` bundling the node's value outputs
-(Current Frame, Is Playing, and the per-track spreads) so a patch can route the whole timeline state on
+(Current Frame, Is Playing, Active Marker, and the per-track spreads) so a patch can route the whole timeline state on
 one wire — a direct port of VL.Automata's `AutomataInfo`. It's a **snapshot**, not a live handle:
 `Update` builds a fresh record each frame from the values it already computed (`EvaluateOutputs`), so
 scalars are copied and the spreads are shared **by reference** (they're immutable) — one small record

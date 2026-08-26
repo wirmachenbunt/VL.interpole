@@ -186,6 +186,12 @@ public class InterpoleNode : IDisposable
         out int currentFrame,
         // True while the timeline is playing (Play pressed and not yet stopped / reached the end).
         out bool isPlaying,
+        // The name of the marker the playhead is currently on, or "" when it is on none. Meant chiefly
+        // for stop markers: when playback halts on one, this holds that marker's name for as long as the
+        // playhead is parked there, so the patch can see *which* marker stopped it. Other (non-stop)
+        // markers are reported too, but only for the single frame the playhead sits on / crosses them
+        // during playback — so treat a non-empty value on a plain marker as a one-frame pulse.
+        out string activeMarker,
         // Per-track outputs, aligned by track order (index 0 = the top track). For each track,
         // the clip covering the playhead is the "active" clip:
         //   activeClipName — the active clip's label, or "" where the playhead sits in a gap.
@@ -327,6 +333,7 @@ public class InterpoleNode : IDisposable
         }
 
         isPlaying = _editor?.IsPlaying ?? false;
+        activeMarker = _editor?.ActiveMarkerName ?? "";
 
         // Expose the mixer's fixed stereo outputs as the Audio Spread (transport + clip layout were
         // already pushed to the mixer above). Stable set of signals — safe to wire once into VL.Audio.
@@ -346,7 +353,7 @@ public class InterpoleNode : IDisposable
 
         // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
         // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
-        info = new InterpoleInfo(currentFrame, isPlaying, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
+        info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned
