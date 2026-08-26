@@ -220,6 +220,12 @@ public class InterpoleNode : IDisposable
         // every audio track, summed with its fade envelope + gain and played in sync with the playhead.
         // Stable regardless of which clips are active — wire it straight into VL.Audio's engine/output.
         out Spread<AudioSignal> audio,
+        // Per **audio track** (aligned by audio-track order, index 0 = the first TrackKind.Audio track):
+        // that track's current loudness as a 0..~1 float — an RMS meter of everything the track is playing
+        // (all its clips summed, post fade + gain), with a fast attack and a smooth (~0.3 s) release, so it
+        // reads like a VU meter. 0 while the track is silent or playback is stopped. Metered on the audio
+        // thread; standard tracks are not included (this is an audio measurement, like the Audio pin).
+        out Spread<float> trackLevels,
         // One-cable bundle of the value outputs above (Current Frame, Is Playing, and the per-track
         // spreads) as a single immutable InterpoleInfo — pass "the whole timeline state" downstream on
         // one wire and unpack only what you need (see the Get… splitter nodes). Built from the same
@@ -345,6 +351,16 @@ public class InterpoleNode : IDisposable
             audio = ab.ToSpread();
         }
         else audio = Spread<AudioSignal>.Empty;
+
+        // Per-audio-track loudness meter. Width = the document's audio-track count (deterministic even
+        // before the audio thread has run), reading the mixer's latest published levels where available
+        // (they're aligned by the same audio-track order). Zeros when there's no mixer (no audio device).
+        int audioTracks = _editor?.Document.Tracks.Count(tr => tr.Kind == TrackKind.Audio) ?? 0;
+        var levels = _mixer?.Levels;
+        var lb = new SpreadBuilder<float>(audioTracks);
+        for (int i = 0; i < audioTracks; i++)
+            lb.Add(levels is not null && i < levels.Length ? levels[i] : 0f);
+        trackLevels = lb.ToSpread();
 
         // Domain outputs, evaluated at the (possibly just-advanced) playhead. Computed after the
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too

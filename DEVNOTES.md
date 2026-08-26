@@ -346,8 +346,22 @@ InterpoleAudioEngine.cs`, `Engine/WaveformCache.cs`, or the audio branches in th
   `ClipData.GainAt` as a *smooth* linear ramp evaluated at every output sample (× `clip.Gain`), so
   audio fades don't zipper at frame boundaries. Same envelope the editor draws — reused *concept*,
   smooth *implementation*.
+- **Per-audio-track loudness meter (`Track Levels` output, 2026-08-26).** The mixer meters each audio
+  track's loudness and publishes it for the node's `Track Levels` `Spread<float>` (aligned by
+  **audio-track** order — one entry per `TrackKind.Audio` track, standard tracks excluded, so it's an
+  audio-domain output like `Audio`, NOT bundled in `Info`). Each `AudioClipSnap` carries its audio-track
+  index (`AudioTransport.Build` tags it, `AudioTrackCount` = how many audio tracks); in the mix loop the
+  clip's post-gain samples add into `_levelEnergy[track] += l²+r²`, so all clips on a track meter as one.
+  Per buffer, `PublishLevels` turns energy into `RMS = √(energy / 2·count)` and applies **VU-style
+  ballistics**: instant attack, exponential release over `LevelReleaseTau` (0.3 s) — a stopped/silent
+  track releases to 0 (the idle early-return also calls `PublishLevels` with zero energy so meters keep
+  falling). **Audio-thread hygiene:** the envelope/energy state is audio-thread-only and the published
+  `float[] _levels` is **ping-ponged** between two preallocated backing arrays (swap the `volatile`
+  reference), so a normal buffer allocates nothing; the main thread reads `Levels` and copies it into the
+  spread (sized to the doc's audio-track count, so the width is stable even before the audio thread runs).
+  Reallocated only when the audio-track count changes (a one-buffer meter reset, inaudible).
 - **Threading model — one immutable snapshot, swapped by reference.** The node builds an
-  `AudioTransport` (`Playing` / `TargetSec` / clip list) on the main thread each frame via
+  `AudioTransport` (`Playing` / `TargetSec` / clip list / audio-track count) on the main thread each frame via
   `AudioTransport.Build(doc, fps, playing, playheadContinuousFrames)` and hands it over with
   `SetTransport` (a `volatile` reference — atomic). The **audio thread only ever reads that reference**,
   never the live `InterpoleDocument`, and it doesn't publish anything back (the playhead is the node's,

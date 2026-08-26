@@ -58,7 +58,9 @@ Interpole/
 | out | `Fade Gain` | Spread&lt;float&gt; | per track: the active clip's fade envelope at the playhead — `0..1`, ramping through the fade-in/out and `1` in between; `0` in a gap. |
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
-| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` is not bundled — it stays on its own pin as a live signal bus.) |
+| out | `Audio` | Spread&lt;AudioSignal&gt; | the timeline's audio as a fixed stereo mix bus — every audio clip on every audio track, summed with its fades + gain and played in sync with the playhead. Wire straight into VL.Audio's engine / output. |
+| out | `Track Levels` | Spread&lt;float&gt; | per **audio track** (aligned by audio-track order, index 0 = the first `TrackKind.Audio` track): that track's current loudness, `0..~1` — an **RMS meter** of everything the track is playing (all clips summed, post fade + gain), with a fast attack and a smooth (~0.3 s) release, like a VU meter. `0` while the track is silent or playback is stopped. Standard tracks are not included. |
+| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -281,7 +283,7 @@ Done:
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
   `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Marker` / `Active Clip Name` /
   `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /
-  `Upcoming Clip Names` / `Audio` / `Info` out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
+  `Upcoming Clip Names` / `Audio` / `Track Levels` / `Info` out; inspector-only `No Background`, `Fps`, `Frame Step Playback`.
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).

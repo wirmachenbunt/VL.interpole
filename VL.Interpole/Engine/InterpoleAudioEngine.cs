@@ -28,6 +28,7 @@ public sealed class AudioClipSnap
 {
     public readonly string Key;         // clip id — stable across edits, keys the source pool
     public readonly string FilePath;
+    public readonly int Track;          // index of the clip's track in document order (for per-track levels)
     public readonly double StartSec;    // timeline position of the clip's start
     public readonly double LengthSec;   // how long the clip sounds on the timeline
     public readonly double InPointSec;  // where in the file playback begins (trim head)
@@ -35,10 +36,10 @@ public sealed class AudioClipSnap
     public readonly double FadeOutSec;
     public readonly float Gain;
 
-    public AudioClipSnap(string key, string filePath, double startSec, double lengthSec,
+    public AudioClipSnap(string key, string filePath, int track, double startSec, double lengthSec,
                          double inPointSec, double fadeInSec, double fadeOutSec, float gain)
     {
-        Key = key; FilePath = filePath;
+        Key = key; FilePath = filePath; Track = track;
         StartSec = startSec; LengthSec = lengthSec; InPointSec = inPointSec;
         FadeInSec = fadeInSec; FadeOutSec = fadeOutSec; Gain = gain;
     }
@@ -52,33 +53,40 @@ public sealed class AudioTransport
     public readonly bool Playing;
     public readonly double TargetSec;   // the visual playhead (sub-frame precise) the audio chases
     public readonly IReadOnlyList<AudioClipSnap> Clips;
+    public readonly int AudioTrackCount; // number of audio tracks — the width of the per-track level meter
 
-    public AudioTransport(bool playing, double targetSec, IReadOnlyList<AudioClipSnap> clips)
+    public AudioTransport(bool playing, double targetSec, IReadOnlyList<AudioClipSnap> clips, int audioTrackCount)
     {
-        Playing = playing; TargetSec = targetSec; Clips = clips;
+        Playing = playing; TargetSec = targetSec; Clips = clips; AudioTrackCount = audioTrackCount;
     }
 
-    public static readonly AudioTransport Idle = new(false, 0, Array.Empty<AudioClipSnap>());
+    public static readonly AudioTransport Idle = new(false, 0, Array.Empty<AudioClipSnap>(), 0);
 
     // Build a transport snapshot from the live document (main thread). Timeline geometry is converted
     // from frames to seconds via fps (so the mixer is rate-independent). playheadFrames is the *sub-frame
     // continuous* playhead (Playhead + fractional accumulator) so the chase target is smooth, not stepped.
-    // Only audio clips (clip.IsAudio) are included.
+    // Only audio clips (clip.IsAudio) are included; each is tagged with the index of its audio track (0-based
+    // among TrackKind.Audio tracks, in document order) so the mixer can meter loudness per audio track.
     public static AudioTransport Build(InterpoleDocument doc, int fps, bool playing, double playheadFrames)
     {
         double f = Math.Max(1, fps);
         var clips = new List<AudioClipSnap>();
+        int audioIdx = -1;   // running audio-track index; ++ on each audio track encountered
         foreach (var tr in doc.Tracks)
+        {
+            bool audioTrack = tr.Kind == TrackKind.Audio;
+            if (audioTrack) audioIdx++;
             foreach (var c in tr.Clips)
             {
                 if (!c.IsAudio) continue;
                 var (fi, fo) = c.EffectiveFades();
                 clips.Add(new AudioClipSnap(
-                    c.Id, c.FilePath!,
+                    c.Id, c.FilePath!, audioTrack ? audioIdx : -1,
                     c.Start / f, c.Length / f, c.FileInPoint,
                     fi / f, fo / f, c.Gain));
             }
-        return new AudioTransport(playing, playheadFrames / f, clips);
+        }
+        return new AudioTransport(playing, playheadFrames / f, clips, audioIdx + 1);
     }
 }
 
@@ -91,6 +99,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
     private const double HardSyncSec = 0.15;     // drift beyond this snaps (Play / seek / loop wrap)
     private const double ReseekTolSec = 0.004;   // a source is "still aligned" within this of expected
     private const double PreloadSec = 2.0;       // open + warm a clip's file this far ahead of its start
+    private const double LevelReleaseTau = 0.3;  // per-track meter release time (s); attack is instant
 
     // The current clip layout + transport (main thread writes, audio thread reads). Reference
     // assignment is atomic; volatile makes the audio thread see the latest.
@@ -105,9 +114,23 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
     private float[] _tmp = Array.Empty<float>();
     private readonly HashSet<string> _liveKeys = new();
 
+    // ---- per-audio-track loudness metering ----
+    // The last published levels (RMS with meter ballistics), one entry per audio track in document order —
+    // read by the node on the main thread and output as the Track Levels spread. Published by reference
+    // (atomic); the writer ping-pongs two backing arrays so no allocation happens on the audio thread.
+    private volatile float[] _levels = Array.Empty<float>();
+    private float[] _levelsBack = Array.Empty<float>();   // the backing array not currently published
+    private float[] _levelEnv = Array.Empty<float>();     // per-track envelope state (audio-thread only)
+    private double[] _levelEnergy = Array.Empty<double>();  // per-track Σ(l²+r²) this buffer (audio-thread only)
+
     // MultiChannelSignal() already SetOutputCount(2) → stereo. Outputs is inherited.
 
     public void SetTransport(AudioTransport t) => _transport = t;
+
+    // The current per-audio-track loudness (0..~1, RMS with a fast attack / ~0.3 s release), indexed by
+    // audio-track order. A live snapshot for metering — the node copies it into the Track Levels spread
+    // each frame. Empty when the mixer never ran (or has no audio tracks).
+    public float[] Levels => _levels;
 
     protected override void FillBuffers(float[][] buffers, int offset, int count)
     {
@@ -123,6 +146,10 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
         var t = _transport;
         PruneSources(t);
 
+        // Reset this buffer's per-track energy accumulators (sized to the audio-track count).
+        EnsureLevelState(t.AudioTrackCount);
+        if (_levelEnergy.Length > 0) Array.Clear(_levelEnergy, 0, _levelEnergy.Length);
+
         // Preload upcoming clips: open + warm their file (off the audio thread) before playback reaches
         // them, so the source is Ready and OS-cached in time — this is what kills the first-play click.
         // Anchored on the current audio position when playing, else the parked playhead (so a clip near a
@@ -136,6 +163,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
         {
             _audioPosSec = t.TargetSec;   // stay parked on the playhead so resuming is aligned
             _wasPlaying = false;
+            PublishLevels(count, rate);   // no energy this buffer → meters release toward 0
             return;
         }
 
@@ -181,6 +209,10 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
             int ch = src.Channels;
             EnsureTmp(nOut * ch);
             int got = src.ReadFrames(_tmp, nOut, speed, rate);
+            // Accumulate this clip's post-gain energy into its audio track's meter (−1 = clip on a
+            // non-audio track, skip). Summed across all clips on the track, so overlapping/adjacent
+            // clips meter together as one track level.
+            bool meter = clip.Track >= 0 && clip.Track < _levelEnergy.Length;
             for (int i = 0; i < got; i++)
             {
                 float g = GainAt(clip, aSec + i * secPerOut);
@@ -188,11 +220,46 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
                 float r = (ch > 1 ? _tmp[i * ch + 1] : _tmp[i * ch]) * g;
                 buffers[0][o0 + i] += l;
                 if (nch > 1) buffers[1][o0 + i] += r;
+                if (meter) _levelEnergy[clip.Track] += (double)l * l + (double)r * r;
             }
             src.NextTimelineSec = aSec + got * secPerOut;   // where this source expects to read next
         }
 
         _audioPosSec = endSec;
+        PublishLevels(count, rate);
+    }
+
+    // Grow the per-track meter state to `n` audio tracks (reallocating resets it to zero — a track
+    // add/remove is rare and a one-buffer meter reset is inaudible). Keeps the two published backing
+    // arrays the same width so the ping-pong publish never allocates on the audio thread.
+    private void EnsureLevelState(int n)
+    {
+        if (_levelEnv.Length == n) return;
+        _levelEnv = new float[n];
+        _levelEnergy = new double[n];
+        _levelsBack = new float[n];
+        _levels = new float[n];
+    }
+
+    // Turn this buffer's accumulated per-track energy into RMS, apply meter ballistics (instant attack,
+    // exponential release over LevelReleaseTau), and publish the result by swapping in the back buffer —
+    // so the main thread always reads a fully-written array and the audio thread allocates nothing.
+    private void PublishLevels(int count, int rate)
+    {
+        int n = _levelEnv.Length;
+        if (n == 0) return;
+        double bufSec = rate > 0 ? (double)count / rate : 0;
+        float release = (float)(1.0 - Math.Exp(-bufSec / LevelReleaseTau));
+        var back = _levelsBack;
+        for (int i = 0; i < n; i++)
+        {
+            float rms = count > 0 ? (float)Math.Sqrt(_levelEnergy[i] / (2.0 * count)) : 0f;
+            if (rms >= _levelEnv[i]) _levelEnv[i] = rms;                 // instant attack
+            else _levelEnv[i] += (rms - _levelEnv[i]) * release;        // smoothed release
+            back[i] = _levelEnv[i];
+        }
+        _levelsBack = _levels;   // recycle the previously published array as the next back buffer
+        _levels = back;          // publish (atomic reference swap)
     }
 
     // Linear fade envelope (× clip gain) at a timeline time in seconds — the smooth, per-sample version
