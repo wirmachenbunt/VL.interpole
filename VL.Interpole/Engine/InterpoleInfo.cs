@@ -24,6 +24,9 @@ public sealed record InterpoleInfo(
     // playback is halted on one it holds that marker's name; a plain marker shows only for the single
     // frame the playhead sits on / crosses it (a one-frame pulse).
     string ActiveMarker,
+    // Per track (aligned by track order): the track's name — the key for looking one track out of the
+    // aligned spreads by name (see the GetTrack node). Index i is the same track across every spread here.
+    Spread<string> TrackNames,
     // Per track (aligned by track order): the active clip's label, or "" where the playhead is in a gap.
     Spread<string> ActiveClipName,
     // Per track: the playhead's 0-based frame position within the active clip, or -1 in a gap.
@@ -44,6 +47,6 @@ public sealed record InterpoleInfo(
     // A harmless empty snapshot (e.g. before the first Update, or a null/unconnected input).
     public static readonly InterpoleInfo Empty = new(
         0, false, "",
-        Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
+        Spread<string>.Empty, Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
         Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty);
 }

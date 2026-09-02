@@ -365,23 +365,24 @@ public class InterpoleNode : IDisposable
         // Domain outputs, evaluated at the (possibly just-advanced) playhead. Computed after the
         // editor update so playback that ran this frame is reflected. Available in No UI Mode too
         // (the document still exists; only the ImGui frame is skipped).
-        EvaluateOutputs(out currentFrame, out activeClipName, out clipFrame, out clipLength, out clipProgress, out fadeGain, out activeColor, out upcomingClipNames);
+        EvaluateOutputs(out currentFrame, out var trackNames, out activeClipName, out clipFrame, out clipLength, out clipProgress, out fadeGain, out activeColor, out upcomingClipNames);
 
         // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
         // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
-        info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
+        info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, trackNames, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned
     // by track order, so index i corresponds to the same track across all of them.
-    private void EvaluateOutputs(out int currentFrame, out Spread<string> names, out Spread<int> clipFrames,
-                                 out Spread<int> clipLengths, out Spread<float> progresses, out Spread<float> gains,
-                                 out Spread<Color4> colors, out Spread<string> upcomingNames)
+    private void EvaluateOutputs(out int currentFrame, out Spread<string> trackNames, out Spread<string> names,
+                                 out Spread<int> clipFrames, out Spread<int> clipLengths, out Spread<float> progresses,
+                                 out Spread<float> gains, out Spread<Color4> colors, out Spread<string> upcomingNames)
     {
         var doc = _editor?.Document;
         if (doc is null)
         {
             currentFrame = 0;
+            trackNames = Spread<string>.Empty;
             names = Spread<string>.Empty;
             clipFrames = Spread<int>.Empty;
             clipLengths = Spread<int>.Empty;
@@ -401,6 +402,7 @@ public class InterpoleNode : IDisposable
         bool looping = _editor?.Loop ?? false;
         var (loopIn, loopOut) = doc.EffectiveLoop();
 
+        var tnb = new SpreadBuilder<string>(doc.Tracks.Count);
         var nb = new SpreadBuilder<string>(doc.Tracks.Count);
         var fb = new SpreadBuilder<int>(doc.Tracks.Count);
         var lb = new SpreadBuilder<int>(doc.Tracks.Count);
@@ -410,6 +412,7 @@ public class InterpoleNode : IDisposable
         var ub = new SpreadBuilder<string>(doc.Tracks.Count);
         foreach (var track in doc.Tracks)
         {
+            tnb.Add(track.Name ?? "");   // the track's name — the lookup key for GetTrack
             var clip = track.ActiveClipAt(frame);
             if (clip is null)
             {
@@ -439,6 +442,7 @@ public class InterpoleNode : IDisposable
                 : track.NextClipAfter(frame);
             ub.Add(upcoming?.Label ?? "");
         }
+        trackNames = tnb.ToSpread();
         names = nb.ToSpread();
         clipFrames = fb.ToSpread();
         clipLengths = lb.ToSpread();

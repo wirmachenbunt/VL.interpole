@@ -60,7 +60,7 @@ Interpole/
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
 | out | `Audio` | Spread&lt;AudioSignal&gt; | the timeline's audio as a fixed stereo mix bus — every audio clip on every audio track, summed with its fades + gain and played in sync with the playhead. Wire straight into VL.Audio's engine / output. |
 | out | `Track Levels` | Spread&lt;float&gt; | per **audio track** (aligned by audio-track order, index 0 = the first `TrackKind.Audio` track): that track's current loudness, `0..~1` — an **RMS meter** of everything the track is playing (all clips summed, post fade + gain), with a fast attack and a smooth (~0.3 s) release, like a VU meter. `0` while the track is silent or playback is stopped. Standard tracks are not included. |
-| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
+| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, the per-track **track names**, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips` / `GetTrack`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -277,9 +277,17 @@ Done:
   seeks to that marker and plays. This is where the two plugins meet — decoupled by design (a plain
   string, no cross-plugin reference), so any string source can drive it.
 - **One-cable `Info` output** — an `InterpoleInfo` record bundling all the value outputs (Current
-  Frame, Is Playing, Active Marker, and the per-track spreads) so a patch can route the whole timeline state on a
-  single wire, then unpack with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips`** splitter
-  nodes. Mirrors VL.Automata's `AutomataInfo`. Audio stays on its own pin.
+  Frame, Is Playing, Active Marker, the per-track track names, and the per-track spreads) so a patch can
+  route the whole timeline state on a single wire, then unpack with the **`GetTransport` /
+  `GetActiveClips` / `GetUpcomingClips` / `GetTrack`** splitter nodes. Mirrors VL.Automata's
+  `AutomataInfo`. Audio stays on its own pin.
+- **Single-track split (`GetTrack`)** — picks **one track by name** out of `Info` and outputs its
+  active-clip values as **scalars** (not spreads): `Active Clip Name`, `Clip Frame`, `Clip Length`,
+  `Clip Progress`, `Fade Gain`, `Active Color`. The per-track equivalent of `GetActiveClips` for a single
+  named track. `Track` is matched exactly (first match wins); an unknown/empty name — or a track whose
+  playhead is in a gap — yields the "nothing" values (`""` / `-1` / `-1` / `0` / `0` / transparent), so
+  `Clip Length == -1` signals "no active clip / no such track". Uses the per-track track names now carried
+  in `Info`.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
   `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Marker` / `Active Clip Name` /
   `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /

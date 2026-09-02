@@ -542,14 +542,30 @@ wanted, the clean route is a shared contract assembly both reference — not a d
 ## One-cable `Info` output (2026-08-19)
 
 `InterpoleInfo` (`Engine/InterpoleInfo.cs`) is an immutable `record` bundling the node's value outputs
-(Current Frame, Is Playing, Active Marker, and the per-track spreads) so a patch can route the whole timeline state on
+(Current Frame, Is Playing, Active Marker, the per-track **track names**, and the per-track spreads) so a
+patch can route the whole timeline state on
 one wire — a direct port of VL.Automata's `AutomataInfo`. It's a **snapshot**, not a live handle:
 `Update` builds a fresh record each frame from the values it already computed (`EvaluateOutputs`), so
 scalars are copied and the spreads are shared **by reference** (they're immutable) — one small record
-per frame, no list copying. Splitter getters (`GetTransport` / `GetActiveClips` / `GetUpcomingClips`,
-zero-field `[ProcessNode]`s that tolerate a null input) unpack it downstream, same convention as
-Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
+per frame, no list copying. Splitter getters (`GetTransport` / `GetActiveClips` / `GetUpcomingClips` /
+`GetTrack`, zero-field `[ProcessNode]`s that tolerate a null input) unpack it downstream, same convention
+as Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
 bus wired straight into VL.Audio, not information to route/unpack, so it keeps its own pin.
+
+- **`TrackNames` (2026-09-02).** The bundle carries a `Spread<string> TrackNames`, aligned by track order
+  like every other per-track spread (index *i* is the same track across all of them). Built in
+  `EvaluateOutputs` from each `TrackData.Name`. Its purpose is to let a splitter resolve a track **by name**
+  from the snapshot alone (the snapshot has no other track identity) — used by `GetTrack`. Added to the
+  `InterpoleInfo` ctor + `Empty`; back-compatible (the existing splitters read named properties, so the new
+  positional field only touched the single construction site in `InterpoleNode`).
+- **`GetTrack` single-track split (2026-09-02).** Picks **one track by name** and unpacks its active-clip
+  values as **scalars** — `Active Clip Name` / `Clip Frame` / `Clip Length` / `Clip Progress` / `Fade Gain` /
+  `Active Color` — the per-track equivalent of `GetActiveClips` for a single named track (the user's ask).
+  `Track` (a plain `string`, chosen over a dynamic-enum dropdown to avoid the app-global-singleton enum
+  machinery) is matched **exactly** against `Info.TrackNames`, first match wins. A null `Info`, an
+  empty/unknown `Track`, or a track sitting in a gap all resolve to the same "nothing" values
+  (`""` / `-1` / `-1` / `0` / `0` / transparent), so `Clip Length == -1` reads as "no active clip / no such
+  track". Shares the safe-index (`At<T>`) + null-tolerant conventions of the other Get… nodes.
 
 ## Rendering performance (2026-08-20)
 
