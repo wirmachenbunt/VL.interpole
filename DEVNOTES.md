@@ -58,6 +58,13 @@ does the same, and where it deliberately differs.
   finds the gap under the cursor and shrinks the new clip to fit (skips if < 1 frame). The
   multi-selection move uses `GroupLeftBound`/`GroupRightBound` — same idea, but ignoring the
   *other selected* clips (they move together, so they can't collide with each other).
+- **A new clip's default length scales with zoom** (`DefaultNewClipLen`). A fixed `DefaultClipLen` (30
+  frames) is a ~4px unusable sliver when zoomed far out (the user works mostly at 2%, where
+  `_pxPerFrame`≈0.12), so `AddClip` instead targets the on-screen width a default clip has at 100% zoom
+  (`DefaultClipLen * DefaultPxPerFrame`≈180px): `max(DefaultClipLen, round(180 / _pxPerFrame))`. So a new
+  clip is 30 frames at ≥100% (zooming in is unchanged) and grows in frames as you zoom out (~1500 at 2%,
+  ~3000 at the 1% floor) to stay a comfortable, grabbable width. Still gap-clamped by `AddClip`; audio
+  clips (sized to the file) and paste (own length) are unaffected.
 - **Clips can be dragged between tracks (single clip or whole selection).** `MoveSelection` is the
   single mover for `DragMode.MoveClip` (a lone clip is just a selection of one). It first tries a
   **whole-track vertical shift** toward the track under the cursor: `trackDelta` is clamped so the
