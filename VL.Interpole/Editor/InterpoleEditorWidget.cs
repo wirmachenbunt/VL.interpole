@@ -1968,6 +1968,18 @@ public sealed class InterpoleEditorWidget : IDisposable
         Commit();
     }
 
+    // Frames for a freshly added clip. DefaultClipLen at 100% zoom (and above), but grows as you zoom
+    // OUT so a new clip keeps a comfortable, grabbable on-screen width — both edge handles reachable —
+    // instead of a few-pixel sliver at low zoom (e.g. at 2% a 30-frame clip is ~4px wide). Target width
+    // is what a default clip spans at 100% (DefaultClipLen * DefaultPxPerFrame px); never shorter than
+    // DefaultClipLen, so zooming in keeps the old behaviour. Still clamped to the gap by the caller.
+    private int DefaultNewClipLen()
+    {
+        float wantedPx = DefaultClipLen * DefaultPxPerFrame;
+        int len = (int)MathF.Round(wantedPx / _pxPerFrame);
+        return Math.Max(DefaultClipLen, len);
+    }
+
     private void AddClip(TrackData tr, float frameF)
     {
         int f = Math.Max(0, (int)MathF.Round(frameF));
@@ -1979,8 +1991,8 @@ public sealed class InterpoleEditorWidget : IDisposable
             else return; // f is inside an existing clip — nothing to add here
         }
         int start = Math.Max(f, leftEnd);
-        int maxLen = rightStart == int.MaxValue ? DefaultClipLen : rightStart - start;
-        int len = Math.Min(DefaultClipLen, maxLen);
+        int wanted = DefaultNewClipLen();
+        int len = rightStart == int.MaxValue ? wanted : Math.Min(wanted, rightStart - start);
         if (len < 1) return;
 
         _clipCounter++;
