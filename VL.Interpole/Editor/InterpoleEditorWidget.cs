@@ -63,6 +63,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
     private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
     private const float ReadoutPadX = 24f;     // left inset of the readout from the bar edge
+    private const float TabBarHeight = 26f;    // bottom page-switcher strip [Timeline] [◆ clip]
 
     private readonly string _title;
     private int _trackCounter;
@@ -110,6 +111,16 @@ public sealed class InterpoleEditorWidget : IDisposable
     private bool _panning;
     private string? _hoverClipId;
     private ClipZone? _hoverZone;   // grab zone under the cursor on the hovered clip, for the edge cue
+
+    // Which "page" the editor shows: the timeline, or a single clip's keyframe editor. A bottom tab
+    // bar switches between them; the clip page is opened from the clip inspector's "Edit Keyframes"
+    // button and closed via its tab's ✕. _openClipId is the clip whose page is open (null = none).
+    private enum EditorMode { Timeline, Clip }
+    private EditorMode _mode = EditorMode.Timeline;
+    private string? _openClipId;
+    // Bottom-tab hit rects, cached each frame by DrawTabBar (draw runs before interaction).
+    private Vector2 _tlTabMin, _tlTabMax, _clipTabMin, _clipTabMax, _clipTabCloseMin, _clipTabCloseMax;
+
     private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
     // The marker shown in the inspector, if any. Mutually exclusive with a clip selection: selecting a
     // marker clears the clip selection and vice-versa, so the inspector edits exactly one thing.
@@ -223,7 +234,10 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float FrameToX(float f) => _laneLeft + f * _pxPerFrame - _scrollX;
     private float XToFrame(float x) => (x - _laneLeft + _scrollX) / _pxPerFrame;
     private float LaneRight => _canvasRight;
-    private float LanesBottom => _origin.Y + _size.Y;
+    private float CanvasBottom => _origin.Y + _size.Y;         // very bottom of the window content
+    // The content area (lanes / inspector / clip page) stops above the bottom tab bar, which occupies
+    // [LanesBottom, CanvasBottom] across the full width.
+    private float LanesBottom => CanvasBottom - TabBarHeight;
     // Audio tracks (and the clips in them) are 20% taller than standard tracks, so heights vary and
     // the vertical layout is a running sum rather than i * TrackHeight.
     private float TrackHeightOf(int i) => Document.Tracks[i].Kind == TrackKind.Audio ? TrackHeight * AudioTrackScale : TrackHeight;
@@ -300,22 +314,43 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (ShowBackground)
             dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
 
-        DrawLanes(dl);
-        if (_drag == DragMode.Marquee) DrawMarquee(dl);
-        DrawRuler(dl);
-        DrawLoopBar(dl);
-        DrawMarkerLane(dl, mouse);
-        DrawHeaders(dl);
-        DrawTrackDragFeedback(dl);
-        DrawPlayhead(dl);
-        DrawSnapGuide(dl);
-        DrawCorner(dl, mouse);
-        DrawTransport(dl, mouse);
-        DrawZoomReadout(dl);
-        DrawInspectorStrip(dl, mouse);
-        if (_inspectorOpen) DrawInspector(dl);
+        // If the open clip vanished (deleted / undo), fall back to the timeline so the clip page
+        // never renders a dangling id.
+        if (_mode == EditorMode.Clip && FindClip(_openClipId) is null) { _mode = EditorMode.Timeline; _openClipId = null; }
 
-        if (_editKind != EditKind.None)
+        if (_mode == EditorMode.Clip)
+        {
+            DrawClipView(dl, mouse);
+        }
+        else
+        {
+            DrawLanes(dl);
+            if (_drag == DragMode.Marquee) DrawMarquee(dl);
+            DrawRuler(dl);
+            DrawLoopBar(dl);
+            DrawMarkerLane(dl, mouse);
+            DrawHeaders(dl);
+            DrawTrackDragFeedback(dl);
+            DrawPlayhead(dl);
+            DrawSnapGuide(dl);
+            DrawCorner(dl, mouse);
+        }
+
+        // Transport + bottom tab bar are shared chrome, drawn in both modes.
+        DrawTransport(dl, mouse);
+        if (_mode == EditorMode.Timeline)
+        {
+            DrawZoomReadout(dl);
+            DrawInspectorStrip(dl, mouse);
+            if (_inspectorOpen) DrawInspector(dl);
+        }
+        DrawTabBar(dl, mouse);
+
+        if (_mode == EditorMode.Clip)
+        {
+            if (!_markerDialogOpen) HandleClipViewInteraction(hovered, mouse, io);
+        }
+        else if (_editKind != EditKind.None)
             DrawInlineEdit();
         else if (!_markerDialogOpen)
         {
@@ -333,7 +368,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void ClampScroll()
     {
         float contentH = TracksTotalHeight();
-        float viewH = _size.Y - TransportHeight - RulerHeight - MarkerLaneHeight;
+        float viewH = _size.Y - TransportHeight - RulerHeight - MarkerLaneHeight - TabBarHeight;
         _scrollY = Math.Clamp(_scrollY, 0f, MathF.Max(0f, contentH - viewH));
         if (_scrollX < 0) _scrollX = 0;
     }
@@ -924,6 +959,11 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
 
         IG.Spacing();
+        IG.Separator();
+        // Opens this clip's keyframe editor page (a bottom tab appears; the canvas switches to it).
+        if (IG.Button("Edit Keyframes  ›", new Vector2(-1f, 0f))) { _openClipId = clip.Id; _mode = EditorMode.Clip; }
+
+        IG.Spacing();
         IG.TextDisabled("track: " + (string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name));
     }
 
@@ -1169,6 +1209,175 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
     }
 
+    // ============================== bottom tab bar + clip page ==============================
+
+    // Draws the [Timeline] [◆ ClipName ✕] page-switcher along the very bottom. Tabs are rounded on
+    // their BOTTOM corners so they read as hanging from the content above (a top-rounded ImGui tab
+    // would look upside-down down here). Hit rects are cached for TryHandleTabBarClick (draw runs
+    // before interaction each frame).
+    private void DrawTabBar(ImDrawListPtr dl, Vector2 mouse)
+    {
+        float top = LanesBottom, bottom = CanvasBottom, right = _origin.X + _size.X;
+        dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(right, bottom), Col(0.10f, 0.11f, 0.12f));
+        dl.AddLine(new Vector2(_origin.X, top), new Vector2(right, top), Col(0f, 0f, 0f, 0.5f));
+
+        const float padX = 16f, gap = 3f, tabTopInset = 3f;
+        float x = _origin.X + 8f;
+
+        // Timeline tab (always present).
+        {
+            const string lbl = "Timeline";
+            var ts = IG.CalcTextSize(lbl);
+            float w = ts.X + padX * 2f;
+            _tlTabMin = new Vector2(x, top + tabTopInset);
+            _tlTabMax = new Vector2(x + w, bottom);
+            bool active = _mode == EditorMode.Timeline;
+            DrawTabBackground(dl, mouse, _tlTabMin, _tlTabMax, active);
+            dl.AddText(new Vector2(x + padX, top + (bottom - top - ts.Y) * 0.5f + 1f),
+                       active ? Col(0.92f, 0.95f, 1f) : Col(0.60f, 0.64f, 0.70f), lbl);
+            x += w + gap;
+        }
+
+        // Clip tab: shown for the OPEN clip's page, or — when none is open — for the currently
+        // SELECTED clip as a "click to edit its keyframes" affordance. The ✕ (close) only appears
+        // once a page is actually open.
+        bool pageOpen = _openClipId is not null;
+        if (TabClipId is { } tabId && FindClip(tabId) is { } f)
+        {
+            string name = string.IsNullOrWhiteSpace(f.clip.Label) ? "clip" : f.clip.Label;
+            var ts = IG.CalcTextSize(name);
+            float closeW = pageOpen ? 24f : 8f;
+            float w = padX + 12f /*diamond*/ + ts.X + closeW;
+            _clipTabMin = new Vector2(x, top + tabTopInset);
+            _clipTabMax = new Vector2(x + w, bottom);
+            bool active = _mode == EditorMode.Clip;
+            DrawTabBackground(dl, mouse, _clipTabMin, _clipTabMax, active);
+
+            // Colour diamond (the clip's palette colour).
+            var (cr, cg, cb) = ClipRgb(f.clip.Color);
+            float cy = (top + bottom) * 0.5f + 1f, dx = x + padX * 0.5f + 3f, dr = 4.5f;
+            dl.AddQuadFilled(new Vector2(dx, cy - dr), new Vector2(dx + dr, cy),
+                             new Vector2(dx, cy + dr), new Vector2(dx - dr, cy), Col(cr, cg, cb));
+            // Name. Dimmer when it's only a selection preview (no page open yet).
+            float tx = dx + dr + 6f;
+            uint nameCol = active ? Col(0.92f, 0.95f, 1f) : pageOpen ? Col(0.62f, 0.66f, 0.72f) : Col(0.72f, 0.76f, 0.82f);
+            dl.AddText(new Vector2(tx, top + (bottom - top - ts.Y) * 0.5f + 1f), nameCol, name);
+
+            // ✕ close — only once a page is open.
+            if (pageOpen)
+            {
+                float clcx = x + w - closeW * 0.5f;
+                _clipTabCloseMin = new Vector2(clcx - 9f, cy - 9f);
+                _clipTabCloseMax = new Vector2(clcx + 9f, cy + 9f);
+                uint xcol = InRect(mouse, _clipTabCloseMin, _clipTabCloseMax) ? Col(1f, 0.72f, 0.72f) : Col(0.6f, 0.64f, 0.7f);
+                const float xh = 4f;
+                dl.AddLine(new Vector2(clcx - xh, cy - xh), new Vector2(clcx + xh, cy + xh), xcol, 1.6f);
+                dl.AddLine(new Vector2(clcx + xh, cy - xh), new Vector2(clcx - xh, cy + xh), xcol, 1.6f);
+            }
+            else _clipTabCloseMin = _clipTabCloseMax = Vector2.Zero;
+        }
+        else { _clipTabMin = _clipTabMax = _clipTabCloseMin = _clipTabCloseMax = Vector2.Zero; }
+    }
+
+    // The clip the bottom clip-tab currently represents: the open page's clip, else the selection.
+    private string? TabClipId => _openClipId ?? _selectedClipId;
+
+    private void DrawTabBackground(ImDrawListPtr dl, Vector2 mouse, Vector2 min, Vector2 max, bool active)
+    {
+        bool hov = InRect(mouse, min, max);
+        uint bg = active ? Col(0.20f, 0.22f, 0.26f) : hov ? Col(0.155f, 0.165f, 0.19f) : Col(0.125f, 0.135f, 0.155f);
+        dl.AddRectFilled(min, max, bg, 5f, ImDrawFlags.RoundCornersBottom);
+        // Active tab: a bright accent line along its top edge, tying it to the content above.
+        if (active) dl.AddLine(new Vector2(min.X + 2f, min.Y), new Vector2(max.X - 2f, min.Y), Col(0.30f, 0.62f, 0.95f), 2f);
+    }
+
+    // Resolve a click on the bottom tab bar. Returns true when the click was inside the bar (so the
+    // caller stops — the strip swallows its own clicks even on empty space).
+    private bool TryHandleTabBarClick(Vector2 mouse)
+    {
+        if (mouse.Y < LanesBottom) return false;
+        if (!IG.IsMouseClicked(ImGuiMouseButton.Left)) return true;
+        // ✕ closes an open page (only present when one is open).
+        if (_openClipId is not null && InRect(mouse, _clipTabCloseMin, _clipTabCloseMax))
+        { _openClipId = null; _mode = EditorMode.Timeline; return true; }
+        // Clicking the clip tab opens (or re-focuses) that clip's keyframe page.
+        if (TabClipId is { } tabId && InRect(mouse, _clipTabMin, _clipTabMax))
+        { _openClipId = tabId; _mode = EditorMode.Clip; return true; }
+        if (InRect(mouse, _tlTabMin, _tlTabMax)) _mode = EditorMode.Timeline;
+        return true;
+    }
+
+    // Interaction while a clip's keyframe page is open: only the shared chrome is live — the bottom
+    // tab bar and the transport bar. (Keyframe-lane editing comes in a later step.)
+    private void HandleClipViewInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
+    {
+        if (!hovered) return;
+        if (mouse.Y >= LanesBottom) { TryHandleTabBarClick(mouse); return; }
+        // Transport bar (topmost strip): buttons + the time/frames toggle, same as the timeline path.
+        if (mouse.Y >= _origin.Y && mouse.Y < _rulerTop && IG.IsMouseClicked(ImGuiMouseButton.Left))
+        {
+            var (rmin, rmax) = TimeToggleRect();
+            if (InRect(mouse, rmin, rmax)) _showTimecode = !_showTimecode;
+            else for (int i = 0; i < 4; i++)
+            {
+                var (bmin, bmax) = TransportButtonRect(i);
+                if (InRect(mouse, bmin, bmax)) { OnTransport((TButton)i); break; }
+            }
+        }
+    }
+
+    // The per-clip keyframe editor page — a placeholder shell for now (clip-local ruler + an empty
+    // state). Keyframe lanes get built on top of this later. Owns the area [_rulerTop, LanesBottom].
+    private void DrawClipView(ImDrawListPtr dl, Vector2 mouse)
+    {
+        float left = _origin.X, right = _origin.X + _size.X;
+        float top = _rulerTop, bottom = LanesBottom;
+        dl.AddRectFilled(new Vector2(left, top), new Vector2(right, bottom), Col(0.115f, 0.125f, 0.14f));
+
+        var found = FindClip(_openClipId);
+        if (found is null) return;
+        var (_, clip) = found.Value;
+        string name = string.IsNullOrWhiteSpace(clip.Label) ? "(unnamed clip)" : clip.Label;
+        var (cr, cg, cb) = ClipRgb(clip.Color);
+
+        // Clip-local ruler: frames 0..Length fitted across the page width (reuses NiceFrameStep).
+        float rTop = top, rBot = top + 44f, padX = 28f;
+        float x0 = left + padX, x1 = right - padX;
+        dl.AddRectFilled(new Vector2(left, rTop), new Vector2(right, rBot), Col(0.14f, 0.15f, 0.17f));
+        dl.AddLine(new Vector2(left, rBot), new Vector2(right, rBot), Col(0f, 0f, 0f, 0.5f));
+        int len = Math.Max(1, clip.Length);
+        float pxf = (x1 - x0) / len;
+        int step = NiceFrameStep(80f / pxf);
+        for (int fr = 0; fr <= len; fr += step)
+        {
+            float x = x0 + fr * pxf;
+            dl.AddLine(new Vector2(x, rBot - 8f), new Vector2(x, rBot), Col(0.5f, 0.55f, 0.6f));
+            string lbl = fr.ToString(CultureInfo.InvariantCulture);
+            dl.AddText(new Vector2(x + 4f, rTop + (rBot - rTop - IG.CalcTextSize(lbl).Y) * 0.5f), Col(0.7f, 0.75f, 0.8f), lbl);
+        }
+
+        // Title row (below the ruler): colour diamond + clip name + frame count.
+        float tyy = rBot + 20f, tdx = x0 + 7f, tdr = 6f, tcy = tyy + 7f;
+        dl.AddQuadFilled(new Vector2(tdx, tcy - tdr), new Vector2(tdx + tdr, tcy),
+                         new Vector2(tdx, tcy + tdr), new Vector2(tdx - tdr, tcy), Col(cr, cg, cb));
+        dl.AddText(new Vector2(tdx + tdr + 8f, tyy), Col(0.92f, 0.95f, 1f), name);
+        string sub = $"{len} frame{(len == 1 ? "" : "s")}  ·  keyframe editor";
+        dl.AddText(new Vector2(tdx + tdr + 8f, tyy + 18f), Col(0.55f, 0.6f, 0.66f), sub);
+
+        // Empty state, centred in the area below the title.
+        const string hint1 = "No keyframe lanes yet";
+        const string hint2 = "Animation lanes for this clip arrive in the next step.";
+        var h1 = IG.CalcTextSize(hint1);
+        var h2 = IG.CalcTextSize(hint2);
+        float cxm = (left + right) * 0.5f, cym = (tyy + 44f + bottom) * 0.5f;
+        float bw = MathF.Max(h2.X + 80f, 320f), bh = 96f;
+        var pmin = new Vector2(cxm - bw * 0.5f, cym - bh * 0.5f);
+        var pmax = new Vector2(cxm + bw * 0.5f, cym + bh * 0.5f);
+        dl.AddRect(pmin, pmax, Col(1f, 1f, 1f, 0.08f), 8f, ImDrawFlags.None, 1.5f);
+        dl.AddText(new Vector2(cxm - h1.X * 0.5f, pmin.Y + 28f), Col(0.7f, 0.74f, 0.8f), hint1);
+        dl.AddText(new Vector2(cxm - h2.X * 0.5f, pmin.Y + 52f), Col(0.5f, 0.54f, 0.6f), hint2);
+    }
+
     // ============================== interaction ==============================
 
     private bool InLanes(Vector2 m) => m.X >= _laneLeft && m.X < LaneRight && m.Y >= _lanesTop;
@@ -1227,6 +1436,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
 
         if (!hovered) return;
+
+        // Bottom tab bar (full-width strip at the very bottom): claim it before any timeline region.
+        if (mouse.Y >= LanesBottom) { TryHandleTabBarClick(mouse); return; }
 
         // Right of the timeline: the far-right strip toggles the inspector; the panel itself is
         // driven by its own ImGui widgets. Claim the whole region so no timeline handler fires here.
