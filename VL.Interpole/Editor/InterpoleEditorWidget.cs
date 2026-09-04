@@ -1370,9 +1370,38 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         DrawTimeGrid(dl);   // same vertical grid as the timeline
 
+        // Darken the timeline outside the clip's span (before its start / after its end) so the clip's
+        // active region stands out. Drawn over the rows + grid; the clip edges below stay crisp.
+        uint shade = Col(0f, 0f, 0f, 0.38f);
+        if (cx0 > _laneLeft) dl.AddRectFilled(new Vector2(_laneLeft, _lanesTop), new Vector2(MathF.Min(cx0, LaneRight), LanesBottom), shade);
+        if (cx1 < LaneRight) dl.AddRectFilled(new Vector2(MathF.Max(cx1, _laneLeft), _lanesTop), new Vector2(LaneRight, LanesBottom), shade);
+
         // Clip start / end as thin lines in the clip colour, full lane height.
         if (cx0 >= _laneLeft && cx0 <= LaneRight) dl.AddLine(new Vector2(cx0, _lanesTop), new Vector2(cx0, LanesBottom), Col(cr, cg, cb, 0.55f), 1.5f);
         if (cx1 >= _laneLeft && cx1 <= LaneRight) dl.AddLine(new Vector2(cx1, _lanesTop), new Vector2(cx1, LanesBottom), Col(cr, cg, cb, 0.55f), 1.5f);
+
+        // Keyframe diamonds, one per key, centred in the track's row (keyframe frame is clip-local).
+        for (int i = 0; i < clip.FloatTracks.Count; i++)
+        {
+            float top = _lanesTop + i * TrackHeight;
+            if (top >= LanesBottom) break;
+            if (top + TrackHeight > LanesBottom) continue;   // skip a partial last row
+            float rcy = top + TrackHeight * 0.5f;
+            foreach (var kf in clip.FloatTracks[i].Keys)
+            {
+                float kx = FrameToX(clip.Start + kf.Frame);
+                if (kx < _laneLeft - 7f || kx > LaneRight + 7f) continue;
+                DrawKeyframeDiamond(dl, kx, rcy, clip.Start + kf.Frame == Document.Playhead);
+            }
+        }
+    }
+
+    private void DrawKeyframeDiamond(ImDrawListPtr dl, float x, float y, bool onPlayhead)
+    {
+        float r = onPlayhead ? 6.5f : 5.5f;
+        uint fill = onPlayhead ? Col(1f, 0.9f, 0.45f) : Col(0.95f, 0.8f, 0.3f);
+        dl.AddQuadFilled(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), fill);
+        dl.AddQuad(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), Col(0.12f, 0.10f, 0.04f), 1.2f);
     }
 
     // Header column: name + draggable value per float track, plus the timeline's row styling (accent
@@ -1424,14 +1453,21 @@ public sealed class InterpoleEditorWidget : IDisposable
                 if (IG.InputText("##name", ref nm, 128)) ft.Name = nm;
                 if (IG.IsItemDeactivatedAfterEdit()) Commit();
                 IG.PopStyleColor(3);
-                // Draggable / slidable value, next to the name.
+                // Value AT THE PLAYHEAD (After-Effects style): the field shows the sampled value, and
+                // editing it creates a keyframe at the playhead — or updates the one already there.
+                // Only inside the clip's span; the frame goes amber when the playhead is on a keyframe.
+                int local = Document.Playhead - clip.Start;
+                bool within = local >= 0 && local < clip.Length;
+                bool onKey = within && ft.Keys.Any(k => k.Frame == local);
                 float valX = _origin.X + 12f + nameW + gap;
                 IG.SetCursorScreenPos(new Vector2(valX, wy));
                 IG.SetNextItemWidth(valueW);
-                IG.PushStyleColor(ImGuiCol.FrameBg, Col(0.20f, 0.21f, 0.24f));
-                float val = ft.Value;
-                if (IG.DragFloat("##value", ref val, 0.01f)) ft.Value = val;
-                if (IG.IsItemDeactivatedAfterEdit()) Commit();
+                IG.PushStyleColor(ImGuiCol.FrameBg, onKey ? Col(0.44f, 0.35f, 0.12f) : Col(0.20f, 0.21f, 0.24f));
+                if (!within) IG.BeginDisabled();
+                float val = ft.SampleAt(within ? local : Math.Clamp(local, 0, clip.Length - 1));
+                if (IG.DragFloat("##value", ref val, 0.01f) && within) ft.SetKeyframe(local, val);
+                if (IG.IsItemDeactivatedAfterEdit() && within) Commit();
+                if (!within) IG.EndDisabled();
                 IG.PopStyleColor();
                 IG.PopID();
             }
@@ -1923,9 +1959,20 @@ public sealed class InterpoleEditorWidget : IDisposable
         int frame = Math.Max(0, (int)MathF.Round(XToFrame(mouseX)));
         if (!snap) return frame;
         CollectClipEdgeTargets(null);          // snap to every clip (nothing to exclude, no playhead)
+        AddActiveKeyframeSnapTargets();        // and, on the clip page, the open clip's keyframes
         var r = Snap(frame);
         snapped = r.snapped;
         return r.frame;
+    }
+
+    // On the clip (keyframe) page, add the open clip's keyframe frames (absolute) to the snap targets so
+    // the playhead scrub snaps onto keyframes too.
+    private void AddActiveKeyframeSnapTargets()
+    {
+        if (_mode != EditorMode.Clip || FindClip(_activeClipId) is not { } f) return;
+        foreach (var t in f.clip.FloatTracks)
+            foreach (var k in t.Keys)
+                _snapTargets.Add(f.clip.Start + k.Frame);
     }
 
     // Fill _snapTargets with the snap-worthy frames: frame 0 and every clip's start / end / fade-in

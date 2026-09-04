@@ -233,6 +233,52 @@ public sealed class FloatTrackData
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    // The constant value used when the track has no keyframes. Once keyframes exist it's ignored (the
+    // value is sampled from Keys). Kept for back-compat and as the pre-keyframe default.
+    public float Value { get; set; }
+    // Keyframes on the clip-local frame axis (frame 0 = the clip's start), kept sorted by Frame. Empty
+    // by default → the track is a constant (Value); absent on old documents (back-compat).
+    public List<Keyframe> Keys { get; set; } = new();
+
+    // The track's value at a clip-local frame: the constant when there are no keyframes, else linear
+    // between the bracketing keyframes, holding the first/last value outside the keyed range.
+    public float SampleAt(int localFrame)
+    {
+        if (Keys.Count == 0) return Value;
+        if (localFrame <= Keys[0].Frame) return Keys[0].Value;
+        if (localFrame >= Keys[^1].Frame) return Keys[^1].Value;
+        for (int i = 1; i < Keys.Count; i++)
+        {
+            var b = Keys[i];
+            if (localFrame <= b.Frame)
+            {
+                var a = Keys[i - 1];
+                if (b.Frame == a.Frame) return b.Value;
+                float t = (localFrame - a.Frame) / (float)(b.Frame - a.Frame);
+                return a.Value + (b.Value - a.Value) * t;
+            }
+        }
+        return Keys[^1].Value;
+    }
+
+    // Create the keyframe at a clip-local frame, or update its value if one already sits there. Keeps
+    // Keys sorted by Frame.
+    public void SetKeyframe(int localFrame, float value)
+    {
+        for (int i = 0; i < Keys.Count; i++)
+        {
+            if (Keys[i].Frame == localFrame) { Keys[i].Value = value; return; }
+            if (Keys[i].Frame > localFrame) { Keys.Insert(i, new Keyframe { Frame = localFrame, Value = value }); return; }
+        }
+        Keys.Add(new Keyframe { Frame = localFrame, Value = value });
+    }
+}
+
+// One keyframe on a float track: a value at a clip-local frame (frame 0 = the clip's start). Linear
+// interpolation between keyframes for now (no curves/tangents yet).
+public sealed class Keyframe
+{
+    public int Frame { get; set; }
     public float Value { get; set; }
 }
 
