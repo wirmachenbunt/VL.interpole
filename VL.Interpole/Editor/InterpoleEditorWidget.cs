@@ -64,7 +64,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
     private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
     private const float ReadoutPadX = 24f;     // left inset of the readout from the bar edge
-    private const float TabBarHeight = 26f;    // bottom page-switcher strip [Timeline] [◆ clip]
+    private const float TabBarHeight = 52f;    // bottom page-switcher strip [Timeline] [◆ clip]
 
     private readonly string _title;
     private int _trackCounter;
@@ -113,14 +113,17 @@ public sealed class InterpoleEditorWidget : IDisposable
     private string? _hoverClipId;
     private ClipZone? _hoverZone;   // grab zone under the cursor on the hovered clip, for the edge cue
 
-    // Which "page" the editor shows: the timeline, or a single clip's keyframe editor. A bottom tab
-    // bar switches between them; the clip page is opened from the clip inspector's "Edit Keyframes"
-    // button and closed via its tab's ✕. _openClipId is the clip whose page is open (null = none).
+    // Which "page" the editor shows: the timeline, or a clip's keyframe editor. The bottom tab bar has
+    // a [Timeline] tab plus one tab per opened clip (in open order). Clicking a (non-audio) clip on the
+    // timeline opens a tab for it; clicking a tab shows that clip's page; a tab's ✕ closes it. Audio
+    // clips have no keyframes yet, so they never get a tab. _activeClipId is the clip shown in clip mode.
     private enum EditorMode { Timeline, Clip }
     private EditorMode _mode = EditorMode.Timeline;
-    private string? _openClipId;
-    // Bottom-tab hit rects, cached each frame by DrawTabBar (draw runs before interaction).
-    private Vector2 _tlTabMin, _tlTabMax, _clipTabMin, _clipTabMax, _clipTabCloseMin, _clipTabCloseMax;
+    private string? _activeClipId;
+    private readonly List<string> _openTabs = new();   // clip ids with a bottom tab, in open order
+    // Bottom-tab hit rects, rebuilt by DrawTabBar each frame (draw runs before interaction).
+    private Vector2 _tlTabMin, _tlTabMax;
+    private readonly List<(string id, Vector2 min, Vector2 max, Vector2 closeMin, Vector2 closeMax)> _tabHits = new();
 
     private string? _selectedClipId;  // primary selection: shown in the inspector; the drag target
     // The marker shown in the inspector, if any. Mutually exclusive with a clip selection: selecting a
@@ -279,9 +282,11 @@ public sealed class InterpoleEditorWidget : IDisposable
         _size = IG.GetContentRegionAvail();
         if (_size.X < 64) _size.X = 64;
         if (_size.Y < 64) _size.Y = 64;
-        // Resolve the clip (keyframe) page before layout: if its clip vanished (deleted / undo), fall
-        // back to the timeline so nothing renders a dangling id (and the header width picks the right mode).
-        if (_mode == EditorMode.Clip && FindClip(_openClipId) is null) { _mode = EditorMode.Timeline; _openClipId = null; }
+        // Resolve the clip (keyframe) page before layout (so the header width picks the right mode):
+        // drop tabs whose clip vanished (deleted / undo), and if the active clip is gone fall back to
+        // the timeline so nothing renders a dangling id.
+        _openTabs.RemoveAll(id => FindClip(id) is null);
+        if (_mode == EditorMode.Clip && (_activeClipId is null || FindClip(_activeClipId) is null)) { _mode = EditorMode.Timeline; _activeClipId = null; }
 
         // The header column is wider on the clip page to give float-track names more room.
         _laneLeft = _origin.X + (_mode == EditorMode.Clip ? ClipHeaderWidth : HeaderWidth);
@@ -977,7 +982,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         IG.Spacing();
         IG.Separator();
         // Opens this clip's keyframe editor page (a bottom tab appears; the canvas switches to it).
-        if (IG.Button("Edit Keyframes  ›", new Vector2(-1f, 0f))) { _openClipId = clip.Id; _mode = EditorMode.Clip; }
+        // Audio clips have no keyframes yet, so no entry for them.
+        if (!clip.IsAudio && IG.Button("Edit Keyframes  ›", new Vector2(-1f, 0f)))
+        { OpenClipTab(clip); _activeClipId = clip.Id; _mode = EditorMode.Clip; }
 
         IG.Spacing();
         IG.TextDisabled("track: " + (string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name));
@@ -1227,10 +1234,9 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // ============================== bottom tab bar + clip page ==============================
 
-    // Draws the [Timeline] [◆ ClipName ✕] page-switcher along the very bottom. Tabs are rounded on
-    // their BOTTOM corners so they read as hanging from the content above (a top-rounded ImGui tab
-    // would look upside-down down here). Hit rects are cached for TryHandleTabBarClick (draw runs
-    // before interaction each frame).
+    // Draws the [Timeline] tab plus one [◆ ClipName ✕] tab per opened clip along the very bottom. Tabs
+    // are rounded on their BOTTOM corners so they read as hanging from the content above. Hit rects are
+    // cached in _tabHits for TryHandleTabBarClick (draw runs before interaction each frame).
     private void DrawTabBar(ImDrawListPtr dl, Vector2 mouse)
     {
         float top = LanesBottom, bottom = CanvasBottom, right = _origin.X + _size.X;
@@ -1238,6 +1244,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddLine(new Vector2(_origin.X, top), new Vector2(right, top), Col(0f, 0f, 0f, 0.5f));
 
         const float padX = 16f, gap = 3f, tabTopInset = 3f;
+        float textY = top + (bottom - top) * 0.5f + 1f;   // vertical centre for text / diamond / ✕
         float x = _origin.X + 8f;
 
         // Timeline tab (always present).
@@ -1254,49 +1261,41 @@ public sealed class InterpoleEditorWidget : IDisposable
             x += w + gap;
         }
 
-        // Clip tab: shown for the OPEN clip's page, or — when none is open — for the currently
-        // SELECTED clip as a "click to edit its keyframes" affordance. The ✕ (close) only appears
-        // once a page is actually open.
-        bool pageOpen = _openClipId is not null;
-        if (TabClipId is { } tabId && FindClip(tabId) is { } f)
+        // One tab per opened clip (in open order). Each has a colour diamond, name and a ✕ close.
+        _tabHits.Clear();
+        foreach (var id in _openTabs)
         {
+            if (FindClip(id) is not { } f) continue;
             string name = string.IsNullOrWhiteSpace(f.clip.Label) ? "clip" : f.clip.Label;
             var ts = IG.CalcTextSize(name);
-            float closeW = pageOpen ? 24f : 8f;
-            float w = padX + 12f /*diamond*/ + ts.X + closeW;
-            _clipTabMin = new Vector2(x, top + tabTopInset);
-            _clipTabMax = new Vector2(x + w, bottom);
-            bool active = _mode == EditorMode.Clip;
-            DrawTabBackground(dl, mouse, _clipTabMin, _clipTabMax, active);
+            const float closeW = 24f, diamondW = 12f;
+            float w = padX + diamondW + ts.X + closeW;
+            if (x + w > right - 8f) break;   // out of room (no tab-strip scrolling yet)
+            var tabMin = new Vector2(x, top + tabTopInset);
+            var tabMax = new Vector2(x + w, bottom);
+            bool active = _mode == EditorMode.Clip && _activeClipId == id;
+            DrawTabBackground(dl, mouse, tabMin, tabMax, active);
 
-            // Colour diamond (the clip's palette colour).
             var (cr, cg, cb) = ClipRgb(f.clip.Color);
-            float cy = (top + bottom) * 0.5f + 1f, dx = x + padX * 0.5f + 3f, dr = 4.5f;
-            dl.AddQuadFilled(new Vector2(dx, cy - dr), new Vector2(dx + dr, cy),
-                             new Vector2(dx, cy + dr), new Vector2(dx - dr, cy), Col(cr, cg, cb));
-            // Name. Dimmer when it's only a selection preview (no page open yet).
+            float dx = x + padX * 0.5f + 3f, dr = 4.5f;
+            dl.AddQuadFilled(new Vector2(dx, textY - dr), new Vector2(dx + dr, textY),
+                             new Vector2(dx, textY + dr), new Vector2(dx - dr, textY), Col(cr, cg, cb));
             float tx = dx + dr + 6f;
-            uint nameCol = active ? Col(0.92f, 0.95f, 1f) : pageOpen ? Col(0.62f, 0.66f, 0.72f) : Col(0.72f, 0.76f, 0.82f);
-            dl.AddText(new Vector2(tx, top + (bottom - top - ts.Y) * 0.5f + 1f), nameCol, name);
+            dl.AddText(new Vector2(tx, top + (bottom - top - ts.Y) * 0.5f + 1f),
+                       active ? Col(0.92f, 0.95f, 1f) : Col(0.66f, 0.70f, 0.76f), name);
 
-            // ✕ close — only once a page is open.
-            if (pageOpen)
-            {
-                float clcx = x + w - closeW * 0.5f;
-                _clipTabCloseMin = new Vector2(clcx - 9f, cy - 9f);
-                _clipTabCloseMax = new Vector2(clcx + 9f, cy + 9f);
-                uint xcol = InRect(mouse, _clipTabCloseMin, _clipTabCloseMax) ? Col(1f, 0.72f, 0.72f) : Col(0.6f, 0.64f, 0.7f);
-                const float xh = 4f;
-                dl.AddLine(new Vector2(clcx - xh, cy - xh), new Vector2(clcx + xh, cy + xh), xcol, 1.6f);
-                dl.AddLine(new Vector2(clcx + xh, cy - xh), new Vector2(clcx - xh, cy + xh), xcol, 1.6f);
-            }
-            else _clipTabCloseMin = _clipTabCloseMax = Vector2.Zero;
+            float clcx = x + w - closeW * 0.5f;
+            var closeMin = new Vector2(clcx - 9f, textY - 9f);
+            var closeMax = new Vector2(clcx + 9f, textY + 9f);
+            uint xcol = InRect(mouse, closeMin, closeMax) ? Col(1f, 0.72f, 0.72f) : Col(0.6f, 0.64f, 0.7f);
+            const float xh = 4f;
+            dl.AddLine(new Vector2(clcx - xh, textY - xh), new Vector2(clcx + xh, textY + xh), xcol, 1.6f);
+            dl.AddLine(new Vector2(clcx + xh, textY - xh), new Vector2(clcx - xh, textY + xh), xcol, 1.6f);
+
+            _tabHits.Add((id, tabMin, tabMax, closeMin, closeMax));
+            x += w + gap;
         }
-        else { _clipTabMin = _clipTabMax = _clipTabCloseMin = _clipTabCloseMax = Vector2.Zero; }
     }
-
-    // The clip the bottom clip-tab currently represents: the open page's clip, else the selection.
-    private string? TabClipId => _openClipId ?? _selectedClipId;
 
     private void DrawTabBackground(ImDrawListPtr dl, Vector2 mouse, Vector2 min, Vector2 max, bool active)
     {
@@ -1313,14 +1312,28 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         if (mouse.Y < LanesBottom) return false;
         if (!IG.IsMouseClicked(ImGuiMouseButton.Left)) return true;
-        // ✕ closes an open page (only present when one is open).
-        if (_openClipId is not null && InRect(mouse, _clipTabCloseMin, _clipTabCloseMax))
-        { _openClipId = null; _mode = EditorMode.Timeline; return true; }
-        // Clicking the clip tab opens (or re-focuses) that clip's keyframe page.
-        if (TabClipId is { } tabId && InRect(mouse, _clipTabMin, _clipTabMax))
-        { _openClipId = tabId; _mode = EditorMode.Clip; return true; }
+        // A clip tab: ✕ closes it, the body shows that clip's page.
+        foreach (var t in _tabHits)
+        {
+            if (InRect(mouse, t.closeMin, t.closeMax)) { CloseTab(t.id); return true; }
+            if (InRect(mouse, t.min, t.max)) { _activeClipId = t.id; _mode = EditorMode.Clip; return true; }
+        }
         if (InRect(mouse, _tlTabMin, _tlTabMax)) _mode = EditorMode.Timeline;
         return true;
+    }
+
+    // Open (or focus) a clip's keyframe tab. Audio clips have no keyframes yet, so they never get a tab.
+    private void OpenClipTab(ClipData clip)
+    {
+        if (clip.IsAudio) return;
+        if (!_openTabs.Contains(clip.Id)) _openTabs.Add(clip.Id);
+    }
+
+    // Remove a clip's tab; if it was the one on screen, drop back to the timeline.
+    private void CloseTab(string id)
+    {
+        _openTabs.Remove(id);
+        if (_activeClipId == id) { _activeClipId = null; _mode = EditorMode.Timeline; }
     }
 
     // ---- clip (keyframe) page: float tracks on the shared timeline axis ----
@@ -1335,7 +1348,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // clip sits on the timeline. Keyframes will be drawn here later (the timeline's clips → keyframes).
     private void DrawFloatLanes(ImDrawListPtr dl)
     {
-        var found = FindClip(_openClipId);
+        var found = FindClip(_activeClipId);
         if (found is null) return;
         var (_, clip) = found.Value;
         var (cr, cg, cb) = ClipRgb(clip.Color);
@@ -1366,7 +1379,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // bar + separators). Delete a track the timeline way — Alt+Left / Middle click on its header cell.
     private void DrawFloatHeaders(ImDrawListPtr dl, Vector2 mouse)
     {
-        var found = FindClip(_openClipId);
+        var found = FindClip(_activeClipId);
         if (found is null) return;
         var (_, clip) = found.Value;
         var io = IG.GetIO();
@@ -1438,7 +1451,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Corner above the header column: the "+ Float Track" button — the clip page's twin of DrawCorner.
     private void DrawFloatCorner(ImDrawListPtr dl, Vector2 mouse)
     {
-        var found = FindClip(_openClipId);
+        var found = FindClip(_activeClipId);
         if (found is null) return;
         var (_, clip) = found.Value;
 
@@ -1686,6 +1699,10 @@ public sealed class InterpoleEditorWidget : IDisposable
                 { RemoveClip(tr, clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
+                    // K-click opens (and jumps to) this clip's keyframe page: adds its tab and switches
+                    // to the clip view. Non-audio only (audio clips have no keyframes yet).
+                    if (IG.IsKeyDown(ImGuiKey.K) && !clip.IsAudio)
+                    { SelectSingle(clip.Id); OpenClipTab(clip); _activeClipId = clip.Id; _mode = EditorMode.Clip; return; }
                     // Ctrl-click toggles this clip in the selection (no drag). Shift is the snap
                     // modifier for the drag (as on the playhead), so it must NOT block the grab —
                     // a Shift-press starts a normal move / resize / fade drag that snaps.
