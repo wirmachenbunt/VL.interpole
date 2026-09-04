@@ -262,24 +262,31 @@ public sealed class FloatTrackData
     }
 
     // Create the keyframe at a clip-local frame, or update its value if one already sits there. Keeps
-    // Keys sorted by Frame.
-    public void SetKeyframe(int localFrame, float value)
+    // Keys sorted by Frame. Returns the keyframe (new or existing).
+    public Keyframe SetKeyframe(int localFrame, float value)
     {
         for (int i = 0; i < Keys.Count; i++)
         {
-            if (Keys[i].Frame == localFrame) { Keys[i].Value = value; return; }
-            if (Keys[i].Frame > localFrame) { Keys.Insert(i, new Keyframe { Frame = localFrame, Value = value }); return; }
+            if (Keys[i].Frame == localFrame) { Keys[i].Value = value; return Keys[i]; }
+            if (Keys[i].Frame > localFrame) { var k = Keyframe.New(localFrame, value); Keys.Insert(i, k); return k; }
         }
-        Keys.Add(new Keyframe { Frame = localFrame, Value = value });
+        var kn = Keyframe.New(localFrame, value);
+        Keys.Add(kn);
+        return kn;
     }
 }
 
 // One keyframe on a float track: a value at a clip-local frame (frame 0 = the clip's start). Linear
-// interpolation between keyframes for now (no curves/tangents yet).
+// interpolation between keyframes for now (no curves/tangents yet). Id is stable across edits so the
+// editor can hold a selection of keyframes (empty on old data → the editor backfills one).
 public sealed class Keyframe
 {
+    public string Id { get; set; } = "";
     public int Frame { get; set; }
     public float Value { get; set; }
+
+    public static Keyframe New(int frame, float value) =>
+        new() { Id = InterpoleDocument.NewId("kf"), Frame = frame, Value = value };
 }
 
 // A named point on the frame axis, shown in the marker lane below the ruler. Global to the timeline

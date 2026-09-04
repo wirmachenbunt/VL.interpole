@@ -102,7 +102,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _lanesTop;    // y where the track lanes begin (= _rulerBottom + MarkerLaneHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker, MoveTrack }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker, MoveTrack, KfMarquee, MoveKeyframe }
     private DragMode _drag;
     private string? _dragClipId;
     private string? _dragMarkerId;  // MoveMarker: the marker being dragged along the frame axis
@@ -138,6 +138,14 @@ public sealed class InterpoleEditorWidget : IDisposable
     // ---- marquee (rubber-band) selection ----
     private Vector2 _marqueeAnchor;               // fixed corner (screen space), set on press
     private HashSet<string> _marqueeBase = new();  // selection to union with (additive marquee)
+
+    // ---- keyframe selection / drag (clip page) ----
+    private readonly HashSet<string> _kfSelection = new();          // selected keyframe ids (active clip)
+    private readonly List<(int trackIndex, int frame, float value)> _kfClipboard = new();  // copied keyframes
+    private readonly List<(Keyframe kf, int orig)> _kfDragOrig = new();  // MoveKeyframe: frames captured at grab
+    private int _kfDragGrabbedOrig;        // MoveKeyframe: the grabbed keyframe's frame at grab
+    private float _kfDragGrabMouseFrame;   // MoveKeyframe: XToFrame(mouseX) at grab
+    private int _kfDragMinOrig;            // MoveKeyframe: min original frame in the group (lower clamp)
 
     // ---- clip clipboard (copy / paste) ----
     // A copied clip plus where it sat, so a multi-clip paste can rebuild the group at the playhead:
@@ -335,7 +343,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         // shared chrome draws and swaps just the lanes / headers / corner.
         if (_mode == EditorMode.Clip)
         {
+            EnsureKeyframeIdsAndPruneSelection();
             DrawFloatLanes(dl);
+            if (_drag == DragMode.KfMarquee) DrawMarquee(dl);
             DrawRuler(dl);
             DrawLoopBar(dl);
             DrawMarkerLane(dl, mouse);
@@ -1391,17 +1401,19 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 float kx = FrameToX(clip.Start + kf.Frame);
                 if (kx < _laneLeft - 7f || kx > LaneRight + 7f) continue;
-                DrawKeyframeDiamond(dl, kx, rcy, clip.Start + kf.Frame == Document.Playhead);
+                DrawKeyframeDiamond(dl, kx, rcy, clip.Start + kf.Frame == Document.Playhead, _kfSelection.Contains(kf.Id));
             }
         }
     }
 
-    private void DrawKeyframeDiamond(ImDrawListPtr dl, float x, float y, bool onPlayhead)
+    private void DrawKeyframeDiamond(ImDrawListPtr dl, float x, float y, bool onPlayhead, bool selected)
     {
-        float r = onPlayhead ? 6.5f : 5.5f;
-        uint fill = onPlayhead ? Col(1f, 0.9f, 0.45f) : Col(0.95f, 0.8f, 0.3f);
+        float r = (onPlayhead || selected) ? 6.5f : 5.5f;
+        uint fill = selected ? Col(1f, 0.98f, 0.85f) : onPlayhead ? Col(1f, 0.9f, 0.45f) : Col(0.95f, 0.8f, 0.3f);
         dl.AddQuadFilled(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), fill);
-        dl.AddQuad(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), Col(0.12f, 0.10f, 0.04f), 1.2f);
+        // Selected keyframes get a bright blue ring; others a thin dark outline.
+        uint ring = selected ? Col(0.35f, 0.7f, 1f) : Col(0.12f, 0.10f, 0.04f);
+        dl.AddQuad(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), ring, selected ? 2f : 1.2f);
     }
 
     // Header column: name + draggable value per float track, plus the timeline's row styling (accent
@@ -1515,6 +1527,192 @@ public sealed class InterpoleEditorWidget : IDisposable
         Commit();
     }
 
+    // ---- keyframe selection / copy / paste (clip page lane) ----
+
+    // Backfill ids on any keyframes that lack one (old data) and drop selected ids whose keyframe is
+    // gone (deleted / undo / a different clip is now active). Runs once per frame on the clip page.
+    private void EnsureKeyframeIdsAndPruneSelection()
+    {
+        if (FindClip(_activeClipId) is not { } f) { _kfSelection.Clear(); return; }
+        var live = new HashSet<string>();
+        foreach (var t in f.clip.FloatTracks)
+            foreach (var k in t.Keys)
+            {
+                if (string.IsNullOrEmpty(k.Id)) k.Id = InterpoleDocument.NewId("kf");
+                live.Add(k.Id);
+            }
+        _kfSelection.RemoveWhere(id => !live.Contains(id));
+    }
+
+    // The keyframe under the cursor in the active clip's lane (with its track index), or null.
+    private (int trackIndex, Keyframe kf)? HitKeyframe(Vector2 mouse)
+    {
+        if (FindClip(_activeClipId) is not { } f) return null;
+        if (mouse.X < _laneLeft || mouse.X >= LaneRight || mouse.Y < _lanesTop || mouse.Y >= LanesBottom) return null;
+        var clip = f.clip;
+        const float r = 7f;
+        for (int i = 0; i < clip.FloatTracks.Count; i++)
+        {
+            float top = _lanesTop + i * TrackHeight;
+            if (top >= LanesBottom) break;
+            if (top + TrackHeight > LanesBottom) continue;
+            float rcy = top + TrackHeight * 0.5f;
+            if (MathF.Abs(mouse.Y - rcy) > r + 3f) continue;
+            foreach (var kf in clip.FloatTracks[i].Keys)
+                if (MathF.Abs(mouse.X - FrameToX(clip.Start + kf.Frame)) <= r) return (i, kf);
+        }
+        return null;
+    }
+
+    // Lane interaction on the clip page: click a keyframe to select it (Ctrl toggles / adds),
+    // Alt/Middle-click to delete it, or drag on empty lane to marquee-select. (No keyframe drag yet.)
+    private void HandleClipLaneInteraction(Vector2 mouse, ImGuiIOPtr io)
+    {
+        if (mouse.X < _laneLeft || mouse.X >= LaneRight || mouse.Y < _lanesTop || mouse.Y >= LanesBottom) return;
+        if (HitKeyframe(mouse) is { } h)
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+            { DeleteKeyframe(h.trackIndex, h.kf); return; }
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+            {
+                // Ctrl-click toggles this keyframe in the selection (no drag).
+                if (io.KeyCtrl) { if (!_kfSelection.Add(h.kf.Id)) _kfSelection.Remove(h.kf.Id); return; }
+                // Grabbing a keyframe already in a multi-selection keeps the group so they drag
+                // together; grabbing any other selects just it. A click with no movement = select.
+                if (!_kfSelection.Contains(h.kf.Id)) { _kfSelection.Clear(); _kfSelection.Add(h.kf.Id); }
+                BeginKeyframeMove(h.kf, mouse);
+                _drag = DragMode.MoveKeyframe;
+            }
+            return;
+        }
+        // Empty lane → marquee (a plain click with no drag ends up clearing the selection).
+        if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+        {
+            _drag = DragMode.KfMarquee;
+            _marqueeAnchor = mouse;
+            _marqueeBase = (io.KeyShift || io.KeyCtrl) ? new HashSet<string>(_kfSelection) : new HashSet<string>();
+            UpdateKfMarqueeSelection(mouse);
+        }
+    }
+
+    private void ContinueKfMarquee(Vector2 mouse)
+    {
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left)) { _drag = DragMode.None; return; }
+        UpdateKfMarqueeSelection(mouse);
+    }
+
+    // Selection = the additive base plus every keyframe whose diamond falls inside the band.
+    private void UpdateKfMarqueeSelection(Vector2 mouse)
+    {
+        if (FindClip(_activeClipId) is not { } f) return;
+        var (min, max) = MarqueeRect(mouse);
+        _kfSelection.Clear();
+        _kfSelection.UnionWith(_marqueeBase);
+        var clip = f.clip;
+        for (int i = 0; i < clip.FloatTracks.Count; i++)
+        {
+            float top = _lanesTop + i * TrackHeight;
+            if (top >= LanesBottom) break;
+            if (top + TrackHeight > LanesBottom) continue;
+            float rcy = top + TrackHeight * 0.5f;
+            if (rcy < min.Y || rcy > max.Y) continue;
+            foreach (var kf in clip.FloatTracks[i].Keys)
+                if (FrameToX(clip.Start + kf.Frame) is var kx && kx >= min.X && kx <= max.X) _kfSelection.Add(kf.Id);
+        }
+    }
+
+    private void DeleteKeyframe(int trackIndex, Keyframe kf)
+    {
+        if (FindClip(_activeClipId) is not { } f) return;
+        f.clip.FloatTracks[trackIndex].Keys.RemoveAll(k => ReferenceEquals(k, kf));
+        _kfSelection.Remove(kf.Id);
+        Commit();
+    }
+
+    // Delete every selected keyframe across the active clip's tracks, in one undo step.
+    private void DeleteSelectedKeyframes()
+    {
+        if (_kfSelection.Count == 0 || FindClip(_activeClipId) is not { } f) return;
+        foreach (var t in f.clip.FloatTracks) t.Keys.RemoveAll(k => _kfSelection.Contains(k.Id));
+        _kfSelection.Clear();
+        Commit();
+    }
+
+    // Copy the selected keyframes (per track index, with their clip-local frames + values).
+    private void CopyKeyframes()
+    {
+        _kfClipboard.Clear();
+        if (_kfSelection.Count == 0 || FindClip(_activeClipId) is not { } f) return;
+        for (int i = 0; i < f.clip.FloatTracks.Count; i++)
+            foreach (var k in f.clip.FloatTracks[i].Keys)
+                if (_kfSelection.Contains(k.Id)) _kfClipboard.Add((i, k.Frame, k.Value));
+    }
+
+    // Paste copied keyframes at the playhead: the earliest copied keyframe lands on the playhead, the
+    // rest keep their relative offsets, into the track at the same index. The pasted keys are selected.
+    private void PasteKeyframes()
+    {
+        if (_kfClipboard.Count == 0 || FindClip(_activeClipId) is not { } f) return;
+        var clip = f.clip;
+        int baseLocal = Math.Max(0, Document.Playhead - clip.Start);
+        int minFrame = _kfClipboard.Min(c => c.frame);
+        _kfSelection.Clear();
+        foreach (var c in _kfClipboard)
+        {
+            if (c.trackIndex >= clip.FloatTracks.Count) continue;   // no matching track in this clip
+            int newFrame = baseLocal + (c.frame - minFrame);
+            if (newFrame < 0) continue;
+            _kfSelection.Add(clip.FloatTracks[c.trackIndex].SetKeyframe(newFrame, c.value).Id);
+        }
+        Commit();
+    }
+
+    // Capture the frames of the selected keyframes at grab time so the group can move by a delta.
+    private void BeginKeyframeMove(Keyframe grabbed, Vector2 mouse)
+    {
+        _kfDragOrig.Clear();
+        if (FindClip(_activeClipId) is not { } f) return;
+        foreach (var t in f.clip.FloatTracks)
+            foreach (var k in t.Keys)
+                if (_kfSelection.Contains(k.Id)) _kfDragOrig.Add((k, k.Frame));
+        _kfDragGrabbedOrig = grabbed.Frame;
+        _kfDragGrabMouseFrame = XToFrame(mouse.X);
+        _kfDragMinOrig = _kfDragOrig.Count > 0 ? _kfDragOrig.Min(o => o.orig) : 0;
+    }
+
+    // Move the selected keyframes along time by the mouse delta. Shift snaps the grabbed keyframe to
+    // clip edges / the playhead / other keyframes; the group is lower-clamped so none goes before the
+    // clip start. Commits one undo step on release.
+    private void ContinueKeyframeDrag(Vector2 mouse)
+    {
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left)) { _drag = DragMode.None; _clipSnapActive = false; Commit(); return; }
+        if (FindClip(_activeClipId) is not { } f) { _drag = DragMode.None; _clipSnapActive = false; return; }
+        var clip = f.clip;
+        int delta = (int)MathF.Round(XToFrame(mouse.X) - _kfDragGrabMouseFrame);
+        _clipSnapActive = false;
+        if (IG.GetIO().KeyShift)
+        {
+            CollectClipEdgeTargets(null);
+            _snapTargets.Add(Document.Playhead);
+            AddOtherKeyframeSnapTargets();
+            int grabbedAbs = clip.Start + _kfDragGrabbedOrig + delta;
+            var s = Snap(grabbedAbs);
+            if (s.snapped) { delta += s.frame - grabbedAbs; _clipSnapActive = true; _clipSnapFrame = s.frame; }
+        }
+        if (_kfDragMinOrig + delta < 0) delta = -_kfDragMinOrig;   // keep the earliest key >= clip start
+        foreach (var (kf, orig) in _kfDragOrig) kf.Frame = orig + delta;
+        foreach (var t in clip.FloatTracks) t.Keys.Sort((a, b) => a.Frame.CompareTo(b.Frame));
+    }
+
+    // Active-clip keyframes NOT in the current selection — snap targets for a keyframe move.
+    private void AddOtherKeyframeSnapTargets()
+    {
+        if (FindClip(_activeClipId) is not { } f) return;
+        foreach (var t in f.clip.FloatTracks)
+            foreach (var k in t.Keys)
+                if (!_kfSelection.Contains(k.Id)) _snapTargets.Add(f.clip.Start + k.Frame);
+    }
+
     // ============================== interaction ==============================
 
     private bool InLanes(Vector2 m) => m.X >= _laneLeft && m.X < LaneRight && m.Y >= _lanesTop;
@@ -1534,16 +1732,15 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (IG.IsKeyPressed(ImGuiKey.B, false)) SetLoopInToPlayhead();
         if (IG.IsKeyPressed(ImGuiKey.N, false)) SetLoopOutToPlayhead();
 
-        // Clip-only gestures (delete / copy / paste act on the timeline's clip selection) must not fire
-        // on the clip page — there they'd hit the clip you're inside.
-        if (_mode == EditorMode.Timeline &&
-            (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false))) DeleteSelection();
+        // Delete / copy / paste act on clips in the timeline, and on keyframes on the clip page.
+        if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false))
+        { if (_mode == EditorMode.Timeline) DeleteSelection(); else DeleteSelectedKeyframes(); }
 
         if (!io.KeyCtrl) return;
         if (IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
         else if (IG.IsKeyPressed(ImGuiKey.Y, false)) Redo();
-        else if (_mode == EditorMode.Timeline && IG.IsKeyPressed(ImGuiKey.C, false)) CopySelection();
-        else if (_mode == EditorMode.Timeline && IG.IsKeyPressed(ImGuiKey.V, false)) PasteClipboard();
+        else if (IG.IsKeyPressed(ImGuiKey.C, false)) { if (_mode == EditorMode.Timeline) CopySelection(); else CopyKeyframes(); }
+        else if (IG.IsKeyPressed(ImGuiKey.V, false)) { if (_mode == EditorMode.Timeline) PasteClipboard(); else PasteKeyframes(); }
     }
 
     private void HandleInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
@@ -1555,6 +1752,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             case DragMode.ResizeL: case DragMode.ResizeR: IG.SetMouseCursor(ImGuiMouseCursor.ResizeEW); break;
             case DragMode.FadeIn: case DragMode.FadeOut: IG.SetMouseCursor(ImGuiMouseCursor.Hand); break;
             case DragMode.MoveClip: IG.SetMouseCursor(ImGuiMouseCursor.ResizeAll); break;
+            case DragMode.MoveKeyframe: IG.SetMouseCursor(ImGuiMouseCursor.ResizeEW); break;
         }
 
         // Continue an in-progress drag / pan first.
@@ -1563,6 +1761,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag is DragMode.LoopIn or DragMode.LoopOut or DragMode.LoopMove) { ContinueLoopDrag(mouse); return; }
         if (_drag == DragMode.MoveMarker) { ContinueMarkerDrag(mouse); return; }
         if (_drag == DragMode.MoveTrack) { ContinueTrackDrag(mouse); return; }
+        if (_drag == DragMode.KfMarquee) { ContinueKfMarquee(mouse); return; }
+        if (_drag == DragMode.MoveKeyframe) { ContinueKeyframeDrag(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
         if (_panning)
         {
@@ -1680,10 +1880,10 @@ public sealed class InterpoleEditorWidget : IDisposable
             return;
         }
 
-        // The clip (keyframe) page shares all the chrome above, but its content (add button, header
-        // name/value widgets, track delete) is handled in the DrawFloat* methods — so stop here and
-        // never run the timeline's corner / track-header / clip-lane interactions in clip mode.
-        if (_mode == EditorMode.Clip) return;
+        // The clip (keyframe) page shares all the chrome above. Its header widgets and add button are
+        // ImGui items handled in the DrawFloat* methods; its LANE handles keyframe selection here. The
+        // timeline's corner / track-header / clip-lane branches below never run in clip mode.
+        if (_mode == EditorMode.Clip) { HandleClipLaneInteraction(mouse, io); return; }
 
         bool alt = io.KeyAlt;
 
