@@ -369,7 +369,32 @@ public class InterpoleNode : IDisposable
 
         // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
         // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
-        info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, trackNames, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames);
+        info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, trackNames, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames,
+                                 BuildClipKeyframes(_editor?.Document, currentFrame));
+    }
+
+    // Snapshot every clip that has float (keyframe) tracks — its name plus each float track's name and
+    // current value (sampled at the playhead) — in track-then-clip order, so GetKeyframes can look a
+    // clip up by name. Only clips with float tracks are included (keeps it lean).
+    private static Spread<ClipKeyframeSnapshot> BuildClipKeyframes(InterpoleDocument? doc, int frame)
+    {
+        if (doc is null) return Spread<ClipKeyframeSnapshot>.Empty;
+        var b = new SpreadBuilder<ClipKeyframeSnapshot>();
+        foreach (var track in doc.Tracks)
+            foreach (var clip in track.Clips)
+            {
+                if (clip.FloatTracks.Count == 0) continue;
+                var names = new SpreadBuilder<string>(clip.FloatTracks.Count);
+                var vals = new SpreadBuilder<float>(clip.FloatTracks.Count);
+                int local = frame - clip.Start;   // clip-local; SampleAt holds outside the keyed range
+                foreach (var ft in clip.FloatTracks)
+                {
+                    names.Add(ft.Name ?? "");
+                    vals.Add(ft.SampleAt(local));
+                }
+                b.Add(new ClipKeyframeSnapshot(clip.Label ?? "", names.ToSpread(), vals.ToSpread()));
+            }
+        return b.ToSpread();
     }
 
     // Evaluate the per-track domain outputs from the document at the playhead. Every spread is aligned

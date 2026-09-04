@@ -42,11 +42,22 @@ public sealed record InterpoleInfo(
     Spread<Color4> ActiveColor,
     // Per track: the name of that track's next clip to play (for preloading), or "" if none; wraps
     // around the loop region while looping.
-    Spread<string> UpcomingClipNames)
+    Spread<string> UpcomingClipNames,
+    // Every clip that carries float (keyframe) tracks, in track-then-clip order, each with its float
+    // tracks' names + current values sampled at the playhead. Used by GetKeyframes to look a clip up by
+    // name. Only clips with at least one float track are included; duplicate names keep both (first wins
+    // on lookup).
+    Spread<ClipKeyframeSnapshot> ClipKeyframes)
 {
     // A harmless empty snapshot (e.g. before the first Update, or a null/unconnected input).
     public static readonly InterpoleInfo Empty = new(
         0, false, "",
         Spread<string>.Empty, Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
-        Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty);
+        Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty,
+        Spread<ClipKeyframeSnapshot>.Empty);
 }
+
+// One clip's float-track state at the playhead: the clip's name, its float-track names, and their
+// current values (aligned by track order). Built each frame in the node; GetKeyframes finds the first
+// entry whose ClipName matches and hands back the two spreads.
+public sealed record ClipKeyframeSnapshot(string ClipName, Spread<string> TrackNames, Spread<float> TrackValues);
