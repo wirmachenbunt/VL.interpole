@@ -1478,9 +1478,11 @@ public sealed class InterpoleEditorWidget : IDisposable
             return;
         }
 
-        // Loop ribbon (top strip of the ruler): drag an end grip, drag the body to move the region,
-        // or drag on empty space to draw a fresh one. Alt/Middle-click clears it (back to the
-        // whole-content default). Checked before the ruler scrub so the strip claims its clicks.
+        // Loop ribbon (top strip of the ruler): drag an end grip, or drag the body to move the region.
+        // The range is only editable via its handles (or the B/N shortcuts) — a plain click on empty
+        // space does nothing (no fresh-draw), so the loop can't be accidentally collapsed to the cursor.
+        // Alt/Middle-click clears it (back to the whole-content default). Checked before the ruler
+        // scrub so the strip claims its clicks.
         if (mouse.X >= _laneLeft && mouse.Y >= _rulerTop && mouse.Y < _loopBottom)
         {
             if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
@@ -1495,7 +1497,7 @@ public sealed class InterpoleEditorWidget : IDisposable
                 if (lo > li && MathF.Abs(mouse.X - xi) <= EdgeGrabPx) { MaterializeLoop(li, lo); _drag = DragMode.LoopIn; }
                 else if (lo > li && MathF.Abs(mouse.X - xo) <= EdgeGrabPx) { MaterializeLoop(li, lo); _drag = DragMode.LoopOut; }
                 else if (lo > li && mouse.X > xi && mouse.X < xo) { MaterializeLoop(li, lo); _drag = DragMode.LoopMove; _loopGrabFrame = mf - li; }
-                else { int f = Math.Max(0, (int)MathF.Round(mf)); Document.LoopIn = f; Document.LoopOut = f; _drag = DragMode.LoopOut; }
+                // Empty space: intentionally do nothing (see above) — no fresh-draw / collapse.
             }
             return;
         }
