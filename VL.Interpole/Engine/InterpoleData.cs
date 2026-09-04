@@ -172,6 +172,11 @@ public sealed class ClipData
     public int FadeIn { get; set; }
     public int FadeOut { get; set; }
 
+    // Per-clip float parameter tracks, edited in the clip's keyframe-editor page. For now each is
+    // just a named track carrying a single draggable value; keyframe lanes over the clip-local time
+    // axis grow from this later. Default empty → old documents and un-animated clips carry none.
+    public List<FloatTrackData> FloatTracks { get; set; } = new();
+
     // ---- audio clips only (null / default on Standard-track clips) ----
     // Absolute path to the sound file this clip plays. Null on non-audio clips. Stored absolute for
     // v1 (a moved patch breaks the reference); relative-to-patch is a later nice-to-have.
@@ -219,6 +224,16 @@ public sealed class ClipData
         if (fo > 0) g = Math.Min(g, (End - frame) / (float)fo);
         return Math.Clamp(g, 0f, 1f);
     }
+}
+
+// A per-clip float parameter track shown in the clip's keyframe-editor page. Currently just a name
+// plus a single draggable value — the seed the keyframe lanes will grow from. Serialized flat and
+// back-compatible (the whole list is absent on clips authored before this existed).
+public sealed class FloatTrackData
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public float Value { get; set; }
 }
 
 // A named point on the frame axis, shown in the marker lane below the ruler. Global to the timeline

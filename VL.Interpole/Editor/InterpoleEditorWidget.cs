@@ -44,7 +44,8 @@ namespace VL.Interpole;
 public sealed class InterpoleEditorWidget : IDisposable
 {
     // ---- layout constants (screen pixels / frames) ----
-    private const float HeaderWidth = 240f;   // track-name column
+    private const float HeaderWidth = 240f;   // track-name column (timeline)
+    private const float ClipHeaderWidth = 340f;// wider track column on the clip (keyframe) page
     private const float TransportHeight = 88f;// transport toolbar (playhead readout + buttons)
     private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
     private const float LoopStripHeight = 14f;// loop-range ribbon, carved from the top of the ruler
@@ -278,15 +279,24 @@ public sealed class InterpoleEditorWidget : IDisposable
         _size = IG.GetContentRegionAvail();
         if (_size.X < 64) _size.X = 64;
         if (_size.Y < 64) _size.Y = 64;
-        _laneLeft = _origin.X + HeaderWidth;
+        // Resolve the clip (keyframe) page before layout: if its clip vanished (deleted / undo), fall
+        // back to the timeline so nothing renders a dangling id (and the header width picks the right mode).
+        if (_mode == EditorMode.Clip && FindClip(_openClipId) is null) { _mode = EditorMode.Timeline; _openClipId = null; }
+
+        // The header column is wider on the clip page to give float-track names more room.
+        _laneLeft = _origin.X + (_mode == EditorMode.Clip ? ClipHeaderWidth : HeaderWidth);
         _rulerTop = _origin.Y + TransportHeight;
         _loopBottom = _rulerTop + LoopStripHeight;
         _rulerBottom = _rulerTop + RulerHeight;
         _lanesTop = _rulerBottom + MarkerLaneHeight;
+
         // The timeline area ends at _canvasRight; the open/close strip lives in the far-right
-        // ToggleStripPx column, and the inspector panel (when open) between them.
+        // ToggleStripPx column, and the inspector panel (when open) between them. The clip page has no
+        // inspector, so it uses the full width.
         _stripLeft = _origin.X + _size.X - ToggleStripPx;
-        _canvasRight = MathF.Max(_laneLeft + 120f, _stripLeft - (_inspectorOpen ? InspectorWidth : 0f));
+        _canvasRight = _mode == EditorMode.Clip
+            ? _origin.X + _size.X
+            : MathF.Max(_laneLeft + 120f, _stripLeft - (_inspectorOpen ? InspectorWidth : 0f));
 
         // Allow the inspector's widgets (submitted later) to sit over the full-canvas InvisibleButton.
         IG.SetNextItemAllowOverlap();
@@ -306,7 +316,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag != DragMode.None) { _hoverClipId = _dragClipId; _hoverZone = null; }
         else
         {
-            var hit = (hovered && _editKind == EditKind.None && InLanes(mouse)) ? HitClip(mouse) : null;
+            var hit = (_mode == EditorMode.Timeline && hovered && _editKind == EditKind.None && InLanes(mouse)) ? HitClip(mouse) : null;
             _hoverClipId = hit?.clip.Id;
             _hoverZone = hit?.zone;
         }
@@ -314,13 +324,20 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (ShowBackground)
             dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
 
-        // If the open clip vanished (deleted / undo), fall back to the timeline so the clip page
-        // never renders a dangling id.
-        if (_mode == EditorMode.Clip && FindClip(_openClipId) is null) { _mode = EditorMode.Timeline; _openClipId = null; }
-
+        // The clip (keyframe) page is the SAME view as the timeline — same time axis (_pxPerFrame /
+        // _scrollX), ruler, loop ribbon, markers, playhead and transport — only the track content
+        // differs: the open clip's float tracks instead of the timeline's clips. So it reuses the
+        // shared chrome draws and swaps just the lanes / headers / corner.
         if (_mode == EditorMode.Clip)
         {
-            DrawClipView(dl, mouse);
+            DrawFloatLanes(dl);
+            DrawRuler(dl);
+            DrawLoopBar(dl);
+            DrawMarkerLane(dl, mouse);
+            DrawFloatHeaders(dl, mouse);
+            DrawPlayhead(dl);
+            DrawSnapGuide(dl);
+            DrawFloatCorner(dl, mouse);
         }
         else
         {
@@ -336,21 +353,20 @@ public sealed class InterpoleEditorWidget : IDisposable
             DrawCorner(dl, mouse);
         }
 
-        // Transport + bottom tab bar are shared chrome, drawn in both modes.
+        // Transport, zoom readout and the bottom tab bar are shared chrome. The inspector is
+        // timeline-only.
         DrawTransport(dl, mouse);
+        DrawZoomReadout(dl);
         if (_mode == EditorMode.Timeline)
         {
-            DrawZoomReadout(dl);
             DrawInspectorStrip(dl, mouse);
             if (_inspectorOpen) DrawInspector(dl);
         }
         DrawTabBar(dl, mouse);
 
-        if (_mode == EditorMode.Clip)
-        {
-            if (!_markerDialogOpen) HandleClipViewInteraction(hovered, mouse, io);
-        }
-        else if (_editKind != EditKind.None)
+        // Interaction is shared: HandleInteraction / HandleShortcuts are mode-aware (they gate the
+        // clip-specific track / lane / shortcut branches), so the chrome behaves identically in both.
+        if (_editKind != EditKind.None)
             DrawInlineEdit();
         else if (!_markerDialogOpen)
         {
@@ -1307,75 +1323,147 @@ public sealed class InterpoleEditorWidget : IDisposable
         return true;
     }
 
-    // Interaction while a clip's keyframe page is open: only the shared chrome is live — the bottom
-    // tab bar and the transport bar. (Keyframe-lane editing comes in a later step.)
-    private void HandleClipViewInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
-    {
-        if (!hovered) return;
-        if (mouse.Y >= LanesBottom) { TryHandleTabBarClick(mouse); return; }
-        // Transport bar (topmost strip): buttons + the time/frames toggle, same as the timeline path.
-        if (mouse.Y >= _origin.Y && mouse.Y < _rulerTop && IG.IsMouseClicked(ImGuiMouseButton.Left))
-        {
-            var (rmin, rmax) = TimeToggleRect();
-            if (InRect(mouse, rmin, rmax)) _showTimecode = !_showTimecode;
-            else for (int i = 0; i < 4; i++)
-            {
-                var (bmin, bmax) = TransportButtonRect(i);
-                if (InRect(mouse, bmin, bmax)) { OnTransport((TButton)i); break; }
-            }
-        }
-    }
+    // ---- clip (keyframe) page: float tracks on the shared timeline axis ----
+    //
+    // The clip page reuses the timeline's ruler / loop / marker / playhead / transport unchanged (same
+    // _pxPerFrame / _scrollX), so you see the exact same moment in time — only the header column and
+    // lane content are swapped for the open clip's float tracks. These three methods are the
+    // float-track twins of DrawLanes / DrawHeaders / DrawCorner; colours and metrics are copied so the
+    // views stay identical. Rows stack from _lanesTop at TrackHeight each (no vertical scroll yet).
 
-    // The per-clip keyframe editor page — a placeholder shell for now (clip-local ruler + an empty
-    // state). Keyframe lanes get built on top of this later. Owns the area [_rulerTop, LanesBottom].
-    private void DrawClipView(ImDrawListPtr dl, Vector2 mouse)
+    // Lane area: one row per float track, with the shared time grid and a faint band showing where the
+    // clip sits on the timeline. Keyframes will be drawn here later (the timeline's clips → keyframes).
+    private void DrawFloatLanes(ImDrawListPtr dl)
     {
-        float left = _origin.X, right = _origin.X + _size.X;
-        float top = _rulerTop, bottom = LanesBottom;
-        dl.AddRectFilled(new Vector2(left, top), new Vector2(right, bottom), Col(0.115f, 0.125f, 0.14f));
-
         var found = FindClip(_openClipId);
         if (found is null) return;
         var (_, clip) = found.Value;
-        string name = string.IsNullOrWhiteSpace(clip.Label) ? "(unnamed clip)" : clip.Label;
         var (cr, cg, cb) = ClipRgb(clip.Color);
+        float cx0 = FrameToX(clip.Start), cx1 = FrameToX(clip.End);
 
-        // Clip-local ruler: frames 0..Length fitted across the page width (reuses NiceFrameStep).
-        float rTop = top, rBot = top + 44f, padX = 28f;
-        float x0 = left + padX, x1 = right - padX;
-        dl.AddRectFilled(new Vector2(left, rTop), new Vector2(right, rBot), Col(0.14f, 0.15f, 0.17f));
-        dl.AddLine(new Vector2(left, rBot), new Vector2(right, rBot), Col(0f, 0f, 0f, 0.5f));
-        int len = Math.Max(1, clip.Length);
-        float pxf = (x1 - x0) / len;
-        int step = NiceFrameStep(80f / pxf);
-        for (int fr = 0; fr <= len; fr += step)
+        for (int i = 0; i < clip.FloatTracks.Count; i++)
         {
-            float x = x0 + fr * pxf;
-            dl.AddLine(new Vector2(x, rBot - 8f), new Vector2(x, rBot), Col(0.5f, 0.55f, 0.6f));
-            string lbl = fr.ToString(CultureInfo.InvariantCulture);
-            dl.AddText(new Vector2(x + 4f, rTop + (rBot - rTop - IG.CalcTextSize(lbl).Y) * 0.5f), Col(0.7f, 0.75f, 0.8f), lbl);
+            float top = _lanesTop + i * TrackHeight;
+            if (top >= LanesBottom) break;
+            float rowBot = top + TrackHeight, bot = MathF.Min(rowBot, LanesBottom);
+            uint bg = (i % 2 == 0) ? Col(0.135f, 0.145f, 0.155f) : Col(0.115f, 0.125f, 0.135f);
+            dl.AddRectFilled(new Vector2(_laneLeft, top), new Vector2(LaneRight, bot), bg);
+            // clip-extent band (faint tint in the clip's colour) so its span reads on the axis
+            float bx0 = MathF.Max(cx0, _laneLeft), bx1 = MathF.Min(cx1, LaneRight);
+            if (bx1 > bx0) dl.AddRectFilled(new Vector2(bx0, top + 1f), new Vector2(bx1, bot - 1f), Col(cr, cg, cb, 0.10f));
+            if (rowBot <= LanesBottom)
+                dl.AddLine(new Vector2(_laneLeft, rowBot), new Vector2(LaneRight, rowBot), Col(0f, 0f, 0f, 0.35f));
         }
 
-        // Title row (below the ruler): colour diamond + clip name + frame count.
-        float tyy = rBot + 20f, tdx = x0 + 7f, tdr = 6f, tcy = tyy + 7f;
-        dl.AddQuadFilled(new Vector2(tdx, tcy - tdr), new Vector2(tdx + tdr, tcy),
-                         new Vector2(tdx, tcy + tdr), new Vector2(tdx - tdr, tcy), Col(cr, cg, cb));
-        dl.AddText(new Vector2(tdx + tdr + 8f, tyy), Col(0.92f, 0.95f, 1f), name);
-        string sub = $"{len} frame{(len == 1 ? "" : "s")}  ·  keyframe editor";
-        dl.AddText(new Vector2(tdx + tdr + 8f, tyy + 18f), Col(0.55f, 0.6f, 0.66f), sub);
+        DrawTimeGrid(dl);   // same vertical grid as the timeline
 
-        // Empty state, centred in the area below the title.
-        const string hint1 = "No keyframe lanes yet";
-        const string hint2 = "Animation lanes for this clip arrive in the next step.";
-        var h1 = IG.CalcTextSize(hint1);
-        var h2 = IG.CalcTextSize(hint2);
-        float cxm = (left + right) * 0.5f, cym = (tyy + 44f + bottom) * 0.5f;
-        float bw = MathF.Max(h2.X + 80f, 320f), bh = 96f;
-        var pmin = new Vector2(cxm - bw * 0.5f, cym - bh * 0.5f);
-        var pmax = new Vector2(cxm + bw * 0.5f, cym + bh * 0.5f);
-        dl.AddRect(pmin, pmax, Col(1f, 1f, 1f, 0.08f), 8f, ImDrawFlags.None, 1.5f);
-        dl.AddText(new Vector2(cxm - h1.X * 0.5f, pmin.Y + 28f), Col(0.7f, 0.74f, 0.8f), hint1);
-        dl.AddText(new Vector2(cxm - h2.X * 0.5f, pmin.Y + 52f), Col(0.5f, 0.54f, 0.6f), hint2);
+        // Clip start / end as thin lines in the clip colour, full lane height.
+        if (cx0 >= _laneLeft && cx0 <= LaneRight) dl.AddLine(new Vector2(cx0, _lanesTop), new Vector2(cx0, LanesBottom), Col(cr, cg, cb, 0.55f), 1.5f);
+        if (cx1 >= _laneLeft && cx1 <= LaneRight) dl.AddLine(new Vector2(cx1, _lanesTop), new Vector2(cx1, LanesBottom), Col(cr, cg, cb, 0.55f), 1.5f);
+    }
+
+    // Header column: name + draggable value per float track, plus the timeline's row styling (accent
+    // bar + separators). Delete a track the timeline way — Alt+Left / Middle click on its header cell.
+    private void DrawFloatHeaders(ImDrawListPtr dl, Vector2 mouse)
+    {
+        var found = FindClip(_openClipId);
+        if (found is null) return;
+        var (_, clip) = found.Value;
+        var io = IG.GetIO();
+
+        dl.AddRectFilled(new Vector2(_origin.X, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0.15f, 0.16f, 0.18f));
+
+        string? removeId = null;
+        for (int i = 0; i < clip.FloatTracks.Count; i++)
+        {
+            float top = _lanesTop + i * TrackHeight;
+            if (top >= LanesBottom) break;
+            float rowBot = top + TrackHeight, bot = MathF.Min(rowBot, LanesBottom);
+            var ft = clip.FloatTracks[i];
+
+            uint bg = (i % 2 == 0) ? Col(0.17f, 0.18f, 0.20f) : Col(0.15f, 0.16f, 0.18f);
+            dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_laneLeft, bot), bg);
+            dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5f, bot), Col(0.25f, 0.55f, 0.85f));
+            if (rowBot <= LanesBottom)
+                dl.AddLine(new Vector2(_origin.X, rowBot), new Vector2(_laneLeft, rowBot), Col(0f, 0f, 0f, 0.35f));
+
+            // Delete (Alt+Left / Middle click) on the header cell.
+            if (mouse.X >= _origin.X && mouse.X < _laneLeft && mouse.Y >= top && mouse.Y < bot &&
+                (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left))))
+                removeId = ft.Id;
+
+            // Name + value widgets, only when the row fully fits (keeps them off the tab bar).
+            if (rowBot <= LanesBottom)
+            {
+                IG.PushID(ft.Id);
+                float wy = top + (TrackHeight - IG.GetFrameHeight()) * 0.5f;   // vertical centre
+                // The name gets the bulk of the column; the value stays a compact fixed width. So the
+                // wider clip-page column translates into more room for names.
+                const float valueW = 96f, gap = 8f;
+                float nameW = MathF.Max(60f, (_laneLeft - 12f) - (_origin.X + 12f) - valueW - gap);
+                // Name — near-transparent frame so it reads like the timeline's plain track name.
+                IG.SetCursorScreenPos(new Vector2(_origin.X + 12f, wy));
+                IG.SetNextItemWidth(nameW);
+                IG.PushStyleColor(ImGuiCol.FrameBg, Col(1f, 1f, 1f, 0f));
+                IG.PushStyleColor(ImGuiCol.FrameBgHovered, Col(1f, 1f, 1f, 0.06f));
+                IG.PushStyleColor(ImGuiCol.FrameBgActive, Col(1f, 1f, 1f, 0.10f));
+                string nm = ft.Name;
+                if (IG.InputText("##name", ref nm, 128)) ft.Name = nm;
+                if (IG.IsItemDeactivatedAfterEdit()) Commit();
+                IG.PopStyleColor(3);
+                // Draggable / slidable value, next to the name.
+                float valX = _origin.X + 12f + nameW + gap;
+                IG.SetCursorScreenPos(new Vector2(valX, wy));
+                IG.SetNextItemWidth(valueW);
+                IG.PushStyleColor(ImGuiCol.FrameBg, Col(0.20f, 0.21f, 0.24f));
+                float val = ft.Value;
+                if (IG.DragFloat("##value", ref val, 0.01f)) ft.Value = val;
+                if (IG.IsItemDeactivatedAfterEdit()) Commit();
+                IG.PopStyleColor();
+                IG.PopID();
+            }
+        }
+        if (removeId is not null) { clip.FloatTracks.RemoveAll(t => t.Id == removeId); Commit(); }
+
+        dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0f, 0f, 0f, 0.5f));
+
+        if (clip.FloatTracks.Count == 0)
+        {
+            const string hint = "No float tracks — click \"+ Float Track\".";
+            var hs = IG.CalcTextSize(hint);
+            dl.AddText(new Vector2(_laneLeft + (LaneRight - _laneLeft - hs.X) * 0.5f, _lanesTop + 18f), Col(0.5f, 0.54f, 0.6f), hint);
+        }
+    }
+
+    // Corner above the header column: the "+ Float Track" button — the clip page's twin of DrawCorner.
+    private void DrawFloatCorner(ImDrawListPtr dl, Vector2 mouse)
+    {
+        var found = FindClip(_openClipId);
+        if (found is null) return;
+        var (_, clip) = found.Value;
+
+        dl.AddRectFilled(new Vector2(_origin.X, _rulerTop), new Vector2(_laneLeft, _rulerBottom), Col(0.13f, 0.14f, 0.16f));
+        // Match the timeline's + Track / + Audio corner buttons: same rect metrics (a 4px margin in the
+        // ruler band → height RulerHeight-8). ImGui centres the label vertically, so it won't clip.
+        var (bMin, bMax) = (new Vector2(_origin.X + 8f, _rulerTop + 4f), new Vector2(_laneLeft - 8f, _rulerBottom - 4f));
+        IG.SetCursorScreenPos(bMin);
+        IG.PushStyleColor(ImGuiCol.Button, Col(0.22f, 0.4f, 0.6f));
+        IG.PushStyleColor(ImGuiCol.ButtonHovered, Col(0.28f, 0.5f, 0.75f));
+        IG.PushStyleColor(ImGuiCol.ButtonActive, Col(0.24f, 0.44f, 0.66f));
+        if (IG.Button("+ Float Track", new Vector2(bMax.X - bMin.X, bMax.Y - bMin.Y))) AddFloatTrack(clip);
+        IG.PopStyleColor(3);
+    }
+
+    // Append a new float track to the clip with a default name/value, as one undo step.
+    private void AddFloatTrack(ClipData clip)
+    {
+        clip.FloatTracks.Add(new FloatTrackData
+        {
+            Id = InterpoleDocument.NewId("ft"),
+            Name = "Float " + (clip.FloatTracks.Count + 1),
+            Value = 0f,
+        });
+        Commit();
     }
 
     // ============================== interaction ==============================
@@ -1390,19 +1478,23 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         if (io.WantTextInput) return;   // an ImGui field (e.g. an inspector input) owns the keyboard
 
-        // Space toggles play / stop.
+        // Space toggles play / stop. B / N set the loop in / out to the playhead. Undo/redo apply in
+        // both views (float-track edits are undoable too). These are all axis/transport-level, so they
+        // work identically on the clip page.
         if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
-        // Delete / Backspace remove the whole selection.
-        if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false)) DeleteSelection();
-        // B / N set the loop in / out to the playhead (After-Effects-style work-area shortcuts).
         if (IG.IsKeyPressed(ImGuiKey.B, false)) SetLoopInToPlayhead();
         if (IG.IsKeyPressed(ImGuiKey.N, false)) SetLoopOutToPlayhead();
+
+        // Clip-only gestures (delete / copy / paste act on the timeline's clip selection) must not fire
+        // on the clip page — there they'd hit the clip you're inside.
+        if (_mode == EditorMode.Timeline &&
+            (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false))) DeleteSelection();
 
         if (!io.KeyCtrl) return;
         if (IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
         else if (IG.IsKeyPressed(ImGuiKey.Y, false)) Redo();
-        else if (IG.IsKeyPressed(ImGuiKey.C, false)) CopySelection();
-        else if (IG.IsKeyPressed(ImGuiKey.V, false)) PasteClipboard();
+        else if (_mode == EditorMode.Timeline && IG.IsKeyPressed(ImGuiKey.C, false)) CopySelection();
+        else if (_mode == EditorMode.Timeline && IG.IsKeyPressed(ImGuiKey.V, false)) PasteClipboard();
     }
 
     private void HandleInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
@@ -1538,6 +1630,11 @@ public sealed class InterpoleEditorWidget : IDisposable
             }
             return;
         }
+
+        // The clip (keyframe) page shares all the chrome above, but its content (add button, header
+        // name/value widgets, track delete) is handled in the DrawFloat* methods — so stop here and
+        // never run the timeline's corner / track-header / clip-lane interactions in clip mode.
+        if (_mode == EditorMode.Clip) return;
 
         bool alt = io.KeyAlt;
 
