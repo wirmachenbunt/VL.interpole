@@ -60,7 +60,7 @@ Interpole/
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
 | out | `Audio` | Spread&lt;AudioSignal&gt; | the timeline's audio as a fixed stereo mix bus — every audio clip on every audio track, summed with its fades + gain and played in sync with the playhead. Wire straight into VL.Audio's engine / output. |
 | out | `Track Levels` | Spread&lt;float&gt; | per **audio track** (aligned by audio-track order, index 0 = the first `TrackKind.Audio` track): that track's current loudness, `0..~1` — an **RMS meter** of everything the track is playing (all clips summed, post fade + gain), with a fast attack and a smooth (~0.3 s) release, like a VU meter. `0` while the track is silent or playback is stopped. Standard tracks are not included. |
-| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, the per-track **track names**, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips` / `GetTrack`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
+| out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, the per-track **track names**, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips` / `GetTrack` / `GetActiveMarker` / `GetKeyframes`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
 see a working timeline immediately.
@@ -200,6 +200,42 @@ History:
 All units are **integer frames**; the **stopwatch** toggle only changes how the ruler and
 readout are *labelled* (timecode is derived from the inspector-only **`Fps`** pin, default 60).
 
+### Keyframe editor (per-clip float tracks)
+
+Any clip can carry **float tracks** — named parameters **animated with keyframes** (After-Effects
+style) — edited on a **per-clip page**. A **tab bar along the bottom** switches pages: `[Timeline]`
+plus **one tab per opened clip** (colour diamond + name + **✕** to close). Open a clip's page with
+**K + click** on a clip (adds its tab and jumps in), or the inspector's **Edit Keyframes** button.
+**Audio clips have no keyframes** — they never get a tab. Click a tab to switch, **✕** to close it.
+
+A clip page is the **same view as the timeline** — same time axis (zoom / scroll), ruler, loop
+ribbon, markers, playhead and transport — only the header column and lanes are swapped for the
+clip's float tracks. The clip's own span is tinted in its colour and the **timeline outside it is
+dimmed**, so you always see *which* part of the timeline you're editing inside.
+
+Float tracks (header column):
+- **+ Float Track** button in the corner → add a track. Each row is a **name** (editable inline) and
+  a **draggable value**.
+- **Alt-click** / **Middle-click** a track's header → delete it (as with timeline tracks).
+
+Keyframes (lanes, drawn as amber diamonds):
+- With the playhead **inside the clip**, **change a track's value → a keyframe is created** at the
+  playhead; if the playhead is already **on** a keyframe (value field turns **amber**) the edit
+  **updates** that keyframe. Interpolation is **linear**, held before the first / after the last key.
+- **Click** a diamond → select it; **Ctrl-click** → add/toggle; **drag an empty lane** → **marquee**
+  select (Shift/Ctrl additive). Selected keyframes are bright with a blue ring.
+- **Drag** a diamond → move it in time; a **multi-selection drags together**; **hold Shift** to snap
+  the grabbed key to clip edges / the playhead / other keyframes (cyan guide). The group can't move
+  before the clip start.
+- **Alt/Middle-click** a diamond, or **Del / Backspace** on the selection → delete. **Ctrl+C / Ctrl+V**
+  copy / paste at the playhead (earliest key on the playhead, offsets kept, same track index).
+- **Shift-scrub** the playhead → it snaps to keyframes too.
+- All keyframe edits are **undoable** (Ctrl+Z/Y) and **persist** in `Data`, like the rest of the doc.
+
+Read the animated values back in the patch with the **`GetKeyframes`** node: give it `Info` + a
+**clip name** and it outputs two aligned spreads — the clip's **track names** and their **current
+values** (sampled at the playhead). First clip wins on a duplicate name.
+
 ## Persistence (`Data` pin)
 
 The timeline lives on the **`Data`** input pin as JSON and is **saved inside the `.vl`
@@ -288,6 +324,19 @@ Done:
   playhead is in a gap — yields the "nothing" values (`""` / `-1` / `-1` / `0` / `0` / transparent), so
   `Clip Length == -1` signals "no active clip / no such track". Uses the per-track track names now carried
   in `Info`.
+- **Active marker split (`GetActiveMarker`)** — unpacks just the `Active Marker` from `Info` (the marker
+  the playhead is on, `""` otherwise) plus a derived **`On Marker`** bool.
+- **Keyframe editor** — per-clip **float tracks** animated with **keyframes** (AE-style), edited on
+  per-clip pages reached from a **bottom tab bar** (`[Timeline]` + a tab per opened clip; **K-click** a
+  non-audio clip to open, ✕ to close). A clip page reuses the whole timeline view (axis / ruler / loop /
+  markers / playhead / transport) and just swaps in the clip's tracks, with the clip's span highlighted
+  and the outside dimmed. Add tracks (name + draggable value); change a track's value at the playhead to
+  **create/update a keyframe** (linear interp); **select** (click / Ctrl / marquee), **move** (drag,
+  group + Shift-snap), **delete** (Alt/Middle / Del), **copy/paste** (Ctrl+C/V at the playhead) — all
+  snapping-aware, undoable, and persisted.
+- **Keyframe values split (`GetKeyframes`)** — looks a clip up **by name** in `Info` and outputs its
+  float-track **names** and **current values** (sampled at the playhead) as two aligned spreads. First
+  clip wins on a duplicate name; unknown/empty name → empty spreads.
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
   `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Marker` / `Active Clip Name` /
   `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /

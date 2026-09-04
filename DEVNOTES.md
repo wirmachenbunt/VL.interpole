@@ -555,8 +555,8 @@ one wire — a direct port of VL.Automata's `AutomataInfo`. It's a **snapshot**,
 `Update` builds a fresh record each frame from the values it already computed (`EvaluateOutputs`), so
 scalars are copied and the spreads are shared **by reference** (they're immutable) — one small record
 per frame, no list copying. Splitter getters (`GetTransport` / `GetActiveClips` / `GetUpcomingClips` /
-`GetTrack`, zero-field `[ProcessNode]`s that tolerate a null input) unpack it downstream, same convention
-as Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
+`GetTrack` / `GetActiveMarker` / `GetKeyframes`, zero-field `[ProcessNode]`s that tolerate a null input)
+unpack it downstream, same convention as Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
 bus wired straight into VL.Audio, not information to route/unpack, so it keeps its own pin.
 
 - **`TrackNames` (2026-09-02).** The bundle carries a `Spread<string> TrackNames`, aligned by track order
@@ -573,6 +573,75 @@ bus wired straight into VL.Audio, not information to route/unpack, so it keeps i
   empty/unknown `Track`, or a track sitting in a gap all resolve to the same "nothing" values
   (`""` / `-1` / `-1` / `0` / `0` / transparent), so `Clip Length == -1` reads as "no active clip / no such
   track". Shares the safe-index (`At<T>`) + null-tolerant conventions of the other Get… nodes.
+
+## Keyframe editor — per-clip float tracks (2026-09-05)
+
+Any clip can hold **float tracks** — named parameters animated with **keyframes** (After-Effects
+style) — edited on a **per-clip page**. Built on the **`keyframe-editor`** branch (two-branch workflow:
+small fixes land on `master`, this big feature stays isolated until merged), in gamma-verified baby
+steps. **The shipped design diverged from the original plan** (which called for a clip-*local* ruler
+and multi-lane tracks): what's built is simpler and reuses the timeline wholesale.
+
+- **The clip page IS the timeline view.** Same time axis (`_pxPerFrame` / `_scrollX`), ruler, loop
+  ribbon, marker lane, playhead and transport — only the **header column + lanes** swap to the open
+  clip's float tracks. So the same moment in time / zoom / markers are visible; only the content is
+  "inside the clip". `Draw()` branches on `_mode` (`Timeline` | `Clip`): the clip branch calls the
+  shared chrome (`DrawRuler` / `DrawLoopBar` / `DrawMarkerLane` / `DrawPlayhead` / `DrawSnapGuide` /
+  transport) unchanged and swaps `DrawLanes`/`DrawHeaders`/`DrawCorner` for `DrawFloatLanes` /
+  `DrawFloatHeaders` / `DrawFloatCorner` (colour/metric twins). Only the active view draws — no double
+  cost. The clip's own `[Start,End)` span is tinted in its colour and **the timeline outside it is
+  dimmed** (a dark overlay) for orientation.
+- **Interaction is shared + mode-gated.** `HandleInteraction` / `HandleShortcuts` run in both modes;
+  the chrome branches (pan/zoom/transport/loop/ruler/markers) are common, and the timeline's
+  clip/track/lane branches are skipped in clip mode (`if (_mode==Clip) { HandleClipLaneInteraction(); 
+  return; }`). Delete / Ctrl+C / Ctrl+V are mode-aware: clips on the timeline, keyframes on the clip
+  page. This keeps the battle-tested timeline path untouched.
+- **Data model (free undo + persistence).** `ClipData.FloatTracks : List<FloatTrackData>` and
+  `FloatTrackData.Keys : List<Keyframe>` (`Engine/InterpoleData.cs`), both default-empty → back-compat
+  and **undo + `Data`-pin autosave come for free** because `StructuralSnapshot` serialises `Tracks`
+  wholesale (exactly how Markers was added). `Keyframe{ Id, Frame, Value }` — **`Frame` is clip-local**
+  (0 = clip start), so keyframes follow the clip when it moves. `Id` (backfilled by the editor if
+  empty) exists only so the editor can hold a selection across undo/redo. `SampleAt(localFrame)` =
+  linear between bracketing keys, holds the ends, constant `Value` when no keys; `SetKeyframe` creates
+  or updates the key at a frame (keeps `Keys` sorted).
+- **Create/edit = the value field at the playhead.** The header's draggable value shows
+  `SampleAt(playhead - clip.Start)`; editing it calls `SetKeyframe` — a new key at the playhead, or an
+  update to the one there (the field goes **amber** when the playhead is on a key). Gated to the clip's
+  span (`BeginDisabled` outside it — the dimmed region).
+- **Keyframe selection / move / copy-paste** reuse the timeline's own infra. `_kfSelection`
+  (HashSet of ids, pruned each frame to the active clip), marquee via the shared `MarqueeRect` /
+  `DrawMarquee` (new `KfMarquee` drag mode), move via a new `MoveKeyframe` drag that shifts the whole
+  selection by a delta and re-sorts `Keys`, Shift-snapping the grabbed key through the shared
+  `Snap`/`_snapTargets` (clip edges + playhead + *other* keys) with the same cyan `DrawSnapGuide`.
+  Copy buffer is `(trackIndex, frame, value)`; paste offsets so the earliest key lands on the playhead,
+  into the same track index. Playhead Shift-scrub also adds the active clip's keys to the snap targets.
+- **Bottom tab bar.** `[Timeline]` + one tab per opened clip (`_openTabs` ordered list, `_activeClipId`
+  = shown clip), each a colour diamond + name + ✕. Hand-drawn on the draw list with **bottom-rounded
+  corners** (`ImDrawFlags.RoundCornersBottom`) so they read as hanging from the content (a top-rounded
+  ImGui tab would look upside-down at the bottom). `TabBarHeight` carves the strip out of the bottom
+  (`LanesBottom = CanvasBottom - TabBarHeight`). **Open a page with `K` + click** a clip (deliberate
+  gesture — a plain click just selects/moves; earlier every click opened a tab, too eager). **Audio
+  clips are excluded** (no keyframes yet): `OpenClipTab` skips `IsAudio` and the inspector's *Edit
+  Keyframes* button is hidden for them.
+- **Header column is wider on the clip page** (`ClipHeaderWidth` 340 vs the timeline's `HeaderWidth`
+  240) for track names; `_laneLeft` picks the width by mode, so all the shared chrome shifts with it.
+  Name/value widgets are ImGui items overlaid on the hand-drawn cells (the inspector's
+  `SetNextItemAllowOverlap` trick); the value field's width is fixed, the name takes the slack.
+- **Gotcha — ImGui button height under 2× DPI.** The corner *+ Float Track* button was clipped to its
+  top half: a fixed pixel height is shorter than the font at 200% scaling. Fixed by giving it the
+  timeline corner-button rect (`RulerHeight-8`, taller than the font) — ImGui centres the label
+  vertically, so it never clips. (Auto-height `Vector2(w,0)` also works.)
+- **Output — `GetKeyframes`.** `InterpoleInfo` gained a `Spread<ClipKeyframeSnapshot> ClipKeyframes`
+  (`ClipKeyframeSnapshot{ ClipName, TrackNames, TrackValues }`), built each frame in
+  `InterpoleNode.BuildClipKeyframes` for every clip **with** float tracks (track-then-clip order),
+  each track's value sampled at the playhead. The `GetKeyframes` node (Info + a clip **name**) finds
+  the first matching entry and hands back the two spreads — a pure splitter like the other Get… nodes.
+  Kept out of the per-track spreads (it's clip-keyed, not track-keyed).
+- **Not built (vs the old plan):** keyframe **lanes** (several typed value lanes per track), vec2/3/4 +
+  Colour lane types, Stepped/Bezier interpolation, and the opaque `Keyframes` cable + typed
+  `GetKeyframeFloat/Vector*/Color` getters. The current output is one float per track. **No vertical
+  scroll** for float rows yet (rows past the bottom are clamped/skipped) and **the tab strip doesn't
+  scroll** (tabs stop when out of width).
 
 ## Rendering performance (2026-08-20)
 
