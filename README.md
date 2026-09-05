@@ -124,7 +124,8 @@ Tracks (header column):
 - **double-click** a track header → rename it (inline)
 - **drag** a track header → reorder the tracks
 - **Alt-click** or **Middle-click** a track header → delete the track (and its clips)
-- **audio tracks** carry **M** / **S** buttons (right of the name): **M** mutes the track, **S** solos it.
+- **audio tracks** carry two buttons right of the name — a **loudspeaker** (mute) and an **ear** (solo);
+  they light **red** when muted / **yellow** when soloed.
   Solo isolates — if any audio track is soloed, only soloed tracks are heard; mute always silences (and a
   muted / soloed-out track meters `0`). Both persist with the patch and are undoable.
 

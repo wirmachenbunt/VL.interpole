@@ -820,8 +820,8 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 var (mMin, mMax, sMin, sMax) = TrackToggleRects(i);
                 nameRight = mMin.X - 6f;
-                DrawTrackToggle(dl, mMin, mMax, "M", tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f));
-                DrawTrackToggle(dl, sMin, sMax, "S", tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f));
+                DrawTrackToggle(dl, mMin, mMax, tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f), speaker: true);
+                DrawTrackToggle(dl, sMin, sMax, tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f), speaker: false);
             }
             dl.PushClipRect(new Vector2(_origin.X + 14, top), new Vector2(nameRight, bottom), true);
             dl.AddText(new Vector2(_origin.X + 14, nameY), Col(0.9f, 0.94f, 1f), name);
@@ -846,14 +846,46 @@ public sealed class InterpoleEditorWidget : IDisposable
                 new Vector2(sx0, y0), new Vector2(sx1, y0 + bh));
     }
 
-    private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, string label, bool on, bool hov, uint onColor)
+    private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool on, bool hov, uint onColor, bool speaker)
     {
         uint bg = on ? onColor : hov ? Col(0.30f, 0.32f, 0.36f) : Col(0.22f, 0.24f, 0.27f);
         dl.AddRectFilled(mn, mx, bg, 3f);
         dl.AddRect(mn, mx, Col(0f, 0f, 0f, 0.4f), 3f);
-        var ts = IG.CalcTextSize(label);
-        uint tc = on ? Col(0.08f, 0.06f, 0.04f) : Col(0.85f, 0.88f, 0.92f);
-        dl.AddText(new Vector2((mn.X + mx.X) * 0.5f - ts.X * 0.5f, (mn.Y + mx.Y) * 0.5f - ts.Y * 0.5f), tc, label);
+        uint ic = on ? Col(0.08f, 0.06f, 0.04f) : Col(0.85f, 0.88f, 0.92f);   // dark glyph on the lit fill
+        var c = (mn + mx) * 0.5f;
+        float s = (mx.Y - mn.Y) * 0.34f;   // icon half-extent (~6px in an 18px button)
+        if (speaker) DrawSpeakerIcon(dl, c, s, ic);
+        else DrawEarIcon(dl, c, s, ic);
+    }
+
+    private static float Rad(float deg) => deg * (MathF.PI / 180f);
+
+    // A minimalist loudspeaker (mute): back box + flaring cone + two sound-wave arcs. Drawn from the
+    // button colour; the muted STATE is shown by the button turning red, not by the glyph.
+    private static void DrawSpeakerIcon(ImDrawListPtr dl, Vector2 c, float s, uint col)
+    {
+        var boxMin = new Vector2(c.X - s * 0.85f, c.Y - s * 0.30f);
+        var boxMax = new Vector2(c.X - s * 0.34f, c.Y + s * 0.30f);
+        dl.AddRectFilled(boxMin, boxMax, col);
+        // cone: apex at the box's right edge, tall base flaring to the right
+        dl.AddTriangleFilled(
+            new Vector2(c.X - s * 0.34f, c.Y),
+            new Vector2(c.X + s * 0.15f, c.Y - s * 0.75f),
+            new Vector2(c.X + s * 0.15f, c.Y + s * 0.75f), col);
+        // two sound waves
+        var wc = new Vector2(c.X + s * 0.2f, c.Y);
+        dl.PathArcTo(wc, s * 0.7f, Rad(-38f), Rad(38f), 8); dl.PathStroke(col, ImDrawFlags.None, 1.4f);
+        dl.PathArcTo(wc, s * 1.05f, Rad(-38f), Rad(38f), 8); dl.PathStroke(col, ImDrawFlags.None, 1.4f);
+    }
+
+    // An ear (solo): the outer pinna as a near-ring opening to the left, plus an inner concha curl.
+    private static void DrawEarIcon(ImDrawListPtr dl, Vector2 c, float s, uint col)
+    {
+        const float t = 1.6f;
+        dl.PathArcTo(new Vector2(c.X, c.Y), s * 0.82f, Rad(-135f), Rad(115f), 22);
+        dl.PathStroke(col, ImDrawFlags.None, t);
+        dl.PathArcTo(new Vector2(c.X + s * 0.12f, c.Y), s * 0.40f, Rad(-120f), Rad(120f), 14);
+        dl.PathStroke(col, ImDrawFlags.None, t);
     }
 
     // While a track header is being dragged to reorder, tint its (live-reflowed) row across the full
