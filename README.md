@@ -218,10 +218,11 @@ ribbon, markers, playhead and transport — only the header column and lanes are
 clip's float tracks. The clip's own span is tinted in its colour and the **timeline outside it is
 dimmed**, so you always see *which* part of the timeline you're editing inside.
 
-Float tracks (header column):
-- **+ Float Track** button in the corner → add a track. Each row is a **name** (editable inline) and
-  a **draggable value**.
-- **Alt-click** / **Middle-click** a track's header → delete it (as with timeline tracks).
+Float tracks (header column) — behave like the timeline's track headers:
+- **+ Float Track** button in the corner → add a track. Each row is a **name** and a **draggable value**.
+- **double-click a track name** → rename it (inline)
+- **drag a track header** → reorder the tracks
+- **Alt-click** / **Middle-click** a track's header → delete it
 
 Keyframes (lanes, drawn as amber diamonds):
 - With the playhead **inside the clip**, **change a track's value → a keyframe is created** at the
@@ -336,7 +337,8 @@ Done:
   per-clip pages reached from a **bottom tab bar** (`[Timeline]` + a tab per opened clip; **double-click
   a non-audio clip's body** to open, **Escape** to leave, ✕ to close). A clip page reuses the whole timeline view (axis / ruler / loop /
   markers / playhead / transport) and just swaps in the clip's tracks, with the clip's span highlighted
-  and the outside dimmed. Add tracks (name + draggable value); change a track's value at the playhead to
+  and the outside dimmed. Add tracks (name + draggable value); their headers mirror the timeline's
+  (double-click to rename, drag to reorder, Alt/Middle to delete); change a track's value at the playhead to
   **create/update a keyframe** (linear interp); **select** (click / Ctrl / marquee), **move** (drag,
   group + Shift-snap), **delete** (Alt/Middle / Del), **copy/paste** (Ctrl+C/V at the playhead) — all
   snapping-aware, undoable, and persisted.

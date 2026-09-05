@@ -102,7 +102,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private float _lanesTop;    // y where the track lanes begin (= _rulerBottom + MarkerLaneHeight)
 
     // ---- interaction / drag state ----
-    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker, MoveTrack, KfMarquee, MoveKeyframe }
+    private enum DragMode { None, MoveClip, ResizeL, ResizeR, FadeIn, FadeOut, Playhead, Marquee, LoopIn, LoopOut, LoopMove, MoveMarker, MoveTrack, KfMarquee, MoveKeyframe, MoveFloatTrack }
     private DragMode _drag;
     private string? _dragClipId;
     private string? _dragMarkerId;  // MoveMarker: the marker being dragged along the frame axis
@@ -189,7 +189,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private bool _showTimecode = true;
 
     // ---- inline editing ----
-    private enum EditKind { None, TrackName, ClipLabel }
+    private enum EditKind { None, TrackName, ClipLabel, FloatTrackName }
     private EditKind _editKind;
     private string _editId = "";
     private string _editBuffer = "";
@@ -349,7 +349,8 @@ public sealed class InterpoleEditorWidget : IDisposable
             DrawRuler(dl);
             DrawLoopBar(dl);
             DrawMarkerLane(dl, mouse);
-            DrawFloatHeaders(dl, mouse);
+            DrawFloatHeaders(dl);
+            DrawFloatTrackDragFeedback(dl);
             DrawPlayhead(dl);
             DrawSnapGuide(dl);
             DrawFloatCorner(dl, mouse);
@@ -819,6 +820,23 @@ public sealed class InterpoleEditorWidget : IDisposable
         float top = TrackTop(i), bottom = top + TrackHeightOf(i);
         if (bottom < _lanesTop || top > LanesBottom) return;
         float ct = MathF.Max(top, _lanesTop), cb = MathF.Min(bottom, LanesBottom);   // clamp into the lanes viewport
+        dl.AddRectFilled(new Vector2(_origin.X, ct), new Vector2(LaneRight, cb), Col(0.30f, 0.55f, 0.85f, 0.16f));
+        uint line = Col(0.35f, 0.70f, 1f, 0.95f);
+        if (top >= _lanesTop) dl.AddLine(new Vector2(_origin.X, top), new Vector2(LaneRight, top), line, 2f);
+        if (bottom <= LanesBottom) dl.AddLine(new Vector2(_origin.X, bottom), new Vector2(LaneRight, bottom), line, 2f);
+    }
+
+    // The clip page's twin of DrawTrackDragFeedback: while a float-track header is dragged to reorder,
+    // tint its (live-reflowed) row and draw insertion lines at its edges so the drop slot is obvious.
+    private void DrawFloatTrackDragFeedback(ImDrawListPtr dl)
+    {
+        if (_drag != DragMode.MoveFloatTrack) return;
+        if (FindClip(_activeClipId) is not { } fc) return;
+        int i = fc.clip.FloatTracks.FindIndex(t => t.Id == _dragTrackId);
+        if (i < 0) return;
+        float top = FloatRowTop(i), bottom = top + TrackHeight;
+        if (bottom < _lanesTop || top > LanesBottom) return;
+        float ct = MathF.Max(top, _lanesTop), cb = MathF.Min(bottom, LanesBottom);
         dl.AddRectFilled(new Vector2(_origin.X, ct), new Vector2(LaneRight, cb), Col(0.30f, 0.55f, 0.85f, 0.16f));
         uint line = Col(0.35f, 0.70f, 1f, 0.95f);
         if (top >= _lanesTop) dl.AddLine(new Vector2(_origin.X, top), new Vector2(LaneRight, top), line, 2f);
@@ -1434,19 +1452,32 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // Header column: name + draggable value per float track, plus the timeline's row styling (accent
     // bar + separators). Delete a track the timeline way — Alt+Left / Middle click on its header cell.
-    private void DrawFloatHeaders(ImDrawListPtr dl, Vector2 mouse)
+    // The top of float-track row i on the clip page. Rows are uniform TrackHeight from _lanesTop.
+    private float FloatRowTop(int i) => _lanesTop + i * TrackHeight;
+
+    // The float-track index under a Y coordinate in the header/lane area, or -1 if none. Uniform rows.
+    private int FloatTrackIndexAtY(ClipData clip, float y)
+    {
+        if (y < _lanesTop) return -1;
+        int i = (int)((y - _lanesTop) / TrackHeight);
+        return (i >= 0 && i < clip.FloatTracks.Count) ? i : -1;
+    }
+
+    // The name column's width in a float-track header — the row width minus the fixed value field.
+    // Shared by the header draw and the inline rename box so the two line up.
+    private float FloatHeaderNameWidth() => MathF.Max(60f, (_laneLeft - 12f) - (_origin.X + 12f) - 96f - 8f);
+
+    private void DrawFloatHeaders(ImDrawListPtr dl)
     {
         var found = FindClip(_activeClipId);
         if (found is null) return;
         var (_, clip) = found.Value;
-        var io = IG.GetIO();
 
         dl.AddRectFilled(new Vector2(_origin.X, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0.15f, 0.16f, 0.18f));
 
-        string? removeId = null;
         for (int i = 0; i < clip.FloatTracks.Count; i++)
         {
-            float top = _lanesTop + i * TrackHeight;
+            float top = FloatRowTop(i);
             if (top >= LanesBottom) break;
             float rowBot = top + TrackHeight, bot = MathF.Min(rowBot, LanesBottom);
             var ft = clip.FloatTracks[i];
@@ -1457,33 +1488,25 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (rowBot <= LanesBottom)
                 dl.AddLine(new Vector2(_origin.X, rowBot), new Vector2(_laneLeft, rowBot), Col(0f, 0f, 0f, 0.35f));
 
-            // Delete (Alt+Left / Middle click) on the header cell.
-            if (mouse.X >= _origin.X && mouse.X < _laneLeft && mouse.Y >= top && mouse.Y < bot &&
-                (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left))))
-                removeId = ft.Id;
-
-            // Name + value widgets, only when the row fully fits (keeps them off the tab bar).
+            // Name + value, only when the row fully fits (keeps them off the tab bar).
             if (rowBot <= LanesBottom)
             {
+                const float valueW = 96f, gap = 8f;
+                float nameW = FloatHeaderNameWidth();
+                // Name is plain text (like the timeline's track headers): double-click to rename, drag to
+                // reorder, Alt/Middle-click to delete — all handled in HandleClipLaneInteraction. During
+                // an inline rename the edit box (opaque) is drawn over it.
+                string name = string.IsNullOrWhiteSpace(ft.Name) ? ft.Id : ft.Name;
+                dl.PushClipRect(new Vector2(_origin.X + 12f, top), new Vector2(_origin.X + 12f + nameW, bot), true);
+                var ts = IG.CalcTextSize(name);
+                dl.AddText(new Vector2(_origin.X + 12f, (top + rowBot) * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
+                dl.PopClipRect();
+
+                // Value AT THE PLAYHEAD (After-Effects style) — the only live widget in the header. The
+                // field shows the sampled value, and editing it creates a keyframe at the playhead (or
+                // updates the one there). Only inside the clip's span; amber when the playhead is on a key.
                 IG.PushID(ft.Id);
                 float wy = top + (TrackHeight - IG.GetFrameHeight()) * 0.5f;   // vertical centre
-                // The name gets the bulk of the column; the value stays a compact fixed width. So the
-                // wider clip-page column translates into more room for names.
-                const float valueW = 96f, gap = 8f;
-                float nameW = MathF.Max(60f, (_laneLeft - 12f) - (_origin.X + 12f) - valueW - gap);
-                // Name — near-transparent frame so it reads like the timeline's plain track name.
-                IG.SetCursorScreenPos(new Vector2(_origin.X + 12f, wy));
-                IG.SetNextItemWidth(nameW);
-                IG.PushStyleColor(ImGuiCol.FrameBg, Col(1f, 1f, 1f, 0f));
-                IG.PushStyleColor(ImGuiCol.FrameBgHovered, Col(1f, 1f, 1f, 0.06f));
-                IG.PushStyleColor(ImGuiCol.FrameBgActive, Col(1f, 1f, 1f, 0.10f));
-                string nm = ft.Name;
-                if (IG.InputText("##name", ref nm, 128)) ft.Name = nm;
-                if (IG.IsItemDeactivatedAfterEdit()) Commit();
-                IG.PopStyleColor(3);
-                // Value AT THE PLAYHEAD (After-Effects style): the field shows the sampled value, and
-                // editing it creates a keyframe at the playhead — or updates the one already there.
-                // Only inside the clip's span; the frame goes amber when the playhead is on a keyframe.
                 int local = Document.Playhead - clip.Start;
                 bool within = local >= 0 && local < clip.Length;
                 bool onKey = within && ft.Keys.Any(k => k.Frame == local);
@@ -1500,7 +1523,6 @@ public sealed class InterpoleEditorWidget : IDisposable
                 IG.PopID();
             }
         }
-        if (removeId is not null) { clip.FloatTracks.RemoveAll(t => t.Id == removeId); Commit(); }
 
         dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0f, 0f, 0f, 0.5f));
 
@@ -1584,6 +1606,24 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Alt/Middle-click to delete it, or drag on empty lane to marquee-select. (No keyframe drag yet.)
     private void HandleClipLaneInteraction(Vector2 mouse, ImGuiIOPtr io)
     {
+        // Track-header column — mirror the timeline's track headers: double-click a name to rename,
+        // drag to reorder, Alt/Middle-click to delete. Only the plain-text name region reaches here
+        // (the value DragFloat sits on top and takes its own input, so !hovered returns earlier).
+        if (mouse.X < _laneLeft && mouse.Y >= _lanesTop && mouse.Y < LanesBottom)
+        {
+            if (FindClip(_activeClipId) is not { } fc) return;
+            int idx = FloatTrackIndexAtY(fc.clip, mouse.Y);
+            if (idx >= 0)
+            {
+                var ft = fc.clip.FloatTracks[idx];
+                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditFloatTrackName(ft);
+                else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+                { fc.clip.FloatTracks.RemoveAll(t => t.Id == ft.Id); Commit(); }
+                else if (IG.IsMouseClicked(ImGuiMouseButton.Left))   // plain click-drag reorders
+                { _drag = DragMode.MoveFloatTrack; _dragTrackId = ft.Id; }
+            }
+            return;
+        }
         if (mouse.X < _laneLeft || mouse.X >= LaneRight || mouse.Y < _lanesTop || mouse.Y >= LanesBottom) return;
         if (HitKeyframe(mouse) is { } h)
         {
@@ -1780,6 +1820,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_drag is DragMode.LoopIn or DragMode.LoopOut or DragMode.LoopMove) { ContinueLoopDrag(mouse); return; }
         if (_drag == DragMode.MoveMarker) { ContinueMarkerDrag(mouse); return; }
         if (_drag == DragMode.MoveTrack) { ContinueTrackDrag(mouse); return; }
+        if (_drag == DragMode.MoveFloatTrack) { ContinueFloatTrackDrag(mouse); return; }
         if (_drag == DragMode.KfMarquee) { ContinueKfMarquee(mouse); return; }
         if (_drag == DragMode.MoveKeyframe) { ContinueKeyframeDrag(mouse); return; }
         if (_drag != DragMode.None) { ContinueClipDrag(mouse); return; }
@@ -3004,6 +3045,35 @@ public sealed class InterpoleEditorWidget : IDisposable
         }
     }
 
+    // Reorder float tracks on the clip page by dragging their headers — the clip-page twin of
+    // ContinueTrackDrag, operating on the active clip's FloatTracks (uniform rows from _lanesTop).
+    private void ContinueFloatTrackDrag(Vector2 mouse)
+    {
+        if (FindClip(_activeClipId) is not { } fc) { _drag = DragMode.None; _dragTrackId = null; return; }
+        var list = fc.clip.FloatTracks;
+        int from = list.FindIndex(t => t.Id == _dragTrackId);
+        if (!IG.IsMouseDown(ImGuiMouseButton.Left) || from < 0)
+        {
+            _drag = DragMode.None;
+            _dragTrackId = null;
+            if (from >= 0) Commit();
+            return;
+        }
+
+        // Swap only when the cursor crosses fully past the dragged row's top / bottom edge, so a plain
+        // click never moves it. Loop the single-step swaps so a fast drag over several rows keeps up.
+        while (from > 0 && mouse.Y < FloatRowTop(from))
+        {
+            (list[from - 1], list[from]) = (list[from], list[from - 1]);
+            from--;
+        }
+        while (from < list.Count - 1 && mouse.Y > FloatRowTop(from) + TrackHeight)
+        {
+            (list[from + 1], list[from]) = (list[from], list[from + 1]);
+            from++;
+        }
+    }
+
     // The marker create/edit modal: name, colour, and the on-reach action (Stop or Jump-to-marker,
     // mutually exclusive). Shown before a new marker is placed and reused to edit an existing one.
     // Managed as an ImGui popup so it captures
@@ -3343,6 +3413,14 @@ public sealed class InterpoleEditorWidget : IDisposable
         _focusEdit = true;
     }
 
+    private void StartEditFloatTrackName(FloatTrackData ft)
+    {
+        _editKind = EditKind.FloatTrackName;
+        _editId = ft.Id;
+        _editBuffer = ft.Name ?? "";
+        _focusEdit = true;
+    }
+
     private void DrawInlineEdit()
     {
         Vector2 pos;
@@ -3355,6 +3433,15 @@ public sealed class InterpoleEditorWidget : IDisposable
             float top = TrackTop(i);
             pos = new Vector2(_origin.X + 10, top + TrackHeightOf(i) * 0.5f - IG.GetFrameHeight() * 0.5f);
             width = HeaderWidth - 18;
+        }
+        else if (_editKind == EditKind.FloatTrackName)
+        {
+            if (FindClip(_activeClipId) is not { } fc) { _editKind = EditKind.None; return; }
+            int i = fc.clip.FloatTracks.FindIndex(t => t.Id == _editId);
+            if (i < 0) { _editKind = EditKind.None; return; }
+            float top = FloatRowTop(i);
+            pos = new Vector2(_origin.X + 12, top + TrackHeight * 0.5f - IG.GetFrameHeight() * 0.5f);
+            width = FloatHeaderNameWidth();
         }
         else
         {
@@ -3436,6 +3523,14 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             var tr = Document.Tracks.FirstOrDefault(t => t.Id == _editId);
             if (tr is not null) tr.Name = _editBuffer.Trim();
+        }
+        else if (_editKind == EditKind.FloatTrackName)
+        {
+            if (FindClip(_activeClipId) is { } fc)
+            {
+                var ft = fc.clip.FloatTracks.FirstOrDefault(t => t.Id == _editId);
+                if (ft is not null) ft.Name = _editBuffer.Trim();
+            }
         }
         else if (_editKind == EditKind.ClipLabel)
         {

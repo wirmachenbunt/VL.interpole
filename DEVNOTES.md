@@ -642,8 +642,20 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   field swallows it first).
 - **Header column is wider on the clip page** (`ClipHeaderWidth` 340 vs the timeline's `HeaderWidth`
   240) for track names; `_laneLeft` picks the width by mode, so all the shared chrome shifts with it.
-  Name/value widgets are ImGui items overlaid on the hand-drawn cells (the inspector's
-  `SetNextItemAllowOverlap` trick); the value field's width is fixed, the name takes the slack.
+  The value field is the only live ImGui widget in the header (overlaid via the InvisibleButton's
+  `SetNextItemAllowOverlap`); its width is fixed (96px), the name takes the slack (`FloatHeaderNameWidth`).
+- **Float-track headers mirror the timeline's track headers (2026-09-05).** The **name is plain text**
+  (hand-drawn, not an always-on input), so the header behaves exactly like a timeline track:
+  **double-click a name → inline rename** (new `EditKind.FloatTrackName`, reusing the shared
+  `DrawInlineEdit`/`CommitEdit` overlay — positioned in the active clip's header column, so `editClip`
+  stays null and no colour swatches show); **drag a header → reorder** (`DragMode.MoveFloatTrack` +
+  `ContinueFloatTrackDrag`, the clip-page twin of `MoveTrack`/`ContinueTrackDrag` operating on
+  `clip.FloatTracks`; blue row-tint + insertion lines via `DrawFloatTrackDragFeedback`, only swapping
+  once the cursor crosses a row edge); **Alt/Middle-click → delete**. All of it lives in
+  `HandleClipLaneInteraction`'s new header branch (`mouse.X < _laneLeft`), reached only over the
+  plain-text name — the value `DragFloat` sits on top so its clicks make the canvas `!hovered` and
+  return before the header branch. Uniform rows from `_lanesTop` (`FloatRowTop`/`FloatTrackIndexAtY`,
+  no vertical scroll yet, like before). The old always-on name `InputText` was removed.
 - **Gotcha — ImGui button height under 2× DPI.** The corner *+ Float Track* button was clipped to its
   top half: a fixed pixel height is shorter than the font at 200% scaling. Fixed by giving it the
   timeline corner-button rect (`RulerHeight-8`, taller than the font) — ImGui centres the label
