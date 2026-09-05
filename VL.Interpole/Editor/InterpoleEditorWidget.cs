@@ -209,6 +209,13 @@ public sealed class InterpoleEditorWidget : IDisposable
     private string _markerJumpTargetBuffer = "";  // jump-to marker Id chosen in the dialog ("" = none)
     private int _markerColorBuffer;           // palette index chosen in the dialog
 
+    // ---- keyframe interpolation context menu (clip page) ----
+    // A small right-click popup listing the six InterpMode types, applied to the keyframe selection.
+    // Interaction/shortcuts are suppressed while _kfMenuOpen (like the marker dialog).
+    private bool _kfMenuOpen;
+    private bool _kfMenuRequestOpen;   // set for one frame to trigger IG.OpenPopup
+    private Vector2 _kfMenuPos;        // screen position to open the popup at (the right-click point)
+
     // ---- undo / redo ----
     // In-editor history of *structural* document snapshots (JSON). The Data-pin autosave writes
     // with ~AddToHistory (it deliberately stays out of vvvv's undo stack, so continuous autosave
@@ -384,15 +391,17 @@ public sealed class InterpoleEditorWidget : IDisposable
         // clip-specific track / lane / shortcut branches), so the chrome behaves identically in both.
         if (_editKind != EditKind.None)
             DrawInlineEdit();
-        else if (!_markerDialogOpen)
+        else if (!_markerDialogOpen && !_kfMenuOpen)
         {
             HandleShortcuts(io);
             HandleInteraction(hovered, mouse, io);
         }
 
-        // The marker create/edit modal (name + "stop playback") is drawn last so it sits over the
-        // canvas and owns input while open; interaction/shortcuts above are suppressed meanwhile.
+        // The marker create/edit modal (name + "stop playback") and the keyframe interpolation menu are
+        // drawn last so they sit over the canvas and own input while open; interaction/shortcuts above
+        // are suppressed meanwhile.
         DrawMarkerDialog();
+        DrawKeyframeMenu();
 
         IG.End();
     }
@@ -1435,19 +1444,143 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 float kx = FrameToX(clip.Start + kf.Frame);
                 if (kx < _laneLeft - 7f || kx > LaneRight + 7f) continue;
-                DrawKeyframeDiamond(dl, kx, rcy, clip.Start + kf.Frame == Document.Playhead, _kfSelection.Contains(kf.Id));
+                DrawKeyframeMarker(dl, kx, rcy, kf.Interp, clip.Start + kf.Frame == Document.Playhead, _kfSelection.Contains(kf.Id));
             }
         }
     }
 
-    private void DrawKeyframeDiamond(ImDrawListPtr dl, float x, float y, bool onPlayhead, bool selected)
+    // Draw a keyframe marker whose SHAPE encodes its interpolation type (industry-standard icons):
+    // Linear = diamond, Step = square, EaseIn = left arrow, EaseOut = right arrow, EasyEase = hourglass,
+    // AutoBezier = circle. Fill is amber (brighter when on the playhead / selected); selected keys get a
+    // bright blue outline, others a thin dark one — both following the shape.
+    private void DrawKeyframeMarker(ImDrawListPtr dl, float x, float y, InterpMode interp, bool onPlayhead, bool selected)
     {
         float r = (onPlayhead || selected) ? 9.5f : 8f;
         uint fill = selected ? Col(1f, 0.98f, 0.85f) : onPlayhead ? Col(1f, 0.9f, 0.45f) : Col(0.95f, 0.8f, 0.3f);
-        dl.AddQuadFilled(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), fill);
-        // Selected keyframes get a bright blue ring; others a thin dark outline.
         uint ring = selected ? Col(0.35f, 0.7f, 1f) : Col(0.12f, 0.10f, 0.04f);
-        dl.AddQuad(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), ring, selected ? 2f : 1.2f);
+        float rw = selected ? 2f : 1.2f;
+
+        switch (interp)
+        {
+            case InterpMode.Step:   // square
+            {
+                float s = r * 0.82f;
+                var mn = new Vector2(x - s, y - s); var mx = new Vector2(x + s, y + s);
+                dl.AddRectFilled(mn, mx, fill);
+                dl.AddRect(mn, mx, ring, 0f, ImDrawFlags.None, rw);
+                break;
+            }
+            case InterpMode.AutoBezier:   // circle
+            {
+                float cr = r * 0.92f;
+                dl.AddCircleFilled(new Vector2(x, y), cr, fill, 18);
+                dl.AddCircle(new Vector2(x, y), cr, ring, 18, rw);
+                break;
+            }
+            case InterpMode.EaseIn:   // left-facing arrow (the eased side is the incoming / left side)
+            {
+                var p0 = new Vector2(x - r, y);
+                var p1 = new Vector2(x + r * 0.7f, y - r);
+                var p2 = new Vector2(x + r * 0.7f, y + r);
+                dl.AddTriangleFilled(p0, p1, p2, fill);
+                dl.AddTriangle(p0, p1, p2, ring, rw);
+                break;
+            }
+            case InterpMode.EaseOut:   // right-facing arrow (eased outgoing / right side)
+            {
+                var p0 = new Vector2(x + r, y);
+                var p1 = new Vector2(x - r * 0.7f, y - r);
+                var p2 = new Vector2(x - r * 0.7f, y + r);
+                dl.AddTriangleFilled(p0, p1, p2, fill);
+                dl.AddTriangle(p0, p1, p2, ring, rw);
+                break;
+            }
+            case InterpMode.EasyEase:   // hourglass (two triangles meeting tip-to-tip)
+            {
+                var tl = new Vector2(x - r, y - r); var tr = new Vector2(x + r, y - r);
+                var bl = new Vector2(x - r, y + r); var br = new Vector2(x + r, y + r);
+                var c = new Vector2(x, y);
+                dl.AddTriangleFilled(tl, tr, c, fill);
+                dl.AddTriangleFilled(bl, br, c, fill);
+                dl.AddTriangle(tl, tr, c, ring, rw);
+                dl.AddTriangle(bl, br, c, ring, rw);
+                break;
+            }
+            default:   // Linear = diamond
+            {
+                var t = new Vector2(x, y - r); var rt = new Vector2(x + r, y);
+                var bt = new Vector2(x, y + r); var l = new Vector2(x - r, y);
+                dl.AddQuadFilled(t, rt, bt, l, fill);
+                dl.AddQuad(t, rt, bt, l, ring, rw);
+                break;
+            }
+        }
+    }
+
+    // ---- keyframe interpolation context menu ----
+
+    private void OpenKeyframeMenu(Vector2 at)
+    {
+        _kfMenuRequestOpen = true;
+        _kfMenuOpen = true;
+        _kfMenuPos = at;
+    }
+
+    // The interpolation type shared by every selected keyframe, or null when the selection is empty or
+    // mixed — drives the check mark in the menu.
+    private InterpMode? CommonSelectedInterp()
+    {
+        if (FindClip(_activeClipId) is not { } f) return null;
+        InterpMode? common = null;
+        foreach (var tr in f.clip.FloatTracks)
+            foreach (var k in tr.Keys)
+                if (_kfSelection.Contains(k.Id))
+                {
+                    if (common is null) common = k.Interp;
+                    else if (common != k.Interp) return null;
+                }
+        return common;
+    }
+
+    // Set the interpolation type on every selected keyframe, as one undo step.
+    private void ApplyInterpToSelection(InterpMode mode)
+    {
+        if (FindClip(_activeClipId) is not { } f) return;
+        bool any = false;
+        foreach (var tr in f.clip.FloatTracks)
+            foreach (var k in tr.Keys)
+                if (_kfSelection.Contains(k.Id)) { k.Interp = mode; any = true; }
+        if (any) Commit();
+    }
+
+    // The right-click keyframe menu: the six interpolation types, applied to the selection. A plain
+    // (non-modal) popup — clicking a type or clicking away closes it. _kfMenuOpen gates the editor's
+    // own interaction/shortcuts while it's up.
+    private void DrawKeyframeMenu()
+    {
+        const string id = "kf-interp##interpole";
+        if (_kfMenuRequestOpen) { IG.SetNextWindowPos(_kfMenuPos, ImGuiCond.Appearing); IG.OpenPopup(id); _kfMenuRequestOpen = false; }
+        if (!_kfMenuOpen) return;
+
+        if (IG.BeginPopup(id))
+        {
+            InterpMode? cur = CommonSelectedInterp();
+            IG.TextDisabled("Interpolation");
+            IG.Separator();
+            KfMenuItem("Linear", InterpMode.Linear, cur);
+            KfMenuItem("Step", InterpMode.Step, cur);
+            KfMenuItem("Ease In", InterpMode.EaseIn, cur);
+            KfMenuItem("Ease Out", InterpMode.EaseOut, cur);
+            KfMenuItem("Easy Ease", InterpMode.EasyEase, cur);
+            KfMenuItem("Auto Bezier", InterpMode.AutoBezier, cur);
+            IG.EndPopup();
+        }
+        else _kfMenuOpen = false;   // clicked a type or clicked away
+    }
+
+    private void KfMenuItem(string label, InterpMode mode, InterpMode? current)
+    {
+        if (IG.MenuItem(label, "", current == mode)) ApplyInterpToSelection(mode);
     }
 
     // Header column: name + draggable value per float track, plus the timeline's row styling (accent
@@ -1857,6 +1990,16 @@ public sealed class InterpoleEditorWidget : IDisposable
             float frameUnder = (mouse.X - _laneLeft + _scrollX) / old;
             _scrollX = frameUnder * _pxPerFrame - (mouse.X - _laneLeft);
             if (_scrollX < 0) _scrollX = 0;
+        }
+
+        // Right-click a keyframe (clip page) opens its interpolation menu instead of panning. Applies
+        // the selection rule: a key already in the selection keeps the whole selection (menu edits them
+        // all); any other becomes the sole selection first. Right-clicking empty space still pans.
+        if (_mode == EditorMode.Clip && IG.IsMouseClicked(ImGuiMouseButton.Right) && HitKeyframe(mouse) is { } hk)
+        {
+            if (!_kfSelection.Contains(hk.kf.Id)) { _kfSelection.Clear(); _kfSelection.Add(hk.kf.Id); }
+            OpenKeyframeMenu(mouse);
+            return;
         }
 
         // Right-drag pans.

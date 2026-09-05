@@ -224,16 +224,21 @@ Float tracks (header column) — behave like the timeline's track headers:
 - **drag a track header** → reorder the tracks
 - **Alt-click** / **Middle-click** a track's header → delete it
 
-Keyframes (lanes, drawn as amber diamonds):
+Keyframes (lanes; each marker's **shape shows its interpolation type**):
 - With the playhead **inside the clip**, **change a track's value → a keyframe is created** at the
   playhead; if the playhead is already **on** a keyframe (value field turns **amber**) the edit
-  **updates** that keyframe. Interpolation is **linear**, held before the first / after the last key.
-- **Click** a diamond → select it; **Ctrl-click** → add/toggle; **drag an empty lane** → **marquee**
+  **updates** that keyframe. New keys start **Linear**; held before the first / after the last key.
+- **Click** a marker → select it; **Ctrl-click** → add/toggle; **drag an empty lane** → **marquee**
   select (Shift/Ctrl additive). Selected keyframes are bright with a blue ring.
-- **Drag** a diamond → move it in time; a **multi-selection drags together**; **hold Shift** to snap
+- **Drag** a marker → move it in time; a **multi-selection drags together**; **hold Shift** to snap
   the grabbed key to clip edges / the playhead / other keyframes (cyan guide). The group can't move
   before the clip start.
-- **Alt/Middle-click** a diamond, or **Del / Backspace** on the selection → delete. **Ctrl+C / Ctrl+V**
+- **Right-click** a keyframe → **interpolation menu** (Linear / Step / Ease In / Ease Out / Easy Ease /
+  Auto Bezier). Applies to the whole selection if you right-click a selected key, else to just that one.
+  The marker shape reflects the choice: **diamond** (linear), **square** (step), **◄** (ease in),
+  **►** (ease out), **hourglass** (easy ease), **circle** (auto bezier). Eases are a fixed strength
+  (no handles); a segment is shaped by the left key's *out* side and the right key's *in* side.
+- **Alt/Middle-click** a marker, or **Del / Backspace** on the selection → delete. **Ctrl+C / Ctrl+V**
   copy / paste at the playhead (earliest key on the playhead, offsets kept, same track index).
 - **Shift-scrub** the playhead → it snaps to keyframes too.
 - All keyframe edits are **undoable** (Ctrl+Z/Y) and **persist** in `Data`, like the rest of the doc.
@@ -339,9 +344,11 @@ Done:
   markers / playhead / transport) and just swaps in the clip's tracks, with the clip's span highlighted
   and the outside dimmed. Add tracks (name + draggable value); their headers mirror the timeline's
   (double-click to rename, drag to reorder, Alt/Middle to delete); change a track's value at the playhead to
-  **create/update a keyframe** (linear interp); **select** (click / Ctrl / marquee), **move** (drag,
-  group + Shift-snap), **delete** (Alt/Middle / Del), **copy/paste** (Ctrl+C/V at the playhead) — all
-  snapping-aware, undoable, and persisted.
+  **create/update a keyframe**; **select** (click / Ctrl / marquee), **move** (drag,
+  group + Shift-snap), **delete** (Alt/Middle / Del), **copy/paste** (Ctrl+C/V at the playhead), and
+  **right-click for an interpolation type** (Linear / Step / Ease In / Ease Out / Easy Ease / Auto Bezier,
+  AE per-side model; the marker shape shows the type — diamond / square / ◄ / ► / hourglass / circle) —
+  all snapping-aware, undoable, and persisted.
 - **Keyframe values split (`GetKeyframes`)** — looks a clip up **by name** in `Info` and outputs its
   float-track **names** and **current values** (sampled at the playhead) as two aligned spreads. First
   clip wins on a duplicate name; unknown/empty name → empty spreads.

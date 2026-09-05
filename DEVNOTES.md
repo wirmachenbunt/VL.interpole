@@ -666,11 +666,29 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   each track's value sampled at the playhead. The `GetKeyframes` node (Info + a clip **name**) finds
   the first matching entry and hands back the two spreads — a pure splitter like the other Get… nodes.
   Kept out of the per-track spreads (it's clip-keyed, not track-keyed).
+- **Easing / interpolation types (2026-09-06).** Each keyframe carries an `InterpMode`
+  (`Engine/InterpoleData.cs`): `Linear`(=0, back-compat) / `Step` / `EaseIn` / `EaseOut` / `EasyEase` /
+  `AutoBezier`. **After-Effects per-side model:** a segment A→B is shaped by **A's outgoing side + B's
+  incoming side**, each mode being a preset (in,out) pair (Linear = both linear, EaseIn = eased in +
+  linear out, EaseOut = linear in + eased out, EasyEase = both eased, AutoBezier = both auto, Step =
+  out-hold). `SampleAt` is now a **cubic Hermite**: linear side → tangent = the straight A→B slope
+  (linear+linear collapses to the exact old line); eased side → tangent = **0** (zero velocity, fixed
+  strength, no handles/influence); auto side → `AutoSlope` = central-difference (Catmull-Rom) through the
+  neighbours, one-sided at the ends; Step returns A's value and jumps at B. Set via a **right-click
+  context menu** on a keyframe (`DrawKeyframeMenu`, non-modal `BeginPopup`, gated by `_kfMenuOpen` like
+  the marker dialog): the intercept sits **before the pan trigger** in `HandleInteraction`, so a
+  right-click *on a key* opens the menu while right-drag on empty lane still pans. Selection rule: a key
+  already selected → menu edits the whole `_kfSelection`; a key not selected → it becomes the sole
+  selection first (`ApplyInterpToSelection`, one undo step; `CommonSelectedInterp` drives the check mark,
+  null when mixed). **Icons encode the type** (`DrawKeyframeMarker`, renamed from `DrawKeyframeDiamond`):
+  diamond / square / ◄ / ► / hourglass / circle, same amber fill + highlight/ring per shape. Right-click
+  only (no F9-style shortcuts); menu holds only the six types (no delete/copy). `GetKeyframes` output is
+  unchanged (only the sampling maths got richer).
 - **Not built (vs the old plan):** keyframe **lanes** (several typed value lanes per track), vec2/3/4 +
-  Colour lane types, Stepped/Bezier interpolation, and the opaque `Keyframes` cable + typed
-  `GetKeyframeFloat/Vector*/Color` getters. The current output is one float per track. **No vertical
-  scroll** for float rows yet (rows past the bottom are clamped/skipped) and **the tab strip doesn't
-  scroll** (tabs stop when out of width).
+  Colour lane types, editable **bézier handles / adjustable ease influence** (the six presets are fixed),
+  and the opaque `Keyframes` cable + typed `GetKeyframeFloat/Vector*/Color` getters. The current output
+  is one float per track. **No vertical scroll** for float rows yet (rows past the bottom are
+  clamped/skipped) and **the tab strip doesn't scroll** (tabs stop when out of width).
 
 ## Rendering performance (2026-08-20)
 
