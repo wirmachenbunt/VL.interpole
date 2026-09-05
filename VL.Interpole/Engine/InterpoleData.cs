@@ -240,8 +240,13 @@ public sealed class FloatTrackData
     // by default → the track is a constant (Value); absent on old documents (back-compat).
     public List<Keyframe> Keys { get; set; } = new();
 
-    // The track's value at a clip-local frame: the constant when there are no keyframes, else linear
-    // between the bracketing keyframes, holding the first/last value outside the keyed range.
+    // The track's value at a clip-local frame: the constant when there are no keyframes, else the
+    // interpolated value between the bracketing keyframes, holding the first/last value outside the
+    // keyed range. Interpolation is a cubic Hermite whose endpoint tangents come from the two keys'
+    // InterpMode (the After-Effects per-side model): the segment A->B is shaped by A's OUTGOING side
+    // and B's INCOMING side — linear side = the straight A->B slope, eased side = zero velocity, auto
+    // side = a Catmull-Rom slope through the neighbours; Step holds A's value and jumps at B. All-Linear
+    // reduces exactly to the old straight-line interpolation.
     public float SampleAt(int localFrame)
     {
         if (Keys.Count == 0) return Value;
@@ -254,11 +259,50 @@ public sealed class FloatTrackData
             {
                 var a = Keys[i - 1];
                 if (b.Frame == a.Frame) return b.Value;
-                float t = (localFrame - a.Frame) / (float)(b.Frame - a.Frame);
-                return a.Value + (b.Value - a.Value) * t;
+                // Step: the segment holds the left value and jumps at the right key.
+                if (a.Interp == InterpMode.Step) return a.Value;
+
+                float dt = b.Frame - a.Frame;
+                float t = (localFrame - a.Frame) / dt;
+                float secant = b.Value - a.Value;   // value change across the segment (= linear per-t tangent)
+
+                // Outgoing tangent from A's right side.
+                float m0 = a.Interp switch
+                {
+                    InterpMode.EaseOut or InterpMode.EasyEase => 0f,          // eased leave = zero velocity
+                    InterpMode.AutoBezier => AutoSlope(i - 1, i - 2, i) * dt, // smooth pass-through at A
+                    _ => secant,                                             // Linear / EaseIn = linear leave
+                };
+                // Incoming tangent into B's left side.
+                float m1 = b.Interp switch
+                {
+                    InterpMode.EaseIn or InterpMode.EasyEase => 0f,           // eased arrival = zero velocity
+                    InterpMode.AutoBezier => AutoSlope(i, i - 1, i + 1) * dt, // smooth pass-through at B
+                    _ => secant,                                             // Linear / EaseOut / Step = linear arrive
+                };
+
+                // Cubic Hermite basis. With m0 == m1 == secant this collapses to the straight line.
+                float t2 = t * t, t3 = t2 * t;
+                float h00 = 2f * t3 - 3f * t2 + 1f;
+                float h10 = t3 - 2f * t2 + t;
+                float h01 = -2f * t3 + 3f * t2;
+                float h11 = t3 - t2;
+                return h00 * a.Value + h10 * m0 + h01 * b.Value + h11 * m1;
             }
         }
         return Keys[^1].Value;
+    }
+
+    // Central-difference slope (value per frame) at key 'center' using the neighbours 'leftIdx' and
+    // 'rightIdx'; falls back to the one-sided slope toward whichever neighbour exists when the other is
+    // out of range (so an auto tangent at the first/last key degrades to the plain segment slope). Used
+    // for the AutoBezier tangents.
+    private float AutoSlope(int center, int leftIdx, int rightIdx)
+    {
+        int lo = leftIdx >= 0 ? leftIdx : center;
+        int hi = rightIdx < Keys.Count ? rightIdx : center;
+        float df = Keys[hi].Frame - Keys[lo].Frame;
+        return df == 0f ? 0f : (Keys[hi].Value - Keys[lo].Value) / df;
     }
 
     // Create the keyframe at a clip-local frame, or update its value if one already sits there. Keeps
@@ -276,14 +320,38 @@ public sealed class FloatTrackData
     }
 }
 
-// One keyframe on a float track: a value at a clip-local frame (frame 0 = the clip's start). Linear
-// interpolation between keyframes for now (no curves/tangents yet). Id is stable across edits so the
-// editor can hold a selection of keyframes (empty on old data → the editor backfills one).
+// Per-keyframe interpolation type — the After-Effects per-side model. A segment between two keys is
+// shaped by the LEFT key's OUTGOING side and the RIGHT key's INCOMING side; each value below is a
+// preset (incoming, outgoing) pair (see FloatTrackData.SampleAt for the maths):
+//   Linear      in/out linear — a straight line (the original behaviour)
+//   Step        out = hold: the segment holds the left value and jumps at the right key
+//   EaseIn      incoming eased (slow arrival), outgoing linear
+//   EaseOut     incoming linear, outgoing eased (slow departure)
+//   EasyEase    both sides eased (slow arrival and departure)
+//   AutoBezier  both sides auto-smoothed (Catmull-Rom slope through the key)
+// Serialized as an int with Linear = 0, so keyframes written before easing existed load as Linear and
+// behave exactly as before.
+public enum InterpMode
+{
+    Linear = 0,
+    Step = 1,
+    EaseIn = 2,
+    EaseOut = 3,
+    EasyEase = 4,
+    AutoBezier = 5,
+}
+
+// One keyframe on a float track: a value at a clip-local frame (frame 0 = the clip's start), plus its
+// interpolation type. Id is stable across edits so the editor can hold a selection of keyframes (empty
+// on old data → the editor backfills one).
 public sealed class Keyframe
 {
     public string Id { get; set; } = "";
     public int Frame { get; set; }
     public float Value { get; set; }
+    // How this key interpolates to its neighbours (see InterpMode). Default Linear (= 0), so keyframes
+    // written before easing existed load as plain linear — behaviour unchanged.
+    public InterpMode Interp { get; set; } = InterpMode.Linear;
 
     public static Keyframe New(int frame, float value) =>
         new() { Id = InterpoleDocument.NewId("kf"), Frame = frame, Value = value };
