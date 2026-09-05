@@ -192,6 +192,13 @@ does the same, and where it deliberately differs.
   looping timeline always reports an upcoming clip as long as the loop region holds one on that track,
   letting the loop-start content be preloaded ahead of the wrap. Not looping → plain forward
   `NextClipAfter`, `""` past the last clip.
+- **On-screen Play button is a toggle + shows playing state (2026-09-05).** The Play button's click
+  toggles: pressing it while `_playing` calls `OnTransport(Stop)` (users expect the on-screen play
+  control to double as pause/stop), matching the Space shortcut — handled **at the click site**, not in
+  `OnTransport(Play)`, which must always *start* (the `Play()` pin/`Active State`/`Jump` paths rely on
+  it). While playing, the button takes the same green "engaged" background as the Loop/timecode toggles
+  and its triangle turns light green, so its on/off state reads at a glance. Transport icons were also
+  shrunk (icon scale `0.26`→`0.21` in `DrawTransportIcon`) for more padding inside each button.
 - **Transport input pins: Play/Stop/Rewind are rising-edge, Loop is two-way state.** `Play`/`Stop`/
   `Rewind` are plain `bool` inputs; the node keeps `_prevPlay`/etc. and calls the editor once on each
   false→true transition, so a bang **or** a held/toggled bool behaves like one button press. The
@@ -619,10 +626,20 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   = shown clip), each a colour diamond + name + ✕. Hand-drawn on the draw list with **bottom-rounded
   corners** (`ImDrawFlags.RoundCornersBottom`) so they read as hanging from the content (a top-rounded
   ImGui tab would look upside-down at the bottom). `TabBarHeight` carves the strip out of the bottom
-  (`LanesBottom = CanvasBottom - TabBarHeight`). **Open a page with `K` + click** a clip (deliberate
-  gesture — a plain click just selects/moves; earlier every click opened a tab, too eager). **Audio
+  (`LanesBottom = CanvasBottom - TabBarHeight`). **Audio
   clips are excluded** (no keyframes yet): `OpenClipTab` skips `IsAudio` and the inspector's *Edit
   Keyframes* button is hidden for them.
+- **Opening a page = double-click, split by where you land (2026-09-05).** A double-click on a clip
+  splits on the label: **on the label text** it edits the clip (inline rename + colour, `StartEditClipLabel`);
+  **anywhere else on the clip body** it opens that clip's keyframe page (`OpenClipKeyframes`). `HitClipLabel`
+  recomputes the drawn label's screen rect (same geometry as `DrawClip` — the left band from the clip's
+  left edge through the end of the text, full clip-body height) so the split matches what's on screen; a
+  clip whose name fills it therefore mostly edits (the inspector *Edit Keyframes* button is the fallback).
+  Audio clips have no keyframes, so they always edit. `OpenClipKeyframes` is the single entry point
+  (select + `OpenClipTab` + switch to `EditorMode.Clip`), shared by the double-click and the inspector
+  button. **The old `K`+click gesture was removed** in favour of this. **Escape** on the keyframe page
+  drops back to the Timeline (the clip's tab stays open), gated in `HandleShortcuts` (so a focused float
+  field swallows it first).
 - **Header column is wider on the clip page** (`ClipHeaderWidth` 340 vs the timeline's `HeaderWidth`
   240) for track names; `_laneLeft` picks the width by mode, so all the shared chrome shifts with it.
   Name/value widgets are ImGui items overlaid on the hand-drawn cells (the inspector's

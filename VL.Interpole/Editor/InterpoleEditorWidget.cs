@@ -994,7 +994,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Opens this clip's keyframe editor page (a bottom tab appears; the canvas switches to it).
         // Audio clips have no keyframes yet, so no entry for them.
         if (!clip.IsAudio && IG.Button("Edit Keyframes  ›", new Vector2(-1f, 0f)))
-        { OpenClipTab(clip); _activeClipId = clip.Id; _mode = EditorMode.Clip; }
+            OpenClipKeyframes(clip);
 
         IG.Spacing();
         IG.TextDisabled("track: " + (string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name));
@@ -1175,7 +1175,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             var (bmin, bmax) = TransportButtonRect(i);
             bool hov = InRect(mouse, bmin, bmax);
-            bool active = i == (int)TButton.Loop && _loop;
+            // Loop and Play both show a green "engaged" background when on (Loop enabled / currently
+            // playing), so the Play button reads as a toggle.
+            bool active = (i == (int)TButton.Loop && _loop) || (i == (int)TButton.Play && _playing);
             uint bg = active ? Col(0.20f, 0.55f, 0.32f) : hov ? Col(0.28f, 0.30f, 0.34f) : Col(0.22f, 0.24f, 0.27f);
             dl.AddRectFilled(bmin, bmax, bg, 4f);
             dl.AddRect(bmin, bmax, Col(0f, 0f, 0f, 0.4f), 4f);
@@ -1217,12 +1219,13 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void DrawTransportIcon(ImDrawListPtr dl, int i, Vector2 bmin, Vector2 bmax)
     {
         var c = (bmin + bmax) * 0.5f;
-        float s = MathF.Min(bmax.X - bmin.X, bmax.Y - bmin.Y) * 0.26f;
+        float s = MathF.Min(bmax.X - bmin.X, bmax.Y - bmin.Y) * 0.21f;
         uint col = Col(0.95f, 0.97f, 1f);
         switch ((TButton)i)
         {
-            case TButton.Play: // right-pointing triangle
-                dl.AddTriangleFilled(new Vector2(c.X - s, c.Y - s), new Vector2(c.X - s, c.Y + s), new Vector2(c.X + s, c.Y), col);
+            case TButton.Play: // right-pointing triangle, tinted green while playing (toggle-on cue)
+                uint pc = _playing ? Col(0.85f, 1f, 0.9f) : col;
+                dl.AddTriangleFilled(new Vector2(c.X - s, c.Y - s), new Vector2(c.X - s, c.Y + s), new Vector2(c.X + s, c.Y), pc);
                 break;
             case TButton.Stop: // square
                 dl.AddRectFilled(new Vector2(c.X - s, c.Y - s), new Vector2(c.X + s, c.Y + s), col, 1f);
@@ -1337,6 +1340,19 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         if (clip.IsAudio) return;
         if (!_openTabs.Contains(clip.Id)) _openTabs.Add(clip.Id);
+    }
+
+    // Open (or re-focus) a clip's keyframe page: select the clip, ensure its bottom tab exists, and
+    // switch the canvas to the clip view. The single entry point for every gesture that opens the
+    // page (double-clicking a clip body, the inspector's "Edit Keyframes" button). Audio clips have
+    // no keyframes yet, so it's a no-op for them.
+    private void OpenClipKeyframes(ClipData clip)
+    {
+        if (clip.IsAudio) return;
+        SelectSingle(clip.Id);
+        OpenClipTab(clip);
+        _activeClipId = clip.Id;
+        _mode = EditorMode.Clip;
     }
 
     // Remove a clip's tab; if it was the one on screen, drop back to the timeline.
@@ -1725,6 +1741,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         if (io.WantTextInput) return;   // an ImGui field (e.g. an inspector input) owns the keyboard
 
+        // Escape leaves the keyframe page and drops back to the timeline (the clip's tab stays open).
+        if (_mode == EditorMode.Clip && IG.IsKeyPressed(ImGuiKey.Escape, false)) { _mode = EditorMode.Timeline; return; }
+
         // Space toggles play / stop. B / N set the loop in / out to the playhead. Undo/redo apply in
         // both views (float-track edits are undoable too). These are all axis/transport-level, so they
         // work identically on the clip page.
@@ -1813,7 +1832,14 @@ public sealed class InterpoleEditorWidget : IDisposable
                     for (int i = 0; i < 4; i++)
                     {
                         var (bmin, bmax) = TransportButtonRect(i);
-                        if (InRect(mouse, bmin, bmax)) { OnTransport((TButton)i); break; }
+                        if (InRect(mouse, bmin, bmax))
+                        {
+                            // Play is a toggle: pressing it while playing stops (users expect the
+                            // on-screen play control to double as pause/stop), same as the Space key.
+                            var b = (TButton)i;
+                            OnTransport(b == TButton.Play && _playing ? TButton.Stop : b);
+                            break;
+                        }
                     }
             }
             return;
@@ -1930,15 +1956,19 @@ public sealed class InterpoleEditorWidget : IDisposable
                     ClipZone.FadeIn or ClipZone.FadeOut => ImGuiMouseCursor.Hand,
                     _ => ImGuiMouseCursor.ResizeAll,
                 });
-                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) { StartEditClipLabel(clip); return; }
+                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                {
+                    // The double-click splits by where you land: on the clip's label text it edits the
+                    // clip (inline rename + colour); anywhere else on the clip body it opens the clip's
+                    // keyframe page. Audio clips have no keyframes yet, so they always edit.
+                    if (!clip.IsAudio && !HitClipLabel(clip, mouse)) OpenClipKeyframes(clip);
+                    else StartEditClipLabel(clip);
+                    return;
+                }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
                 { RemoveClip(tr, clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
-                    // K-click opens (and jumps to) this clip's keyframe page: adds its tab and switches
-                    // to the clip view. Non-audio only (audio clips have no keyframes yet).
-                    if (IG.IsKeyDown(ImGuiKey.K) && !clip.IsAudio)
-                    { SelectSingle(clip.Id); OpenClipTab(clip); _activeClipId = clip.Id; _mode = EditorMode.Clip; return; }
                     // Ctrl-click toggles this clip in the selection (no drag). Shift is the snap
                     // modifier for the drag (as on the playhead), so it must NOT block the grab —
                     // a Shift-press starts a normal move / resize / fade drag that snaps.
@@ -2514,6 +2544,22 @@ public sealed class InterpoleEditorWidget : IDisposable
             return (tr, clip, zone);
         }
         return null;
+    }
+
+    // Whether the mouse is over a clip's drawn label — the left band spanning the label text (from
+    // the clip's left edge through the end of the drawn text) across the full clip-body height. Used
+    // to split the double-click gesture: on the label it edits the clip, elsewhere on the body it
+    // opens the keyframe page. Same text geometry as DrawClip so the split matches what's on screen.
+    private bool HitClipLabel(ClipData clip, Vector2 mouse)
+    {
+        int i = TrackIndexAtY(mouse.Y);
+        if (i < 0) return false;
+        float top = TrackTop(i);
+        float y0 = top + ClipPadY, y1 = top + TrackHeightOf(i) - ClipPadY;
+        float x0 = FrameToX(clip.Start);
+        string lbl = string.IsNullOrWhiteSpace(clip.Label) ? clip.Id : clip.Label;
+        float lblRight = x0 + 6f + IG.CalcTextSize(lbl).X + 4f;
+        return mouse.X >= x0 && mouse.X <= lblRight && mouse.Y >= y0 && mouse.Y <= y1;
     }
 
     private (TrackData tr, ClipData clip)? FindClip(string? id)

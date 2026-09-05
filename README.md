@@ -161,8 +161,10 @@ Clips (lanes) — clips in a track can never overlap; all edits clamp to neighbo
 - **drag** a clip's **top-left / top-right handle** inward → set the **fade-in / fade-out**
   (frames); the fade shows as a ramp triangle. Snug in the corner = no fade. The handles sit in
   the top corners; the rest of each edge stays resize
-- **double-click** a clip → rename it (inline); a **10-colour palette** appears below the field —
+- **double-click a clip's label** → rename it (inline); a **10-colour palette** appears below the field —
   click a swatch to colour the clip (the choice is saved when the rename commits)
+- **double-click elsewhere on a clip** → open that clip's **keyframe editor** page (see below).
+  Audio clips have no keyframes, so a double-click always renames them
 - **Alt-click** or **Middle-click** a clip → delete it
 
 Loop region (the ribbon along the top of the ruler):
@@ -180,7 +182,8 @@ Playhead & view:
 - **click / drag in the ruler** → move the playhead (snaps to whole frames). **Hold Shift** for
   After-Effects-style snapping — the playhead snaps to the nearest clip **start/end** or **fade
   handle** (and frame 0), and turns cyan while snapped
-- **Space** → toggle play / stop
+- **Space**, or the on-screen **Play ▶** button, → toggle play / stop. The Play button acts as a
+  toggle (press it again to stop) and turns **green while playing** so its state is visible at a glance
 - **Play** advances the playhead in real time (`Fps` frames per second by default; see the
   `Frame Step Playback` pin for the legacy per-render-frame mode) — pressing Play while parked at
   the end restarts from 0 (or the **loop-in** when looping); **Loop** wraps the playhead within the
@@ -204,8 +207,10 @@ readout are *labelled* (timecode is derived from the inspector-only **`Fps`** pi
 
 Any clip can carry **float tracks** — named parameters **animated with keyframes** (After-Effects
 style) — edited on a **per-clip page**. A **tab bar along the bottom** switches pages: `[Timeline]`
-plus **one tab per opened clip** (colour diamond + name + **✕** to close). Open a clip's page with
-**K + click** on a clip (adds its tab and jumps in), or the inspector's **Edit Keyframes** button.
+plus **one tab per opened clip** (colour diamond + name + **✕** to close). Open a clip's page by
+**double-clicking the clip anywhere but its label** (adds its tab and jumps in), or with the
+inspector's **Edit Keyframes** button. Press **Escape** to leave the page and drop back to the
+Timeline (the tab stays open).
 **Audio clips have no keyframes** — they never get a tab. Click a tab to switch, **✕** to close it.
 
 A clip page is the **same view as the timeline** — same time axis (zoom / scroll), ruler, loop
@@ -278,7 +283,8 @@ Done:
   track + time preserved).
 - **View** — right-drag pan, wheel zoom (around the cursor), **playhead auto-follow** while playing
   (and on Rewind).
-- **Transport** — Play / Stop / Rewind / Loop, via the on-screen buttons, **Space** (= play/stop),
+- **Transport** — Play / Stop / Rewind / Loop, via the on-screen buttons (the **Play button toggles**
+  play/stop and glows **green while playing**), **Space** (= play/stop),
   **or the input pins**: `Play`/`Stop`/`Rewind` are rising-edge bangs, and **`Loop` is a two-way-bound
   state** that stays in sync with the on-screen Loop button (set the pin to drive the editor; toggle
   in the editor and the pin follows). **Real-time playback** (`Fps`-based, delta-time), with a hidden
@@ -327,8 +333,8 @@ Done:
 - **Active marker split (`GetActiveMarker`)** — unpacks just the `Active Marker` from `Info` (the marker
   the playhead is on, `""` otherwise) plus a derived **`On Marker`** bool.
 - **Keyframe editor** — per-clip **float tracks** animated with **keyframes** (AE-style), edited on
-  per-clip pages reached from a **bottom tab bar** (`[Timeline]` + a tab per opened clip; **K-click** a
-  non-audio clip to open, ✕ to close). A clip page reuses the whole timeline view (axis / ruler / loop /
+  per-clip pages reached from a **bottom tab bar** (`[Timeline]` + a tab per opened clip; **double-click
+  a non-audio clip's body** to open, **Escape** to leave, ✕ to close). A clip page reuses the whole timeline view (axis / ruler / loop /
   markers / playhead / transport) and just swaps in the clip's tracks, with the clip's span highlighted
   and the outside dimmed. Add tracks (name + draggable value); change a track's value at the playhead to
   **create/update a keyframe** (linear interp); **select** (click / Ctrl / marquee), **move** (drag,
