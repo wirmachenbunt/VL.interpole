@@ -422,6 +422,18 @@ InterpoleAudioEngine.cs`, `Engine/WaveformCache.cs`, or the audio branches in th
   documents (field absent → `Standard`, `FilePath` null) load unchanged. `ClipData.IsAudio =>
   FilePath is not null` (`[JsonIgnore]`, like `End`). `Start`/`Length` stay integer frames; only the
   mixer works in samples/seconds.
+- **Mute / Solo per audio track (2026-09-06).** `TrackData.Mute` / `TrackData.Solo` (both default false,
+  back-compat; persisted + undoable — they ride the structural snapshot like any track field). Audibility
+  is resolved **in `AudioTransport.Build`** (main thread), not the audio thread: a first pass sets
+  `anySolo` (any audio track soloed), then each clip's `AudioClipSnap.Audible = !tr.Mute && (!anySolo ||
+  tr.Solo)` — **solo isolates, mute gates on top, soloed+muted = silent**. The mixer just does
+  `if (!clip.Audible) continue;` at the top of the clip loop, so an inaudible track is **not decoded** and
+  **meters 0** on `Track Levels` (skipped before the meter accumulate) — i.e. the meter follows what you
+  hear. Unmute is instant (next snapshot); the source reseeks on the discontinuity like any gap. UI: small
+  **M** / **S** buttons in each **audio** track header (`TrackToggleRects`/`DrawTrackToggle`), right-aligned
+  and level with the name (name clipped so it can't run under them); M red when muted, S yellow when soloed.
+  Standard tracks have none. The header hit-test takes a plain left-click on M/S **before** the
+  rename/reorder/delete gestures (audio tracks only, `!alt`).
 - **Left-edge resize head-trims audio clips.** Dragging a clip's left edge advances `FileInPoint` by
   the same delta (clamped ≥ 0), so the audio content stays put on the timeline (proper NLE trim), and
   the drawn waveform shifts to match. In-point + gain are also editable in the inspector's **AUDIO**

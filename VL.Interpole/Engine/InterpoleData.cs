@@ -108,6 +108,13 @@ public sealed class TrackData
     public TrackKind Kind { get; set; } = TrackKind.Standard;
     public List<ClipData> Clips { get; set; } = new();
 
+    // Audio-track mix state (ignored on standard tracks). Mute silences the track; Solo restricts
+    // audible audio to soloed tracks (if any audio track is soloed, non-soloed audio tracks are silent).
+    // A muted track is silent regardless of solo. Both default false → pre-mute documents load unchanged;
+    // both are persisted and undoable (serialized with the track, like every other structural field).
+    public bool Mute { get; set; }
+    public bool Solo { get; set; }
+
     // The clip covering a given frame, or null if the frame falls in a gap. Clips never overlap
     // within a track, so at most one qualifies.
     public ClipData? ActiveClipAt(int frame)

@@ -122,7 +122,11 @@ action** (**stop** or **jump to marker**), and a **delete** button. For a clip i
 Tracks (header column):
 - **+ Track** button, or **double-click** empty header area → add a track
 - **double-click** a track header → rename it (inline)
+- **drag** a track header → reorder the tracks
 - **Alt-click** or **Middle-click** a track header → delete the track (and its clips)
+- **audio tracks** carry **M** / **S** buttons (right of the name): **M** mutes the track, **S** solos it.
+  Solo isolates — if any audio track is soloed, only soloed tracks are heard; mute always silences (and a
+  muted / soloed-out track meters `0`). Both persist with the patch and are undoable.
 
 Markers (the lane just below the ruler) — named points on the frame axis, global to the timeline:
 - **double-click** empty marker-lane space → a modal asks for a **name**, a **colour** (the shared

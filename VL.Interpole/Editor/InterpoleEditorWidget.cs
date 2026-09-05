@@ -369,7 +369,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             DrawRuler(dl);
             DrawLoopBar(dl);
             DrawMarkerLane(dl, mouse);
-            DrawHeaders(dl);
+            DrawHeaders(dl, mouse);
             DrawTrackDragFeedback(dl);
             DrawPlayhead(dl);
             DrawSnapGuide(dl);
@@ -790,7 +790,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.PopClipRect();
     }
 
-    private void DrawHeaders(ImDrawListPtr dl)
+    private void DrawHeaders(ImDrawListPtr dl, Vector2 mouse)
     {
         dl.PushClipRect(new Vector2(_origin.X, _lanesTop), new Vector2(_laneLeft, LanesBottom), true);
         dl.AddRectFilled(new Vector2(_origin.X, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0.15f, 0.16f, 0.18f));
@@ -812,11 +812,48 @@ public sealed class InterpoleEditorWidget : IDisposable
             dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(_origin.X + 5, bottom), accent);
             string name = string.IsNullOrWhiteSpace(tr.Name) ? tr.Id : tr.Name;
             var ts = IG.CalcTextSize(name);
-            dl.AddText(new Vector2(_origin.X + 14, (top + bottom) * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
+            float nameY = (top + bottom) * 0.5f - ts.Y * 0.5f;
+            // Mute / Solo buttons — audio tracks only, right-aligned and level with the name. M lights
+            // red when muted, S yellow when soloed. Clip the name so it can't run under the buttons.
+            float nameRight = _laneLeft - 6f;
+            if (audio)
+            {
+                var (mMin, mMax, sMin, sMax) = TrackToggleRects(i);
+                nameRight = mMin.X - 6f;
+                DrawTrackToggle(dl, mMin, mMax, "M", tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f));
+                DrawTrackToggle(dl, sMin, sMax, "S", tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f));
+            }
+            dl.PushClipRect(new Vector2(_origin.X + 14, top), new Vector2(nameRight, bottom), true);
+            dl.AddText(new Vector2(_origin.X + 14, nameY), Col(0.9f, 0.94f, 1f), name);
+            dl.PopClipRect();
         }
         // column divider
         dl.AddLine(new Vector2(_laneLeft, _lanesTop), new Vector2(_laneLeft, LanesBottom), Col(0f, 0f, 0f, 0.5f));
         dl.PopClipRect();
+    }
+
+    // The Mute / Solo button rects in an audio track's header — a right-aligned pair (M then S), level
+    // with the track name. Only meaningful for audio tracks; used by both the draw and the hit-testing.
+    private (Vector2 mMin, Vector2 mMax, Vector2 sMin, Vector2 sMax) TrackToggleRects(int i)
+    {
+        const float bh = 18f, gap = 4f, margin = 8f;
+        float y0 = TrackTop(i) + TrackHeightOf(i) * 0.5f - bh * 0.5f;
+        float sx1 = _laneLeft - margin;   // S right edge (rightmost)
+        float sx0 = sx1 - bh;
+        float mx1 = sx0 - gap;
+        float mx0 = mx1 - bh;
+        return (new Vector2(mx0, y0), new Vector2(mx1, y0 + bh),
+                new Vector2(sx0, y0), new Vector2(sx1, y0 + bh));
+    }
+
+    private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, string label, bool on, bool hov, uint onColor)
+    {
+        uint bg = on ? onColor : hov ? Col(0.30f, 0.32f, 0.36f) : Col(0.22f, 0.24f, 0.27f);
+        dl.AddRectFilled(mn, mx, bg, 3f);
+        dl.AddRect(mn, mx, Col(0f, 0f, 0f, 0.4f), 3f);
+        var ts = IG.CalcTextSize(label);
+        uint tc = on ? Col(0.08f, 0.06f, 0.04f) : Col(0.85f, 0.88f, 0.92f);
+        dl.AddText(new Vector2((mn.X + mx.X) * 0.5f - ts.X * 0.5f, (mn.Y + mx.Y) * 0.5f - ts.Y * 0.5f), tc, label);
     }
 
     // While a track header is being dragged to reorder, tint its (live-reflowed) row across the full
@@ -2115,6 +2152,13 @@ public sealed class InterpoleEditorWidget : IDisposable
             var tr = TrackAtY(mouse.Y);
             if (tr is not null)
             {
+                // Mute / Solo buttons take a plain left click first (audio tracks only).
+                if (tr.Kind == TrackKind.Audio && !alt && IG.IsMouseClicked(ImGuiMouseButton.Left))
+                {
+                    var (mMin, mMax, sMin, sMax) = TrackToggleRects(Document.Tracks.IndexOf(tr));
+                    if (InRect(mouse, mMin, mMax)) { tr.Mute = !tr.Mute; Commit(); return; }
+                    if (InRect(mouse, sMin, sMax)) { tr.Solo = !tr.Solo; Commit(); return; }
+                }
                 if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditTrackName(tr);
                 else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
                     RemoveTrack(tr.Id);

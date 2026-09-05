@@ -35,13 +35,14 @@ public sealed class AudioClipSnap
     public readonly double FadeInSec;
     public readonly double FadeOutSec;
     public readonly float Gain;
+    public readonly bool Audible;       // false when the clip's track is muted or soloed-out (mixer skips it)
 
     public AudioClipSnap(string key, string filePath, int track, double startSec, double lengthSec,
-                         double inPointSec, double fadeInSec, double fadeOutSec, float gain)
+                         double inPointSec, double fadeInSec, double fadeOutSec, float gain, bool audible)
     {
         Key = key; FilePath = filePath; Track = track;
         StartSec = startSec; LengthSec = lengthSec; InPointSec = inPointSec;
-        FadeInSec = fadeInSec; FadeOutSec = fadeOutSec; Gain = gain;
+        FadeInSec = fadeInSec; FadeOutSec = fadeOutSec; Gain = gain; Audible = audible;
     }
 
     public double EndSec => StartSec + LengthSec;
@@ -72,10 +73,18 @@ public sealed class AudioTransport
         double f = Math.Max(1, fps);
         var clips = new List<AudioClipSnap>();
         int audioIdx = -1;   // running audio-track index; ++ on each audio track encountered
+
+        // Solo isolation: if any audio track is soloed, only soloed audio tracks are audible. Mute gates
+        // on top of that, so a track is audible iff it isn't muted and (nothing is soloed or it is).
+        bool anySolo = false;
+        foreach (var tr in doc.Tracks)
+            if (tr.Kind == TrackKind.Audio && tr.Solo) { anySolo = true; break; }
+
         foreach (var tr in doc.Tracks)
         {
             bool audioTrack = tr.Kind == TrackKind.Audio;
             if (audioTrack) audioIdx++;
+            bool audible = !tr.Mute && (!anySolo || tr.Solo);
             foreach (var c in tr.Clips)
             {
                 if (!c.IsAudio) continue;
@@ -83,7 +92,7 @@ public sealed class AudioTransport
                 clips.Add(new AudioClipSnap(
                     c.Id, c.FilePath!, audioTrack ? audioIdx : -1,
                     c.Start / f, c.Length / f, c.FileInPoint,
-                    fi / f, fo / f, c.Gain));
+                    fi / f, fo / f, c.Gain, audible));
             }
         }
         return new AudioTransport(playing, playheadFrames / f, clips, audioIdx + 1);
@@ -187,6 +196,7 @@ public sealed class InterpoleMixerSignal : MultiChannelSignal
 
         foreach (var clip in t.Clips)
         {
+            if (!clip.Audible) continue;   // track muted or soloed-out → skip (no decode, meters 0)
             double a = Math.Max(startSec, clip.StartSec);
             double b = Math.Min(endSec, clip.EndSec);
             if (b <= a) continue;   // clip not active in this buffer
