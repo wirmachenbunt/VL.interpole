@@ -1442,7 +1442,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private void DrawKeyframeDiamond(ImDrawListPtr dl, float x, float y, bool onPlayhead, bool selected)
     {
-        float r = (onPlayhead || selected) ? 6.5f : 5.5f;
+        float r = (onPlayhead || selected) ? 9.5f : 8f;
         uint fill = selected ? Col(1f, 0.98f, 0.85f) : onPlayhead ? Col(1f, 0.9f, 0.45f) : Col(0.95f, 0.8f, 0.3f);
         dl.AddQuadFilled(new Vector2(x, y - r), new Vector2(x + r, y), new Vector2(x, y + r), new Vector2(x - r, y), fill);
         // Selected keyframes get a bright blue ring; others a thin dark outline.
@@ -1588,7 +1588,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (FindClip(_activeClipId) is not { } f) return null;
         if (mouse.X < _laneLeft || mouse.X >= LaneRight || mouse.Y < _lanesTop || mouse.Y >= LanesBottom) return null;
         var clip = f.clip;
-        const float r = 7f;
+        const float r = 10f;
         for (int i = 0; i < clip.FloatTracks.Count; i++)
         {
             float top = _lanesTop + i * TrackHeight;
