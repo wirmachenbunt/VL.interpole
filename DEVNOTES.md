@@ -675,11 +675,19 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   timeline corner-button rect (`RulerHeight-8`, taller than the font) — ImGui centres the label
   vertically, so it never clips. (Auto-height `Vector2(w,0)` also works.)
 - **Output — `GetKeyframes`.** `InterpoleInfo` gained a `Spread<ClipKeyframeSnapshot> ClipKeyframes`
-  (`ClipKeyframeSnapshot{ ClipName, TrackNames, TrackValues }`), built each frame in
+  (`ClipKeyframeSnapshot{ ClipName, TrackNames, TrackValues, Active }`), built each frame in
   `InterpoleNode.BuildClipKeyframes` for every clip **with** float tracks (track-then-clip order),
-  each track's value sampled at the playhead. The `GetKeyframes` node (Info + a clip **name**) finds
-  the first matching entry and hands back the two spreads — a pure splitter like the other Get… nodes.
-  Kept out of the per-track spreads (it's clip-keyed, not track-keyed).
+  each track's value sampled at the playhead (`Active = clip.Contains(playhead)`). The `GetKeyframes`
+  node (Info + a clip **name**) is **playhead-aware**: it returns the same-named clip that is **active
+  under the playhead** (so a *copy* of a clip plays its own animation, not just the first clip in
+  document order); first wins among several active at once; when **none** is active it falls back to the
+  first same-named clip's held value. A pure splitter like the other Get… nodes; kept out of the
+  per-track spreads (it's clip-keyed, not track-keyed).
+- **Copy/paste carries float tracks (2026-09-06).** `CloneClip` deep-copies `ClipData.FloatTracks` via
+  `CloneFloatTracks` (fresh ids for every track + keyframe, preserving `Name`/`Value`/`Frame`/`Interp`),
+  and the paste construction clones again — so a pasted clip carries its own **independent** keyframe
+  animation with no shared ids (which would confuse the editor's keyframe selection). Was previously
+  dropped: `CloneClip`/paste only copied the audio + fade + colour fields.
 - **Easing / interpolation types (2026-09-06).** Each keyframe carries an `InterpMode`
   (`Engine/InterpoleData.cs`): `Linear`(=0, back-compat) / `Step` / `EaseIn` / `EaseOut` / `EasyEase` /
   `AutoBezier`. **After-Effects per-side model:** a segment A→B is shaped by **A's outgoing side + B's

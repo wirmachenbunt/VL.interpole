@@ -392,7 +392,9 @@ public class InterpoleNode : IDisposable
                     names.Add(ft.Name ?? "");
                     vals.Add(ft.SampleAt(local));
                 }
-                b.Add(new ClipKeyframeSnapshot(clip.Label ?? "", names.ToSpread(), vals.ToSpread()));
+                // Active = the playhead is inside this clip, so GetKeyframes can prefer the same-named
+                // clip actually playing (a copy) over the first one in document order.
+                b.Add(new ClipKeyframeSnapshot(clip.Label ?? "", names.ToSpread(), vals.ToSpread(), clip.Contains(frame)));
             }
         return b.ToSpread();
     }

@@ -57,7 +57,8 @@ public sealed record InterpoleInfo(
         Spread<ClipKeyframeSnapshot>.Empty);
 }
 
-// One clip's float-track state at the playhead: the clip's name, its float-track names, and their
-// current values (aligned by track order). Built each frame in the node; GetKeyframes finds the first
-// entry whose ClipName matches and hands back the two spreads.
-public sealed record ClipKeyframeSnapshot(string ClipName, Spread<string> TrackNames, Spread<float> TrackValues);
+// One clip's float-track state at the playhead: the clip's name, its float-track names, their current
+// values (aligned by track order), and whether the playhead is inside this clip's span (Active). Built
+// each frame in the node. GetKeyframes resolves a name to the ACTIVE same-named clip (so a played copy
+// animates), falling back to the first same-named clip's held value when none is active.
+public sealed record ClipKeyframeSnapshot(string ClipName, Spread<string> TrackNames, Spread<float> TrackValues, bool Active);

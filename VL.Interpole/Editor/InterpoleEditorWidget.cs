@@ -2954,8 +2954,25 @@ public sealed class InterpoleEditorWidget : IDisposable
         Label = c.Label, Start = c.Start, Length = c.Length,
         Color = c.Color, FadeIn = c.FadeIn, FadeOut = c.FadeOut,
         FilePath = c.FilePath, FileInPoint = c.FileInPoint, Gain = c.Gain,
-        FileDurationSeconds = c.FileDurationSeconds
+        FileDurationSeconds = c.FileDurationSeconds,
+        FloatTracks = CloneFloatTracks(c.FloatTracks)
     };
+
+    // Deep-copy a clip's float (keyframe) tracks with fresh ids for the tracks and their keyframes, so a
+    // cloned / pasted clip carries its own independent animation instead of losing it (or sharing ids
+    // with the source, which would confuse the editor's keyframe selection).
+    private static List<FloatTrackData> CloneFloatTracks(List<FloatTrackData> tracks)
+    {
+        var copy = new List<FloatTrackData>(tracks.Count);
+        foreach (var t in tracks)
+        {
+            var nt = new FloatTrackData { Id = InterpoleDocument.NewId("ft"), Name = t.Name, Value = t.Value };
+            foreach (var k in t.Keys)
+                nt.Keys.Add(new Keyframe { Id = InterpoleDocument.NewId("kf"), Frame = k.Frame, Value = k.Value, Interp = k.Interp });
+            copy.Add(nt);
+        }
+        return copy;
+    }
 
     // Copy every selected clip (or, if nothing is selected, the hovered one) to the clipboard,
     // recording each clip's track index and its start relative to the earliest copied clip, so a
@@ -3023,7 +3040,8 @@ public sealed class InterpoleEditorWidget : IDisposable
                 Label = e.Clip.Label, Start = start, Length = len,
                 Color = e.Clip.Color, FadeIn = e.Clip.FadeIn, FadeOut = e.Clip.FadeOut,
                 FilePath = e.Clip.FilePath, FileInPoint = e.Clip.FileInPoint, Gain = e.Clip.Gain,
-                FileDurationSeconds = e.Clip.FileDurationSeconds
+                FileDurationSeconds = e.Clip.FileDurationSeconds,
+                FloatTracks = CloneFloatTracks(e.Clip.FloatTracks)
             };
             ClampFades(nc);   // a trimmed paste may no longer fit both fades
             tr.Clips.Add(nc);

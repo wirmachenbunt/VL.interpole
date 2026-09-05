@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VL.Interpole")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+874992238f29df8849ae20d23260c1a8cd989784")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e197ae9e252f3769861b196d8523507ecde2814a")]
 [assembly: System.Reflection.AssemblyProductAttribute("VL.Interpole")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VL.Interpole")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
