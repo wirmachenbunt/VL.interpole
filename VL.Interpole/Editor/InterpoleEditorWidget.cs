@@ -74,6 +74,26 @@ public sealed class InterpoleEditorWidget : IDisposable
     // When false the canvas is drawn transparent — both the explicit fill AND ImGui's own
     // window background are skipped — so whatever is behind the renderer shows through.
     public bool ShowBackground = true;
+
+    // Playback render mode, set by the node each frame so the editor can render only what changes
+    // while playing (the snapshot-cache path — see SnapshotLayer):
+    //   Off     = full live editor (normal editing).
+    //   Static  = everything EXCEPT the moving overlay (playhead / timecode), for capture into the cache.
+    //   Overlay = ONLY the playhead + timecode readout, drawn over the blitted cache; window transparent.
+    // In both play passes, editing is locked — only transport, playhead scrub and zoom are handled.
+    public enum PlayCache { Off, Static, Overlay }
+    public PlayCache PlayPass = PlayCache.Off;
+
+    // Read by the node (before Update) to drive the per-page cache: the node computes which page the
+    // playhead is on from the lane width + zoom, page-aligns the scroll, and keys the cache by page.
+    public float ViewScrollX => _scrollX;
+    public float ViewPxPerFrame => _pxPerFrame;
+    public Vector2 ViewSize => _size;
+    public float LaneWidthPx => LaneRight - _laneLeft;   // visible time-axis width (one page), in px
+    // Page-align the time-axis scroll while playing (the node owns the view during play, so the
+    // playhead stays on a deterministic page grid and cached pages recur exactly on loops).
+    public void SetPlayScroll(float scrollX) => _scrollX = MathF.Max(0f, scrollX);
+
     // Frames per second used to derive timecode for the ruler + readout (the "time / frames"
     // toggle). Set from the node's inspector-only Fps pin each frame; clamped >= 1 by the setter.
     private int _fps = 60;
@@ -286,7 +306,10 @@ public sealed class InterpoleEditorWidget : IDisposable
             ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove |
             ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
             ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoBringToFrontOnFocus;
-        if (!ShowBackground) flags |= ImGuiWindowFlags.NoBackground;
+        // No ImGui window background when the editor background is off, OR in the Overlay pass — there
+        // we draw only the playhead/timecode over the blitted cache, so ImGui's own (dark, semi-
+        // transparent) WindowBg must not paint over the cache and darken it.
+        if (!ShowBackground || PlayPass == PlayCache.Overlay) flags |= ImGuiWindowFlags.NoBackground;
 
         IG.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         bool open = IG.Begin("Interpole — " + _title, flags);
@@ -328,8 +351,10 @@ public sealed class InterpoleEditorWidget : IDisposable
         ClampScroll();
 
         // Playback is advanced in Tick() (called from the node's Update, so it runs in No UI Mode too);
-        // here we only keep the playhead in view while playing (needs this frame's geometry).
-        if (_playing && !_panning) EnsurePlayheadVisible();
+        // here we only keep the playhead in view while playing (needs this frame's geometry). While the
+        // snapshot cache is active (a play pass) the node owns the scroll (page-aligned via SetPlayScroll),
+        // so skip the edge-nudge follow — it would fight the page grid the cache keys on.
+        if (_playing && !_panning && PlayPass == PlayCache.Off) EnsurePlayheadVisible();
 
         // Which clip is highlighted: the one being dragged, else the one under the cursor. Capture the
         // grab zone too so DrawClip can flag a resize edge before the press.
@@ -341,55 +366,76 @@ public sealed class InterpoleEditorWidget : IDisposable
             _hoverZone = hit?.zone;
         }
 
-        if (ShowBackground)
-            dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
+        bool overlay = PlayPass == PlayCache.Overlay;
+        bool play = PlayPass != PlayCache.Off;
 
-        // The clip (keyframe) page is the SAME view as the timeline — same time axis (_pxPerFrame /
-        // _scrollX), ruler, loop ribbon, markers, playhead and transport — only the track content
-        // differs: the open clip's float tracks instead of the timeline's clips. So it reuses the
-        // shared chrome draws and swaps just the lanes / headers / corner.
-        if (_mode == EditorMode.Clip)
+        if (overlay)
         {
-            EnsureKeyframeIdsAndPruneSelection();
-            DrawFloatLanes(dl);
-            if (_drag == DragMode.KfMarquee) DrawMarquee(dl);
-            DrawRuler(dl);
-            DrawLoopBar(dl);
-            DrawMarkerLane(dl, mouse);
-            DrawFloatHeaders(dl);
-            DrawFloatTrackDragFeedback(dl);
+            // Play/Overlay pass: draw ONLY the moving overlay over the blitted cache (the window is
+            // NoBackground here, so nothing else is painted). Playhead + timecode readout only.
+            DrawReadout(dl);
             DrawPlayhead(dl);
-            DrawSnapGuide(dl);
-            DrawFloatCorner(dl, mouse);
         }
         else
         {
-            DrawLanes(dl);
-            if (_drag == DragMode.Marquee) DrawMarquee(dl);
-            DrawRuler(dl);
-            DrawLoopBar(dl);
-            DrawMarkerLane(dl, mouse);
-            DrawHeaders(dl, mouse);
-            DrawTrackDragFeedback(dl);
-            DrawPlayhead(dl);
-            DrawSnapGuide(dl);
-            DrawCorner(dl, mouse);
+            if (ShowBackground)
+                dl.AddRectFilled(_origin, _origin + _size, Col(0.11f, 0.12f, 0.13f));
+
+            // The clip (keyframe) page is the SAME view as the timeline — same time axis (_pxPerFrame /
+            // _scrollX), ruler, loop ribbon, markers, playhead and transport — only the track content
+            // differs: the open clip's float tracks instead of the timeline's clips. So it reuses the
+            // shared chrome draws and swaps just the lanes / headers / corner.
+            if (_mode == EditorMode.Clip)
+            {
+                EnsureKeyframeIdsAndPruneSelection();
+                DrawFloatLanes(dl);
+                if (_drag == DragMode.KfMarquee) DrawMarquee(dl);
+                DrawRuler(dl);
+                DrawLoopBar(dl);
+                DrawMarkerLane(dl, mouse);
+                DrawFloatHeaders(dl);
+                DrawFloatTrackDragFeedback(dl);
+                if (!play) { DrawPlayhead(dl); DrawSnapGuide(dl); }   // Static bakes no overlay (drawn on top)
+                DrawFloatCorner(dl, mouse);
+            }
+            else
+            {
+                DrawLanes(dl);
+                if (_drag == DragMode.Marquee) DrawMarquee(dl);
+                DrawRuler(dl);
+                DrawLoopBar(dl);
+                DrawMarkerLane(dl, mouse);
+                DrawHeaders(dl, mouse);
+                DrawTrackDragFeedback(dl);
+                if (!play) { DrawPlayhead(dl); DrawSnapGuide(dl); }
+                DrawCorner(dl, mouse);
+            }
+
+            // Transport, zoom readout and the bottom tab bar are shared chrome. The inspector is
+            // timeline-only. The readout (moving timecode) is baked only when NOT playing — in play the
+            // Overlay pass draws it fresh over the cache.
+            DrawTransport(dl, mouse);
+            if (!play) DrawReadout(dl);
+            DrawZoomReadout(dl);
+            if (_mode == EditorMode.Timeline)
+            {
+                DrawInspectorStrip(dl, mouse);
+                if (_inspectorOpen) DrawInspector(dl);
+            }
+            DrawTabBar(dl, mouse);
         }
 
-        // Transport, zoom readout and the bottom tab bar are shared chrome. The inspector is
-        // timeline-only.
-        DrawTransport(dl, mouse);
-        DrawZoomReadout(dl);
-        if (_mode == EditorMode.Timeline)
+        // Interaction. While playing, editing is locked: only transport, playhead scrub and zoom are
+        // handled (HandlePlay*). Otherwise the full mode-aware editing interaction runs.
+        if (play)
         {
-            DrawInspectorStrip(dl, mouse);
-            if (_inspectorOpen) DrawInspector(dl);
+            if (!_markerDialogOpen && !_kfMenuOpen)
+            {
+                HandlePlayShortcuts(io);
+                HandlePlayInteraction(hovered, mouse, io);
+            }
         }
-        DrawTabBar(dl, mouse);
-
-        // Interaction is shared: HandleInteraction / HandleShortcuts are mode-aware (they gate the
-        // clip-specific track / lane / shortcut branches), so the chrome behaves identically in both.
-        if (_editKind != EditKind.None)
+        else if (_editKind != EditKind.None)
             DrawInlineEdit();
         else if (!_markerDialogOpen && !_kfMenuOpen)
         {
@@ -1255,18 +1301,6 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRectFilled(_origin, new Vector2(LaneRight, _rulerTop), Col(0.16f, 0.17f, 0.19f));
         dl.AddLine(new Vector2(_origin.X, _rulerTop), new Vector2(LaneRight, _rulerTop), Col(0f, 0f, 0f, 0.5f));
 
-        // Playhead readout on the left — just the value: timecode in time mode, else a
-        // zero-padded 6-digit frame counter (e.g. 000042).
-        string txt = _showTimecode
-            ? FramesToTimecode(Document.Playhead, 1)   // step 1 => always show the frame subfield
-            : Document.Playhead.ToString("000000", CultureInfo.InvariantCulture);
-        // Draw with the larger baked readout font (index 1) at its native size — crisp, where scaling
-        // the default font up was pixelated. ReadoutTextScale still trims it a touch if needed.
-        var font = ReadoutFont();
-        float sz = font.FontSize * ReadoutTextScale;
-        var ts = font.CalcTextSizeA(sz, float.MaxValue, 0f, txt);
-        dl.AddText(font, sz, new Vector2(_origin.X + ReadoutPadX, _origin.Y + (TransportHeight - ts.Y) * 0.5f), Col(0.85f, 0.9f, 0.95f), txt);
-
         for (int i = 0; i < 4; i++)
         {
             var (bmin, bmax) = TransportButtonRect(i);
@@ -1288,6 +1322,27 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRectFilled(rmin, rmax, rbg, 4f);
         dl.AddRect(rmin, rmax, Col(0f, 0f, 0f, 0.4f), 4f);
         DrawStopwatchIcon(dl, rmin, rmax, Col(0.95f, 0.97f, 1f));
+    }
+
+    // The playhead readout on the left of the transport bar — the value only: timecode in time mode,
+    // else a zero-padded 6-digit frame counter (e.g. 000042). Split out of DrawTransport because it is
+    // the one bit of the transport that ANIMATES: when playing it is drawn fresh over the cached still
+    // (the Overlay pass), so the timecode keeps ticking without re-rendering the whole editor. A patch
+    // in the bar colour is painted first so the Overlay pass cleanly overwrites the cache's (blank)
+    // readout area; the patch stops short of the first transport button so it never covers the buttons.
+    private void DrawReadout(ImDrawListPtr dl)
+    {
+        string txt = _showTimecode
+            ? FramesToTimecode(Document.Playhead, 1)   // step 1 => always show the frame subfield
+            : Document.Playhead.ToString("000000", CultureInfo.InvariantCulture);
+        // Draw with the larger baked readout font (index 1) at its native size — crisp, where scaling
+        // the default font up was pixelated. ReadoutTextScale still trims it a touch if needed.
+        var font = ReadoutFont();
+        float sz = font.FontSize * ReadoutTextScale;
+        var ts = font.CalcTextSizeA(sz, float.MaxValue, 0f, txt);
+        float patchRight = TransportButtonRect(0).min.X - 8f;
+        dl.AddRectFilled(_origin, new Vector2(patchRight, _rulerTop), Col(0.16f, 0.17f, 0.19f));
+        dl.AddText(font, sz, new Vector2(_origin.X + ReadoutPadX, _origin.Y + (TransportHeight - ts.Y) * 0.5f), Col(0.85f, 0.9f, 0.95f), txt);
     }
 
     // A small stopwatch glyph (ring body + top crown/stem + a hand at ~1-2 o'clock), drawn from
@@ -1979,6 +2034,69 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo, Ctrl+C copy clip, Ctrl+V paste at playhead. Only
     // when no inline edit is open (there the InputText owns the keyboard).
+    // Play-mode keyboard: only Space (stop). No edit shortcuts — the timeline plays, it doesn't edit.
+    private void HandlePlayShortcuts(ImGuiIOPtr io)
+    {
+        if (io.WantTextInput) return;
+        if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
+    }
+
+    // Play-mode mouse: only the things that aren't document edits — continue/begin a playhead scrub,
+    // zoom the time axis, and click the transport bar (Play/Stop/Rewind/Loop + time toggle). Everything
+    // else (clip/track/marker/keyframe edits, inspector, loop-ribbon edits, pan, tab bar) is blocked.
+    private void HandlePlayInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
+    {
+        // Continue a playhead scrub already in progress; drop any other stray drag/pan.
+        if (_drag == DragMode.Playhead) { ContinuePlayheadDrag(mouse); return; }
+        if (_drag != DragMode.None) { _drag = DragMode.None; }
+        _panning = false;
+
+        if (!hovered) return;
+
+        // Zoom the time axis around the cursor (over the lanes / ruler). Changes _pxPerFrame → the node
+        // sees the view change and re-captures the cache at the new zoom.
+        if (io.MouseWheel != 0f && mouse.X >= _laneLeft)
+        {
+            float old = _pxPerFrame;
+            _pxPerFrame = Math.Clamp(_pxPerFrame * MathF.Pow(1.1f, io.MouseWheel), MinPxPerFrame, MaxPxPerFrame);
+            float frameUnder = (mouse.X - _laneLeft + _scrollX) / old;
+            _scrollX = frameUnder * _pxPerFrame - (mouse.X - _laneLeft);
+            if (_scrollX < 0) _scrollX = 0;
+        }
+
+        // Transport bar (topmost strip): buttons + time/frames toggle. Same behaviour as full mode.
+        if (mouse.Y >= _origin.Y && mouse.Y < _rulerTop)
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+            {
+                var (rmin, rmax) = TimeToggleRect();
+                if (InRect(mouse, rmin, rmax)) _showTimecode = !_showTimecode;
+                else
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var (bmin, bmax) = TransportButtonRect(i);
+                        if (InRect(mouse, bmin, bmax))
+                        {
+                            var b = (TButton)i;
+                            OnTransport(b == TButton.Play && _playing ? TButton.Stop : b);
+                            break;
+                        }
+                    }
+            }
+            return;
+        }
+
+        // Ruler strip (below the loop strip, above the marker lane): click / drag to scrub the playhead.
+        if (mouse.X >= _laneLeft && mouse.Y >= _loopBottom && mouse.Y < _rulerBottom)
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left))
+            {
+                _drag = DragMode.Playhead;
+                Document.Playhead = PlayheadFrameFromMouse(mouse.X, io.KeyShift, out _playheadSnapped);
+            }
+        }
+    }
+
     private void HandleShortcuts(ImGuiIOPtr io)
     {
         if (io.WantTextInput) return;   // an ImGui field (e.g. an inspector input) owns the keyboard

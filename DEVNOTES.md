@@ -716,13 +716,42 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
 
 The editor is immediate-mode: every frame `InterpoleNode.Update` calls `_toSkia.Update(...)`, which
 re-runs the whole `Draw()` pass and re-tessellates it (No UI Mode skips exactly this). There's no
-partial cache *within* a frame. Two levers, in order of impact:
+partial cache *within* a frame.
 
-- **Idle-skip rendering (biggest, not yet done).** Skip the ImGui frame when nothing changed (not
-  playing, no drag/edit/dialog, no hover change, pointer not over the editor, no resize, no waveform
-  just-decoded). The catch is "wake on input" gating — ImGui needs io pumped to stay responsive — so
-  it needs a real gamma test before shipping. This dwarfs everything else; the whole UI re-tessellates
-  every frame today.
+### Snapshot cache for playback (done, 2026-09-10) — `Editor/SnapshotLayer.cs`
+
+The dominant cost was **per-pixel rasterization**: ToSkiaLayer re-draws the whole opaque editor onto
+the window every frame (thousands of DrawVertices), so with a large Interpole window the cost scales
+with window size and **stuttered vvvv's realtime graphics while playing**. Fixed by caching: while
+**playing**, almost nothing on screen changes except the playhead + timecode, so we blit a cached
+still of the static UI (one quad) and let the editor draw only the moving overlay on top. Stutter
+gone; verified in gamma at 175% DPI.
+
+- **`SnapshotLayer : ILayer`** sits between `SetSpaceUpstream2(DIPTopLeft)` and `ToSkiaLayer`
+  (`_editorSpace.Update(new SnapshotLayer(_toSkia), ...)`). The node drives its `Mode` + `CurrentKey`
+  each frame: `Live` (stopped → pass-through), `Capture` (render static + record into the cache),
+  `BlitOverlay` (blit the cached page + draw the overlay on top).
+- **Widget `PlayCache` passes** (`PlayPass`, set by the node): `Static` draws the full editor minus
+  playhead/snap-guide/readout (captured); `Overlay` draws only the playhead + `DrawReadout` timecode
+  (over the blit, window forced `NoBackground`). Editing is locked in play — `HandlePlayShortcuts`/
+  `HandlePlayInteraction` allow only Space, transport, zoom and playhead scrub.
+- **Per-page LRU** keyed `(page, zoom, size)` (`PageKey`, cap 8). The node **page-aligns** the scroll
+  to the playhead's page (`SetPlayScroll`, skipping the edge-nudge `EnsurePlayheadVisible` in play), so
+  pages recur deterministically and a **loop re-hits cached pages every lap** (no re-capture). First
+  visit of a page (or a new zoom) captures it — a brief 1-frame static (no playhead) then smooth.
+- **Capture = SKPicture record → rasterize** (ToSkiaLayer draws only to `caller.Canvas`, so a recording
+  canvas captures every op). **Coordinate gotcha:** the DIPTopLeft `Transformation` scale is
+  `DIPFactor*100` (175 at 175%); the net content matrix is `Transformation·Scale(Scaling/ScaleX)` — use
+  that or the surface is sized `vb*175` (~44 gigapixels → null → NRE). The offscreen surface must carry
+  the **destination color space** (else the blit darkens), and the Overlay pass must set ImGui
+  `NoBackground` (else its dark WindowBg paints over the cache). Full write-up in the
+  `vl-imgui-skia-layer-snapshot-cache` memory.
+
+Other levers:
+
+- **Idle-skip rendering (not done).** Skip the ImGui frame when *stopped* and nothing changed (no
+  drag/edit/dialog/hover/resize). The snapshot cache already handles the *playing* case (the one that
+  stuttered); idle-skip would additionally save the stopped-but-idle CPU. Needs "wake on input" gating.
 - **Waveform envelope cache (done).** `DrawWaveform` used to recompute a per-pixel min/max envelope
   every frame (each column summing peak buckets — costly zoomed out on long files). Now `GetWaveEnvelope`
   caches the per-column min/max per clip (`_waveEnv`, keyed by clip Id), rebuilt only when peaks /

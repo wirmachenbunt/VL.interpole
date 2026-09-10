@@ -194,7 +194,12 @@ Playhead & view:
   the end restarts from 0 (or the **loop-in** when looping); **Loop** wraps the playhead within the
   **loop region** (`[Loop In, Loop Out)`, or the whole content when unset); **Rewind** jumps to the
   start (frame 0, or the **loop-in** when looping); **Stop** halts and saves the position. While playing, if the playhead scrolls out of view the
-  timeline **auto-pages** to keep it visible
+  timeline **auto-pages** to keep it visible (jumping one page at a time, playhead at the page's left edge)
+- **while playing the editor plays, it doesn't edit** — clip/track/marker/keyframe editing is
+  **locked**; only **Space / transport / zoom / playhead-scrub** respond. Stop to edit again. This is
+  what lets playback stay cheap: while playing the static UI is cached to an image and only the
+  playhead + timecode are redrawn each frame (see DEVNOTES → *Rendering performance*), so a large
+  editor window no longer stutters the rest of vvvv. Editing is fully live again the moment you stop.
 - **mouse wheel** over the lanes → zoom the time axis (around the cursor)
 - **right-drag** → pan the view (time + tracks)
 - **stopwatch** button (transport bar, right) → toggle the ruler + playhead readout between

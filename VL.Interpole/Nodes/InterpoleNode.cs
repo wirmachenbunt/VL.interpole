@@ -67,6 +67,11 @@ public class InterpoleNode : IDisposable
     // the renderer's *default* Normalized space — and re-derives the mouse PositionInWorldSpace
     // so input lines up too (see the VL.Automata notes).
     private readonly SetSpaceUpstream2 _editorSpace = new();
+    // Caching layer between SetSpace and ToSkiaLayer: renders the editor into an offscreen SKImage and
+    // blits it, instead of re-rasterizing the whole opaque UI every frame (the playback fill-rate
+    // cost). See SnapshotLayer. Increment 1 = always capture+blit when Enabled (spike, proves the
+    // offscreen round-trip is 1:1); toggled live via the Snapshot Cache pin.
+    private readonly SnapshotLayer _snapshot;
     private readonly ILayer _editorLayer;
     private InterpoleEditorWidget? _editor;
 
@@ -90,6 +95,11 @@ public class InterpoleNode : IDisposable
     private string _loadedData = "\0";
     private string _persistedData = "\0";
     private bool _docDirty;
+
+    // Snapshot-cache state (playback perf): while playing we blit a cached still per page + draw only
+    // the moving overlay. _wasPlaying tracks the playing→stopped transition so we free the page cache
+    // when playback stops.
+    private bool _wasPlaying;
 
     // JSON strings this node has written back into the Data pin. SetPinValue echoes our own write
     // back into the incoming 'data' over the next frame(s); we must not mistake that echo for an
@@ -131,7 +141,10 @@ public class InterpoleNode : IDisposable
     public InterpoleNode(NodeContext nodeContext)
     {
         _nc = nodeContext;
-        _editorSpace.Update(_toSkia, out _editorLayer, CommonSpace.DIPTopLeft);
+        // Wrap ToSkiaLayer in the snapshot cache, then force DIPTopLeft space around that — so the
+        // CallerInfo reaching SnapshotLayer is already in DIPTopLeft (capture/blit stay symmetric).
+        _snapshot = new SnapshotLayer(_toSkia);
+        _editorSpace.Update(_snapshot, out _editorLayer, CommonSpace.DIPTopLeft);
     }
 
     public void Update(
@@ -324,6 +337,42 @@ public class InterpoleNode : IDisposable
         else
         {
             _editor.ShowBackground = !noBackground;
+
+            // Decide this frame's render path. While PLAYING we page-align the view to the playhead's
+            // page, blit that page's cached still and let the editor draw only the moving playhead/
+            // timecode overlay on top; a page not yet cached (first visit / new zoom) is captured. A
+            // loop re-hits cached pages every lap → no re-capture. While STOPPED we render the full live
+            // editor so it stays fully editable.
+            if (_editor.IsPlaying)
+            {
+                float laneW = _editor.LaneWidthPx;
+                float px = _editor.ViewPxPerFrame;
+                int page = 0;
+                if (laneW > 1f && px > 0f)
+                {
+                    float pageFrames = laneW / px;
+                    page = pageFrames > 0f ? (int)MathF.Floor(_editor.Document.Playhead / pageFrames) : 0;
+                    if (page < 0) page = 0;
+                    _editor.SetPlayScroll(page * laneW);   // page-aligned, deterministic per page
+                }
+
+                var key = new PageKey(page, (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y);
+                _snapshot.CurrentKey = key;
+                bool hit = _snapshot.Has(key);
+                _editor.PlayPass = hit ? InterpoleEditorWidget.PlayCache.Overlay
+                                       : InterpoleEditorWidget.PlayCache.Static;
+                _snapshot.Mode = hit ? SnapshotLayer.RenderMode.BlitOverlay
+                                     : SnapshotLayer.RenderMode.Capture;
+                _wasPlaying = true;
+            }
+            else
+            {
+                _editor.PlayPass = InterpoleEditorWidget.PlayCache.Off;
+                _snapshot.Mode = SnapshotLayer.RenderMode.Live;
+                if (_wasPlaying) _snapshot.Invalidate();   // free the page cache on play→stop
+                _wasPlaying = false;
+            }
+
             _toSkia.Update(_editor.Widget, dockingEnabled: false, fonts: EditorFonts, fullscreenWindow: false, Style: null);
             editor = _editorLayer;
         }
@@ -552,6 +601,7 @@ public class InterpoleNode : IDisposable
     {
         _editor?.Dispose();
         _mixer?.Dispose();
+        _snapshot.Dispose();
         _toSkia.Dispose();
     }
 }
