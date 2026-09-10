@@ -44,7 +44,7 @@ namespace VL.Interpole;
 public sealed class InterpoleEditorWidget : IDisposable
 {
     // ---- layout constants (screen pixels / frames) ----
-    private const float HeaderWidth = 240f;   // track-name column (timeline)
+    private const float HeaderWidth = 340f;   // track-name column (timeline) — matches the clip page
     private const float ClipHeaderWidth = 340f;// wider track column on the clip (keyframe) page
     private const float TransportHeight = 88f;// transport toolbar (playhead readout + buttons)
     private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
@@ -866,8 +866,8 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 var (mMin, mMax, sMin, sMax) = TrackToggleRects(i);
                 nameRight = mMin.X - 6f;
-                DrawTrackToggle(dl, mMin, mMax, tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f), speaker: true);
-                DrawTrackToggle(dl, sMin, sMax, tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f), speaker: false);
+                DrawTrackToggle(dl, mMin, mMax, tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f), "M");
+                DrawTrackToggle(dl, sMin, sMax, tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f), "S");
             }
             dl.PushClipRect(new Vector2(_origin.X + 14, top), new Vector2(nameRight, bottom), true);
             dl.AddText(new Vector2(_origin.X + 14, nameY), Col(0.9f, 0.94f, 1f), name);
@@ -882,7 +882,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // with the track name. Only meaningful for audio tracks; used by both the draw and the hit-testing.
     private (Vector2 mMin, Vector2 mMax, Vector2 sMin, Vector2 sMax) TrackToggleRects(int i)
     {
-        const float bh = 18f, gap = 4f, margin = 8f;
+        const float bh = 30f, gap = 4f, margin = 8f;
         float y0 = TrackTop(i) + TrackHeightOf(i) * 0.5f - bh * 0.5f;
         float sx1 = _laneLeft - margin;   // S right edge (rightmost)
         float sx0 = sx1 - bh;
@@ -892,46 +892,15 @@ public sealed class InterpoleEditorWidget : IDisposable
                 new Vector2(sx0, y0), new Vector2(sx1, y0 + bh));
     }
 
-    private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool on, bool hov, uint onColor, bool speaker)
+    private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool on, bool hov, uint onColor, string label)
     {
         uint bg = on ? onColor : hov ? Col(0.30f, 0.32f, 0.36f) : Col(0.22f, 0.24f, 0.27f);
         dl.AddRectFilled(mn, mx, bg, 3f);
         dl.AddRect(mn, mx, Col(0f, 0f, 0f, 0.4f), 3f);
-        uint ic = on ? Col(0.08f, 0.06f, 0.04f) : Col(0.85f, 0.88f, 0.92f);   // dark glyph on the lit fill
+        uint ic = on ? Col(0.08f, 0.06f, 0.04f) : Col(0.85f, 0.88f, 0.92f);   // dark letter on the lit fill
         var c = (mn + mx) * 0.5f;
-        float s = (mx.Y - mn.Y) * 0.34f;   // icon half-extent (~6px in an 18px button)
-        if (speaker) DrawSpeakerIcon(dl, c, s, ic);
-        else DrawEarIcon(dl, c, s, ic);
-    }
-
-    private static float Rad(float deg) => deg * (MathF.PI / 180f);
-
-    // A minimalist loudspeaker (mute): back box + flaring cone + two sound-wave arcs. Drawn from the
-    // button colour; the muted STATE is shown by the button turning red, not by the glyph.
-    private static void DrawSpeakerIcon(ImDrawListPtr dl, Vector2 c, float s, uint col)
-    {
-        var boxMin = new Vector2(c.X - s * 0.85f, c.Y - s * 0.30f);
-        var boxMax = new Vector2(c.X - s * 0.34f, c.Y + s * 0.30f);
-        dl.AddRectFilled(boxMin, boxMax, col);
-        // cone: apex at the box's right edge, tall base flaring to the right
-        dl.AddTriangleFilled(
-            new Vector2(c.X - s * 0.34f, c.Y),
-            new Vector2(c.X + s * 0.15f, c.Y - s * 0.75f),
-            new Vector2(c.X + s * 0.15f, c.Y + s * 0.75f), col);
-        // two sound waves
-        var wc = new Vector2(c.X + s * 0.2f, c.Y);
-        dl.PathArcTo(wc, s * 0.7f, Rad(-38f), Rad(38f), 8); dl.PathStroke(col, ImDrawFlags.None, 1.4f);
-        dl.PathArcTo(wc, s * 1.05f, Rad(-38f), Rad(38f), 8); dl.PathStroke(col, ImDrawFlags.None, 1.4f);
-    }
-
-    // An ear (solo): the outer pinna as a near-ring opening to the left, plus an inner concha curl.
-    private static void DrawEarIcon(ImDrawListPtr dl, Vector2 c, float s, uint col)
-    {
-        const float t = 1.6f;
-        dl.PathArcTo(new Vector2(c.X, c.Y), s * 0.82f, Rad(-135f), Rad(115f), 22);
-        dl.PathStroke(col, ImDrawFlags.None, t);
-        dl.PathArcTo(new Vector2(c.X + s * 0.12f, c.Y), s * 0.40f, Rad(-120f), Rad(120f), 14);
-        dl.PathStroke(col, ImDrawFlags.None, t);
+        var ts = IG.CalcTextSize(label);
+        dl.AddText(new Vector2(c.X - ts.X * 0.5f, c.Y - ts.Y * 0.5f), ic, label);
     }
 
     // While a track header is being dragged to reorder, tint its (live-reflowed) row across the full
