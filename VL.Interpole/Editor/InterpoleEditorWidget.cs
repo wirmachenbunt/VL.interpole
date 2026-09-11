@@ -84,14 +84,14 @@ public sealed class InterpoleEditorWidget : IDisposable
     public enum PlayCache { Off, Static, Overlay }
     public PlayCache PlayPass = PlayCache.Off;
 
-    // Read by the node (before Update) to drive the per-page cache: the node computes which page the
-    // playhead is on from the lane width + zoom, page-aligns the scroll, and keys the cache by page.
+    // Read by the node (before Update) to drive the per-page cache: the node follows the playhead in
+    // whole-page steps from the lane width + zoom, sets the scroll, and keys the cache by that scroll.
     public float ViewScrollX => _scrollX;
     public float ViewPxPerFrame => _pxPerFrame;
     public Vector2 ViewSize => _size;
     public float LaneWidthPx => LaneRight - _laneLeft;   // visible time-axis width (one page), in px
-    // Page-align the time-axis scroll while playing (the node owns the view during play, so the
-    // playhead stays on a deterministic page grid and cached pages recur exactly on loops).
+    // Set the time-axis scroll while playing (the node owns the view during play, stepping it one page
+    // at a time so the playhead stays on a grid whose cached pages recur exactly on loops).
     public void SetPlayScroll(float scrollX) => _scrollX = MathF.Max(0f, scrollX);
 
     // Frames per second used to derive timecode for the ruler + readout (the "time / frames"
@@ -352,7 +352,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         // Playback is advanced in Tick() (called from the node's Update, so it runs in No UI Mode too);
         // here we only keep the playhead in view while playing (needs this frame's geometry). While the
-        // snapshot cache is active (a play pass) the node owns the scroll (page-aligned via SetPlayScroll),
+        // snapshot cache is active (a play pass) the node owns the scroll (stepped per page via SetPlayScroll),
         // so skip the edge-nudge follow — it would fight the page grid the cache keys on.
         if (_playing && !_panning && PlayPass == PlayCache.Off) EnsurePlayheadVisible();
 

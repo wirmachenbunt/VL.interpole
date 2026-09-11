@@ -100,6 +100,9 @@ public class InterpoleNode : IDisposable
     // the moving overlay. _wasPlaying tracks the playing→stopped transition so we free the page cache
     // when playback stops.
     private bool _wasPlaying;
+    // Time-axis scroll (device px) the page grid is anchored to for the current play session — captured
+    // when play starts (so the view doesn't jump), re-anchored on a backward jump (loop wrap / reset).
+    private float _playAnchorScroll;
 
     // JSON strings this node has written back into the Data pin. SetPinValue echoes our own write
     // back into the incoming 'data' over the next frame(s); we must not mistake that echo for an
@@ -338,25 +341,38 @@ public class InterpoleNode : IDisposable
         {
             _editor.ShowBackground = !noBackground;
 
-            // Decide this frame's render path. While PLAYING we page-align the view to the playhead's
-            // page, blit that page's cached still and let the editor draw only the moving playhead/
+            // Decide this frame's render path. While PLAYING we follow the playhead in whole-page steps,
+            // blit the current page's cached still and let the editor draw only the moving playhead/
             // timecode overlay on top; a page not yet cached (first visit / new zoom) is captured. A
             // loop re-hits cached pages every lap → no re-capture. While STOPPED we render the full live
             // editor so it stays fully editable.
+            //
+            // The page grid is anchored to wherever the view is at the moment play starts, so hitting
+            // play never jumps the view — the playhead keeps its on-screen spot and the view only steps
+            // forward once it crosses the page's right edge. A backward jump (loop wrap / end reset)
+            // lands the playhead left of the anchor; we re-anchor at its page's left edge there, and
+            // that same re-anchored grid recurs every lap, so the LRU still hits from the 2nd lap on.
             if (_editor.IsPlaying)
             {
                 float laneW = _editor.LaneWidthPx;
                 float px = _editor.ViewPxPerFrame;
-                int page = 0;
+                float scroll = _editor.ViewScrollX;
                 if (laneW > 1f && px > 0f)
                 {
                     float pageFrames = laneW / px;
-                    page = pageFrames > 0f ? (int)MathF.Floor(_editor.Document.Playhead / pageFrames) : 0;
-                    if (page < 0) page = 0;
-                    _editor.SetPlayScroll(page * laneW);   // page-aligned, deterministic per page
+                    if (!_wasPlaying) _playAnchorScroll = _editor.ViewScrollX;   // anchor to current view → no jump on play
+                    float anchorFrame = _playAnchorScroll / px;
+                    int relPage = (int)MathF.Floor((_editor.Document.Playhead - anchorFrame) / pageFrames);
+                    if (relPage < 0)   // playhead jumped left of the anchor (loop wrap / reset) → re-anchor
+                    {
+                        _playAnchorScroll = MathF.Max(0f, _editor.Document.Playhead * px);
+                        relPage = 0;
+                    }
+                    scroll = _playAnchorScroll + relPage * laneW;
+                    _editor.SetPlayScroll(scroll);
                 }
 
-                var key = new PageKey(page, (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y);
+                var key = new PageKey((int)MathF.Round(scroll), (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y);
                 _snapshot.CurrentKey = key;
                 bool hit = _snapshot.Has(key);
                 _editor.PlayPass = hit ? InterpoleEditorWidget.PlayCache.Overlay

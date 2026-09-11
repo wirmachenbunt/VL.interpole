@@ -5,9 +5,10 @@ using VL.Skia;
 
 namespace VL.Interpole;
 
-// Identifies one cached page image: the page index along the time axis, the (quantized) zoom, and the
-// device size. Page-aligned play-follow makes these recur exactly on loops, so the LRU hits.
-public readonly record struct PageKey(int Page, int PxBucket, int W, int H);
+// Identifies one cached page image: the time-axis scroll (in device px), the (quantized) zoom, and the
+// device size. Whole-page play-follow makes the scroll recur exactly on loops, so the LRU hits. Keying
+// by scroll (not a page index) keeps distinct views distinct even when the page grid is re-anchored.
+public readonly record struct PageKey(int ScrollPx, int PxBucket, int W, int H);
 
 // A caching Skia layer between the editor's SetSpace wrapper and the ToSkiaLayer.
 //
