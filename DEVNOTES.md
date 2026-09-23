@@ -778,8 +778,25 @@ internal API opening up or a widget-tree rewrite.
   No UI Mode; per-`Update` stepping is opt-in via the hidden `Frame Step Playback` pin (see timebase
   decision above). Real-time relies on the wall-clock `dt` being sane — a very long stall (or the node
   not being evaluated for a while) produces one large catch-up jump (bounded on loop).
-- Pan/zoom is **not** carried across an external `Data` reload (Automata carries pan/zoom over
-  a rebuild; Interpole rebuilds the widget and resets the view). Low priority.
+- **Pan/zoom is persisted** — it survives a reload *and* a full vvvv restart. The view transform
+  (time-axis zoom + horizontal/vertical scroll) lives on the document as `ViewPxPerFrame` /
+  `ViewScrollX` / `ViewScrollY`, so it serializes onto the `Data` pin exactly like `Playhead` and the
+  loop region. The widget **restores** it from the document in its constructor (clamped/floored; the
+  first `Draw`'s `ClampScroll` re-fits the scroll to the content, so a smaller reloaded timeline can't
+  strand the view), and **persists** it via `PersistViewIfChanged` — called once per interactive frame,
+  it folds the current view back into the document and fires `Changed` only when the view has *changed*
+  **and is at rest** (not playing, no drag/pan in progress). That "at rest" guard is what keeps a pan
+  from writing the pin every frame during the drag (it saves once on release) and keeps the transient
+  per-page scroll the node drives while playing (`SetPlayScroll`) out of the saved view — the parked
+  view is what's kept. The model's `ViewPxPerFrame` default (6) mirrors `DefaultPxPerFrame`; a missing
+  JSON field keeps that default, so pre-view documents load at the default view unchanged.
+  - Undo/redo is unaffected: `StructuralSnapshot` builds a fresh doc with only `Title`/`Tracks`/
+    `Markers` (view fields sit at their defaults, so a pan/zoom never makes a spurious undo step) and
+    `ApplySnapshot` restores only those three, so undo/redo never moves the view.
+  - Belt-and-suspenders for an *in-session* rebuild (external `Data` reload / paste): `LoadIfChanged`
+    also reads the old widget's `View` (`ViewTransform`) and re-applies it after building the new
+    widget, so a view change that hadn't been persisted yet isn't lost across the rebuild. In steady
+    state this equals the document-restored view. Matches Automata carrying pan/zoom over a rebuild.
 - **Audio caveats (all noted inline in the Audio section):** the transport snapshot rebuilds every
   frame (small alloc); MP3/compressed decode on the audio thread (WAV is cheap); WAV **paths are
   absolute** in the patch (a moved patch/machine breaks references — relative-to-patch is a future
@@ -809,8 +826,8 @@ internal API opening up or a widget-tree rewrite.
 4. Audio nice-to-haves: **slip-edit** (drag inside an audio clip to move `FileInPoint` without moving
    the clip); per-clip **waveform colour/scale**; a master **gain/meter**; embedding or
    relative-path WAV references; scrub-audio preview while paused.
-5. Nice-to-haves: carry pan/zoom across an external reload; ripple/push on cross-track drop (today
-   it's strict exact-fit); a crisp large readout font (see Known issues). (Done: shift-snapping;
+5. Nice-to-haves: ripple/push on cross-track drop (today it's strict exact-fit); a crisp large
+   readout font (see Known issues). (Done: carry pan/zoom across an external reload; shift-snapping;
    marquee multi-select; multi-clip copy/paste; group drag; cross-track drag; loop region + ribbon +
    `Loop In`/`Loop Out` pins; playhead **seek from the patch** via `Time` + rising-edge `Set`;
    playback **outputs** — `Current Frame` + per-track `Active Clip Name` / `Clip Frame` /

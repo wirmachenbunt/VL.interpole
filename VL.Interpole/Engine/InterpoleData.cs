@@ -27,6 +27,16 @@ public sealed class InterpoleDocument
     public int LoopIn { get; set; }
     public int LoopOut { get; set; }
 
+    // The editor's view transform: time-axis zoom in pixels-per-frame, plus the horizontal (time) and
+    // vertical (track) scroll in pixels. Persisted with the document — like Playhead and the loop
+    // region — so panning and zooming survive a reload AND a full vvvv restart (the view is authored in
+    // the editor, not from a pin). Defaults mirror a fresh widget: DefaultPxPerFrame (6) and no scroll.
+    // A missing JSON property keeps the C# default, so documents written before the view was persisted
+    // load at that default view; the editor re-clamps the scroll to the content on the first draw.
+    public float ViewPxPerFrame { get; set; } = 6f;   // mirrors InterpoleEditorWidget.DefaultPxPerFrame
+    public float ViewScrollX { get; set; }
+    public float ViewScrollY { get; set; }
+
     // The last frame covered by any clip — the natural end of the timeline (0 if empty).
     public int ContentEnd()
     {

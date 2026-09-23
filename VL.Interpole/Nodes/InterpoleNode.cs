@@ -557,11 +557,17 @@ public class InterpoleNode : IDisposable
         var doc = InterpoleDocument.Parse(data);
         EnsureDefault(doc);
 
+        // Carry the view transform (zoom + pan) across the rebuild so an external Data reload — or an
+        // undo/redo, which also lands here as a pin change — doesn't snap the timeline back to the
+        // default view. Captured before the old widget is disposed; null on the very first load.
+        var carryView = _editor?.View;
+
         _editor?.Dispose();
         _editor = new InterpoleEditorWidget("Interpole", doc)
         {
             Changed = () => _docDirty = true
         };
+        if (carryView is { } view) _editor.View = view;
 
         _persistedData = data;
         var canonical = doc.Serialize();

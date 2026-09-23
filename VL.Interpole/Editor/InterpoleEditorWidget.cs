@@ -59,7 +59,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     private const float FadeHandlePx = 11f;   // size of a clip's top-corner fade handle
     private const int DefaultClipLen = 30;    // frames, for a freshly added clip
     private const float MinPxPerFrame = 0.06f, MaxPxPerFrame = 40f;   // 0.06/6 ≈ 1% zoom floor
-    private const float DefaultPxPerFrame = 6f;  // the 100% zoom reference
+    private const float DefaultPxPerFrame = 6f;  // the 100% zoom reference (mirrored by InterpoleDocument.ViewPxPerFrame's default)
     private const float ReadoutTextScale = 1f; // playhead/timecode readout size, x the base font
     private const float InspectorWidth = 280f;   // right-side clip inspector panel
     private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
@@ -93,6 +93,23 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Set the time-axis scroll while playing (the node owns the view during play, stepping it one page
     // at a time so the playhead stays on a grid whose cached pages recur exactly on loops).
     public void SetPlayScroll(float scrollX) => _scrollX = MathF.Max(0f, scrollX);
+
+    // The full view transform — time-axis zoom plus both scroll offsets. The node reads it off the old
+    // widget and writes it onto the freshly built one so an external Data reload (or an undo/redo, which
+    // also arrives as a pin change) keeps the same on-screen view instead of snapping back to the default.
+    // Restoring only sets the fields (clamped to their bounds); the next Draw's ClampScroll re-fits the
+    // scroll to the reloaded document's content extents, so a smaller timeline can't leave the view stranded.
+    public readonly record struct ViewTransform(float PxPerFrame, float ScrollX, float ScrollY);
+    public ViewTransform View
+    {
+        get => new(_pxPerFrame, _scrollX, _scrollY);
+        set
+        {
+            _pxPerFrame = Math.Clamp(value.PxPerFrame, MinPxPerFrame, MaxPxPerFrame);
+            _scrollX = MathF.Max(0f, value.ScrollX);
+            _scrollY = MathF.Max(0f, value.ScrollY);
+        }
+    }
 
     // Frames per second used to derive timecode for the ruler + readout (the "time / frames"
     // toggle). Set from the node's inspector-only Fps pin each frame; clamped >= 1 by the setter.
@@ -254,6 +271,15 @@ public sealed class InterpoleEditorWidget : IDisposable
         _trackCounter = doc.Tracks.Count;
         _clipCounter = doc.Tracks.Sum(t => t.Clips.Count);
         Widget = new ImmediateModeWidget { Updator = Draw };
+
+        // Restore the persisted view (zoom + pan) from the document, so it survives a reload and a full
+        // vvvv restart. Values are clamped/floored to their valid ranges; the scroll is re-fit to the
+        // content by the first Draw's ClampScroll. Old documents carry the default view (DefaultPxPerFrame,
+        // no scroll) because a missing JSON field keeps the model's default — so this is a no-op for them.
+        _pxPerFrame = Math.Clamp(doc.ViewPxPerFrame, MinPxPerFrame, MaxPxPerFrame);
+        _scrollX = MathF.Max(0f, doc.ViewScrollX);
+        _scrollY = MathF.Max(0f, doc.ViewScrollY);
+
         _baseline = StructuralSnapshot();
     }
 
@@ -449,7 +475,29 @@ public sealed class InterpoleEditorWidget : IDisposable
         DrawMarkerDialog();
         DrawKeyframeMenu();
 
+        // Fold a settled pan/zoom back into the document so it persists to the Data pin (see
+        // PersistViewIfChanged). Runs after interaction, so this frame's view is what gets saved.
+        PersistViewIfChanged();
+
         IG.End();
+    }
+
+    // Persist the view transform (zoom + pan) into the document when it has changed and is at rest —
+    // not playing, and no drag/pan in progress — so a pan or zoom is written to the Data pin (surviving
+    // a reload and a vvvv restart) WITHOUT writing the pin every frame during a drag. While playing the
+    // node drives the scroll per page (SetPlayScroll); those transient values must not be persisted, so
+    // playback is excluded and the saved view is whatever the user last parked it at. A no-op when the
+    // view already matches the document (the common case), so idle frames don't churn the pin.
+    private void PersistViewIfChanged()
+    {
+        if (_playing || _drag != DragMode.None || _panning) return;
+        if (Document.ViewPxPerFrame == _pxPerFrame &&
+            Document.ViewScrollX == _scrollX &&
+            Document.ViewScrollY == _scrollY) return;
+        Document.ViewPxPerFrame = _pxPerFrame;
+        Document.ViewScrollX = _scrollX;
+        Document.ViewScrollY = _scrollY;
+        Changed?.Invoke();
     }
 
     private void ClampScroll()
