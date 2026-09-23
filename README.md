@@ -222,6 +222,8 @@ plus **one tab per opened clip** (colour diamond + name + **✕** to close). Ope
 inspector's **Edit Keyframes** button. Press **Escape** to leave the page and drop back to the
 Timeline (the tab stays open).
 **Audio clips have no keyframes** — they never get a tab. Click a tab to switch, **✕** to close it.
+Switching pages (the tab bar and **Escape**) also works **while playing** — starting playback on a
+clip page never traps you there; you can jump back to the Timeline and keep playing.
 
 A clip page is the **same view as the timeline** — same time axis (zoom / scroll), ruler, loop
 ribbon, markers, playhead and transport — only the header column and lanes are swapped for the
@@ -229,15 +231,21 @@ clip's float tracks. The clip's own span is tinted in its colour and the **timel
 dimmed**, so you always see *which* part of the timeline you're editing inside.
 
 Float tracks (header column) — behave like the timeline's track headers:
-- **+ Float Track** button in the corner → add a track. Each row is a **name** and a **draggable value**.
+- **+ Float Track** button in the corner → add a track. Each row shows a dim **0-based index**, a
+  **name**, a small **K** button, and a **draggable value** (the index matches the order `GetKeyframes`
+  uses, so you can tell which track is which downstream).
 - **double-click a track name** → rename it (inline)
 - **drag a track header** → reorder the tracks
 - **Alt-click** / **Middle-click** a track's header → delete it
+- **K button** → **add a keyframe at the playhead with the track's current value** — so you can key a
+  value without first nudging it. Dim / inert when the playhead is outside the clip or **already on a
+  keyframe** (it never stacks keys on the same frame).
 
 Keyframes (lanes; each marker's **shape shows its interpolation type**):
 - With the playhead **inside the clip**, **change a track's value → a keyframe is created** at the
   playhead; if the playhead is already **on** a keyframe (value field turns **amber**) the edit
-  **updates** that keyframe. New keys start **Linear**; held before the first / after the last key.
+  **updates** that keyframe. Or press the header's **K** button to drop a keyframe at the **current**
+  value without changing it. New keys start **Linear**; held before the first / after the last key.
 - **Click** a marker → select it; **Ctrl-click** → add/toggle; **drag an empty lane** → **marquee**
   select (Shift/Ctrl additive). Selected keyframes are bright with a blue ring.
 - **Drag** a marker → move it in time; a **multi-selection drags together**; **hold Shift** to snap
@@ -268,7 +276,8 @@ way). Because it's a real pin you can copy the JSON out or paste one in.
 
 The **playhead** is part of the document, but playback-driven changes are **not** saved every
 frame (that would hammer the autosave) — only manual scrubs, **Stop** and **Rewind** persist
-it. See [DEVNOTES](DEVNOTES.md).
+it. The **view** (pan + zoom) is saved too, so the timeline reopens where you left it — across a
+reload **and a full vvvv restart**. See [DEVNOTES](DEVNOTES.md).
 
 ## Dev loop (local gamma)
 
@@ -298,7 +307,7 @@ Done:
 - **Clipboard** — Ctrl+C / Ctrl+V copy/paste the **whole selection** at the playhead (relative
   track + time preserved).
 - **View** — right-drag pan, wheel zoom (around the cursor), **playhead auto-follow** while playing
-  (and on Rewind).
+  (and on Rewind). Pan + zoom are **persisted** with the document (survive reload and a vvvv restart).
 - **Transport** — Play / Stop / Rewind / Loop, via the on-screen buttons (the **Play button toggles**
   play/stop and glows **green while playing**), **Space** (= play/stop),
   **or the input pins**: `Play`/`Stop`/`Rewind` are rising-edge bangs, and **`Loop` is a two-way-bound
@@ -350,9 +359,12 @@ Done:
   the playhead is on, `""` otherwise) plus a derived **`On Marker`** bool.
 - **Keyframe editor** — per-clip **float tracks** animated with **keyframes** (AE-style), edited on
   per-clip pages reached from a **bottom tab bar** (`[Timeline]` + a tab per opened clip; **double-click
-  a non-audio clip's body** to open, **Escape** to leave, ✕ to close). A clip page reuses the whole timeline view (axis / ruler / loop /
+  a non-audio clip's body** to open, **Escape** to leave, ✕ to close; page-switching also works
+  **while playing**). A clip page reuses the whole timeline view (axis / ruler / loop /
   markers / playhead / transport) and just swaps in the clip's tracks, with the clip's span highlighted
-  and the outside dimmed. Add tracks (name + draggable value); their headers mirror the timeline's
+  and the outside dimmed. Add tracks (each header shows a **0-based index**, name + draggable value, and
+  a **K** button that keys the current value at the playhead without changing it — never stacking a key
+  on an existing one); their headers mirror the timeline's
   (double-click to rename, drag to reorder, Alt/Middle to delete); change a track's value at the playhead to
   **create/update a keyframe**; **select** (click / Ctrl / marquee), **move** (drag,
   group + Shift-snap), **delete** (Alt/Middle / Del), **copy/paste** (Ctrl+C/V at the playhead), and
@@ -369,6 +381,6 @@ Done:
 
 Not done yet (see [DEVNOTES → Next steps](DEVNOTES.md#next-steps)):
 - **DPI pixel-lock** — the editor renders 2× on 200% Windows scaling (shared with Automata).
-- **Nice-to-haves** — carry pan/zoom across an external `Data` reload; ripple/push on cross-track
-  drop (today it's strict exact-fit); a crisp large timecode-readout font (currently the readout is
-  drawn at the base font size — see [DEVNOTES](DEVNOTES.md#known-issues--rough-edges)).
+- **Nice-to-haves** — ripple/push on cross-track drop (today it's strict exact-fit); a crisp large
+  timecode-readout font (currently the readout is drawn at the base font size — see
+  [DEVNOTES](DEVNOTES.md#known-issues--rough-edges)).
