@@ -89,6 +89,11 @@ public sealed class InterpoleEditorWidget : IDisposable
     public float ViewScrollX => _scrollX;
     public float ViewPxPerFrame => _pxPerFrame;
     public Vector2 ViewSize => _size;
+    // Discriminates WHAT the editor is drawing beyond the view transform — the timeline (0) vs. a
+    // specific clip's keyframe page — so the node folds it into the snapshot cache key. Without it, the
+    // timeline and a clip page (which share the same scroll / zoom / size) would blit each other's cached
+    // stills after a mid-playback view switch. Clip pages use the active clip id's hash (never 0).
+    public int ViewContentTag => _mode == EditorMode.Timeline ? 0 : (_activeClipId?.GetHashCode() ?? 1);
     public float LaneWidthPx => LaneRight - _laneLeft;   // visible time-axis width (one page), in px
     // Set the time-axis scroll while playing (the node owns the view during play, stepping it one page
     // at a time so the playhead stays on a grid whose cached pages recur exactly on loops).
@@ -2144,12 +2149,16 @@ public sealed class InterpoleEditorWidget : IDisposable
     private void HandlePlayShortcuts(ImGuiIOPtr io)
     {
         if (io.WantTextInput) return;
+        // Escape leaves the keyframe page back to the timeline — a view switch, not an edit, so it's
+        // allowed while playing (same as in HandleShortcuts).
+        if (_mode == EditorMode.Clip && IG.IsKeyPressed(ImGuiKey.Escape, false)) { _mode = EditorMode.Timeline; return; }
         if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
     }
 
     // Play-mode mouse: only the things that aren't document edits — continue/begin a playhead scrub,
-    // zoom the time axis, and click the transport bar (Play/Stop/Rewind/Loop + time toggle). Everything
-    // else (clip/track/marker/keyframe edits, inspector, loop-ribbon edits, pan, tab bar) is blocked.
+    // zoom the time axis, click the transport bar (Play/Stop/Rewind/Loop + time toggle), and switch
+    // views via the bottom tab bar (Timeline ↔ a clip's keyframe page). Everything else (clip/track/
+    // marker/keyframe edits, inspector, loop-ribbon edits, pan) is blocked.
     private void HandlePlayInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
     {
         // Continue a playhead scrub already in progress; drop any other stray drag/pan.
@@ -2158,6 +2167,11 @@ public sealed class InterpoleEditorWidget : IDisposable
         _panning = false;
 
         if (!hovered) return;
+
+        // Bottom tab bar: switching between the Timeline and a clip's keyframe page (and closing a tab)
+        // is a view change, not a document edit, so it's allowed while playing — otherwise starting
+        // playback on the keyframe page would strand you there with no way back to the sequencer.
+        if (mouse.Y >= LanesBottom) { TryHandleTabBarClick(mouse); return; }
 
         // Zoom the time axis around the cursor (over the lanes / ruler). Changes _pxPerFrame → the node
         // sees the view change and re-captures the cache at the new zoom.

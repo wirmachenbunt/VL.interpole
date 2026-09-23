@@ -750,8 +750,15 @@ gone; verified in gamma at 175% DPI.
 - **Widget `PlayCache` passes** (`PlayPass`, set by the node): `Static` draws the full editor minus
   playhead/snap-guide/readout (captured); `Overlay` draws only the playhead + `DrawReadout` timecode
   (over the blit, window forced `NoBackground`). Editing is locked in play — `HandlePlayShortcuts`/
-  `HandlePlayInteraction` allow only Space, transport, zoom and playhead scrub.
-- **Per-page LRU** keyed `(page, zoom, size)` (`PageKey`, cap 8). The node **page-aligns** the scroll
+  `HandlePlayInteraction` allow only Space, transport, zoom, playhead scrub, **and the bottom tab bar**
+  (Timeline ↔ a clip's keyframe page + Escape back to the timeline). Switching views is not a document
+  edit, and *must* stay allowed: otherwise pressing play on a clip's keyframe page would strand you there
+  with no way back to the sequencer (the reported bug). `TryHandleTabBarClick` only flips
+  `_mode`/`_activeClipId`/`_openTabs`, so it's safe mid-play.
+- **Per-page LRU** keyed `(page, zoom, size, view)` (`PageKey`, cap 8). The **view** tag
+  (`ViewContentTag`: 0 = timeline, else the active clip id's hash) is what lets a mid-play view switch
+  work — the timeline and a clip page share the same scroll/zoom/size, so without it a cache hit would
+  blit the other view's still. The node **page-aligns** the scroll
   to the playhead's page (`SetPlayScroll`, skipping the edge-nudge `EnsurePlayheadVisible` in play), so
   pages recur deterministically and a **loop re-hits cached pages every lap** (no re-capture). First
   visit of a page (or a new zoom) captures it — a brief 1-frame static (no playhead) then smooth.

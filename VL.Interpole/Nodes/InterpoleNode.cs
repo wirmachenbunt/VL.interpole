@@ -372,7 +372,7 @@ public class InterpoleNode : IDisposable
                     _editor.SetPlayScroll(scroll);
                 }
 
-                var key = new PageKey((int)MathF.Round(scroll), (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y);
+                var key = new PageKey((int)MathF.Round(scroll), (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y, _editor.ViewContentTag);
                 _snapshot.CurrentKey = key;
                 bool hit = _snapshot.Has(key);
                 _editor.PlayPass = hit ? InterpoleEditorWidget.PlayCache.Overlay
