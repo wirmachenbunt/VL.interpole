@@ -913,9 +913,13 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (audio)
             {
                 var (mMin, mMax, sMin, sMax) = TrackToggleRects(i);
-                nameRight = mMin.X - 6f;
                 DrawTrackToggle(dl, mMin, mMax, tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f), "M");
                 DrawTrackToggle(dl, sMin, sMax, tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f), "S");
+                // Track volume (0..1) as a real draggable ImGui value, just left of M. The name clips
+                // before it. It scales every clip on the lane (folded into gain in AudioTransport.Build).
+                var (vMin, vMax) = TrackVolumeRect(i);
+                nameRight = vMin.X - 8f;
+                DrawTrackVolume(tr, vMin, vMax);
             }
             dl.PushClipRect(new Vector2(_origin.X + 14, top), new Vector2(nameRight, bottom), true);
             dl.AddText(new Vector2(_origin.X + 14, nameY), Col(0.9f, 0.94f, 1f), name);
@@ -938,6 +942,31 @@ public sealed class InterpoleEditorWidget : IDisposable
         float mx0 = mx1 - bh;
         return (new Vector2(mx0, y0), new Vector2(mx1, y0 + bh),
                 new Vector2(sx0, y0), new Vector2(sx1, y0 + bh));
+    }
+
+    // The volume drag-field rect in an audio track header — just left of the Mute button, vertically
+    // centred on the row and matched to the current ImGui frame height so it lines up with M / S.
+    private (Vector2 min, Vector2 max) TrackVolumeRect(int i)
+    {
+        const float w = 44f, gap = 6f;
+        var (mMin, _, _, _) = TrackToggleRects(i);
+        float h = IG.GetFrameHeight();
+        float cy = TrackTop(i) + TrackHeightOf(i) * 0.5f;
+        float x1 = mMin.X - gap;
+        return (new Vector2(x1 - w, cy - h * 0.5f), new Vector2(x1, cy + h * 0.5f));
+    }
+
+    // The track volume as a real ImGui DragFloat (0..1), submitted over the full-canvas InvisibleButton
+    // (whose SetNextItemAllowOverlap lets this later item take hover). Live-previews into the track so
+    // audio responds during the drag; one undo step + persist on release, like the inspector's fields.
+    private void DrawTrackVolume(TrackData tr, Vector2 vMin, Vector2 vMax)
+    {
+        IG.SetCursorScreenPos(vMin);
+        IG.SetNextItemWidth(vMax.X - vMin.X);
+        float vol = tr.Volume;
+        if (IG.DragFloat($"##vol{tr.Id}", ref vol, 0.005f, 0f, 1f, "%.2f"))
+            tr.Volume = Math.Clamp(vol, 0f, 1f);
+        if (IG.IsItemDeactivatedAfterEdit()) Commit();
     }
 
     private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool on, bool hov, uint onColor, string label)
@@ -1771,9 +1800,17 @@ public sealed class InterpoleEditorWidget : IDisposable
                 // reorder, Alt/Middle-click to delete — all handled in HandleClipLaneInteraction. During
                 // an inline rename the edit box (opaque) is drawn over it.
                 string name = string.IsNullOrWhiteSpace(ft.Name) ? ft.Id : ft.Name;
-                dl.PushClipRect(new Vector2(_origin.X + 12f, top), new Vector2(_origin.X + 12f + nameW, bot), true);
+                // Dim 0-based track index in front of the name (matches the order GetKeyframes / the
+                // InterpoleInfo keyframe snapshot use), so a track's patch-side index is visible. Drawn
+                // inside the name region, so the value field to its right doesn't move.
+                string idx = i.ToString();
+                var idxSize = IG.CalcTextSize(idx);
+                float rowCy = (top + rowBot) * 0.5f;
+                dl.AddText(new Vector2(_origin.X + 12f, rowCy - idxSize.Y * 0.5f), Col(0.45f, 0.50f, 0.58f), idx);
+                float nameX = _origin.X + 12f + idxSize.X + 8f;
+                dl.PushClipRect(new Vector2(nameX, top), new Vector2(_origin.X + 12f + nameW, bot), true);
                 var ts = IG.CalcTextSize(name);
-                dl.AddText(new Vector2(_origin.X + 12f, (top + rowBot) * 0.5f - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
+                dl.AddText(new Vector2(nameX, rowCy - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
                 dl.PopClipRect();
 
                 // Value AT THE PLAYHEAD (After-Effects style) — the only live widget in the header. The

@@ -125,6 +125,12 @@ public sealed class TrackData
     public bool Mute { get; set; }
     public bool Solo { get; set; }
 
+    // Per-track audio volume: a 0..1 linear gain multiplied into every clip on this track, on top of
+    // each clip's own Gain and fade envelope (so the track fader scales the whole lane). 1 = unity.
+    // Ignored on standard tracks. Default 1 → pre-volume documents load unchanged (a missing field
+    // keeps the default); persisted and undoable with the track, like Mute / Solo.
+    public float Volume { get; set; } = 1f;
+
     // The clip covering a given frame, or null if the frame falls in a gap. Clips never overlap
     // within a track, so at most one qualifies.
     public ClipData? ActiveClipAt(int frame)

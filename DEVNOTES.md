@@ -436,6 +436,16 @@ InterpoleAudioEngine.cs`, `Engine/WaveformCache.cs`, or the audio branches in th
   since no icon font is loaded; the **state** is the fill colour (red = muted, yellow = soloed), the glyph
   itself doesn't change. Standard tracks have none. The header hit-test takes a plain left-click on the
   buttons **before** the rename/reorder/delete gestures (audio tracks only, `!alt`).
+- **Per-track volume (0..1).** `TrackData.Volume` (default 1, back-compat + undoable like Mute/Solo).
+  Folded into each clip's gain **in `AudioTransport.Build`** — `c.Gain * Clamp(tr.Volume, 0, 1)` — so the
+  mixer stays clip-only and the per-track VU (`Track Levels`) is automatically **post-volume** (it meters
+  what the mixer plays). UI: a **real ImGui `DragFloat`** in each audio track header, just left of the M
+  button (`TrackVolumeRect` / `DrawTrackVolume`), so it drags/type-edits like every other ImGui value
+  (not a hand-drawn fader). It sits over the full-canvas `InvisibleButton` via that button's
+  `SetNextItemAllowOverlap` (same trick as the inspector), so it wins hover and the manual header
+  hit-tests (which only run while the canvas itself is hovered) don't fight it. Live-previews into the
+  track (audio responds mid-drag, since the transport rebuilds from the live document each frame) and
+  `Commit`s once on release for a single undo step + `Data`-pin persist — the inspector's edit convention.
 - **Left-edge resize head-trims audio clips.** Dragging a clip's left edge advances `FileInPoint` by
   the same delta (clamped ≥ 0), so the audio content stays put on the timeline (proper NLE trim), and
   the drawn waveform shifts to match. In-point + gain are also editable in the inspector's **AUDIO**

@@ -85,6 +85,9 @@ public sealed class AudioTransport
             bool audioTrack = tr.Kind == TrackKind.Audio;
             if (audioTrack) audioIdx++;
             bool audible = !tr.Mute && (!anySolo || tr.Solo);
+            // Per-track volume (0..1) folded into each clip's gain here, so the mixer stays clip-only.
+            // Clamped defensively even though the editor already limits it to [0, 1].
+            float trackVol = audioTrack ? Math.Clamp(tr.Volume, 0f, 1f) : 1f;
             foreach (var c in tr.Clips)
             {
                 if (!c.IsAudio) continue;
@@ -92,7 +95,7 @@ public sealed class AudioTransport
                 clips.Add(new AudioClipSnap(
                     c.Id, c.FilePath!, audioTrack ? audioIdx : -1,
                     c.Start / f, c.Length / f, c.FileInPoint,
-                    fi / f, fo / f, c.Gain, audible));
+                    fi / f, fo / f, c.Gain * trackVol, audible));
             }
         }
         return new AudioTransport(playing, playheadFrames / f, clips, audioIdx + 1);
