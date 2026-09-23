@@ -639,6 +639,12 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   `SampleAt(playhead - clip.Start)`; editing it calls `SetKeyframe` — a new key at the playhead, or an
   update to the one there (the field goes **amber** when the playhead is on a key). Gated to the clip's
   span (`BeginDisabled` outside it — the dimmed region).
+  - **`K` button = add a key without changing the value.** A small M/S-style button just left of the
+    value field (`FloatKeyButtonRect` / `DrawKeyButton`, hit-tested in `HandleClipLaneInteraction` before
+    the rename/reorder/delete gestures). It calls `SetKeyframe(local, SampleAt(local))`, so it drops a key
+    at the playhead **on** the current curve (value unchanged). Enabled only `within && !onKey` — off the
+    clip or already on a key it reads dim and does nothing (no keys stacked on the same frame). A click on
+    it is always swallowed, so it never starts a header reorder drag. Undoable/persisted via `Commit`.
 - **Keyframe selection / move / copy-paste** reuse the timeline's own infra. `_kfSelection`
   (HashSet of ids, pruned each frame to the active clip), marquee via the shared `MarqueeRect` /
   `DrawMarquee` (new `KfMarquee` drag mode), move via a new `MoveKeyframe` drag that shifts the whole

@@ -419,7 +419,7 @@ public sealed class InterpoleEditorWidget : IDisposable
                 DrawRuler(dl);
                 DrawLoopBar(dl);
                 DrawMarkerLane(dl, mouse);
-                DrawFloatHeaders(dl);
+                DrawFloatHeaders(dl, mouse);
                 DrawFloatTrackDragFeedback(dl);
                 if (!play) { DrawPlayhead(dl); DrawSnapGuide(dl); }   // Static bakes no overlay (drawn on top)
                 DrawFloatCorner(dl, mouse);
@@ -1770,7 +1770,34 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Shared by the header draw and the inline rename box so the two line up.
     private float FloatHeaderNameWidth() => MathF.Max(60f, (_laneLeft - 12f) - (_origin.X + 12f) - 96f - 8f);
 
-    private void DrawFloatHeaders(ImDrawListPtr dl)
+    // The "K" (add-keyframe) button rect in float-track header row i — a small square just left of the
+    // value field, centred on the row. Used by both the header draw and the click hit-test so they agree.
+    private (Vector2 min, Vector2 max) FloatKeyButtonRect(int i)
+    {
+        const float bh = 26f, kGap = 8f;
+        float valX = _origin.X + 12f + FloatHeaderNameWidth() + 8f;   // 8 = the value field's gap
+        float cy = FloatRowTop(i) + TrackHeight * 0.5f;
+        float x1 = valX - kGap;
+        return (new Vector2(x1 - bh, cy - bh * 0.5f), new Vector2(x1, cy + bh * 0.5f));
+    }
+
+    // A momentary "K" (add-keyframe) button in a float-track header — same look as the M/S toggles but
+    // action-only: it brightens (greenish) on hover when enabled, and reads dim when disabled (the
+    // playhead is off the clip or already on a key here, so there's nothing to add).
+    private void DrawKeyButton(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool hov, bool enabled)
+    {
+        uint bg = !enabled ? Col(0.16f, 0.17f, 0.19f)
+                : hov       ? Col(0.28f, 0.42f, 0.30f)
+                            : Col(0.22f, 0.24f, 0.27f);
+        dl.AddRectFilled(mn, mx, bg, 3f);
+        dl.AddRect(mn, mx, Col(0f, 0f, 0f, 0.4f), 3f);
+        uint ic = enabled ? Col(0.85f, 0.92f, 0.86f) : Col(0.45f, 0.47f, 0.50f);
+        var c = (mn + mx) * 0.5f;
+        var ts = IG.CalcTextSize("K");
+        dl.AddText(new Vector2(c.X - ts.X * 0.5f, c.Y - ts.Y * 0.5f), ic, "K");
+    }
+
+    private void DrawFloatHeaders(ImDrawListPtr dl, Vector2 mouse)
     {
         var found = FindClip(_activeClipId);
         if (found is null) return;
@@ -1796,6 +1823,18 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 const float valueW = 96f, gap = 8f;
                 float nameW = FloatHeaderNameWidth();
+                float rowCy = (top + rowBot) * 0.5f;
+
+                // Where the playhead sits relative to this clip — shared by the K button and the value
+                // field. within = inside the clip's span; onKey = already a keyframe on this frame.
+                int local = Document.Playhead - clip.Start;
+                bool within = local >= 0 && local < clip.Length;
+                bool onKey = within && ft.Keys.Any(k => k.Frame == local);
+
+                // The "K" (add-keyframe) button sits just left of the value field; the name clips before
+                // it. Compute its rect first so the name knows where to stop.
+                var (kMin, kMax) = FloatKeyButtonRect(i);
+
                 // Name is plain text (like the timeline's track headers): double-click to rename, drag to
                 // reorder, Alt/Middle-click to delete — all handled in HandleClipLaneInteraction. During
                 // an inline rename the edit box (opaque) is drawn over it.
@@ -1805,22 +1844,22 @@ public sealed class InterpoleEditorWidget : IDisposable
                 // inside the name region, so the value field to its right doesn't move.
                 string idx = i.ToString();
                 var idxSize = IG.CalcTextSize(idx);
-                float rowCy = (top + rowBot) * 0.5f;
                 dl.AddText(new Vector2(_origin.X + 12f, rowCy - idxSize.Y * 0.5f), Col(0.45f, 0.50f, 0.58f), idx);
                 float nameX = _origin.X + 12f + idxSize.X + 8f;
-                dl.PushClipRect(new Vector2(nameX, top), new Vector2(_origin.X + 12f + nameW, bot), true);
+                dl.PushClipRect(new Vector2(nameX, top), new Vector2(kMin.X - 6f, bot), true);
                 var ts = IG.CalcTextSize(name);
                 dl.AddText(new Vector2(nameX, rowCy - ts.Y * 0.5f), Col(0.9f, 0.94f, 1f), name);
                 dl.PopClipRect();
+
+                // K button: creates a key at the playhead with the lane's current sampled value. Enabled
+                // only inside the clip and not already on a key (no stacking); disabled = dim, no action.
+                DrawKeyButton(dl, kMin, kMax, InRect(mouse, kMin, kMax), within && !onKey);
 
                 // Value AT THE PLAYHEAD (After-Effects style) — the only live widget in the header. The
                 // field shows the sampled value, and editing it creates a keyframe at the playhead (or
                 // updates the one there). Only inside the clip's span; amber when the playhead is on a key.
                 IG.PushID(ft.Id);
                 float wy = top + (TrackHeight - IG.GetFrameHeight()) * 0.5f;   // vertical centre
-                int local = Document.Playhead - clip.Start;
-                bool within = local >= 0 && local < clip.Length;
-                bool onKey = within && ft.Keys.Any(k => k.Frame == local);
                 float valX = _origin.X + 12f + nameW + gap;
                 IG.SetCursorScreenPos(new Vector2(valX, wy));
                 IG.SetNextItemWidth(valueW);
@@ -1927,6 +1966,19 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (idx >= 0)
             {
                 var ft = fc.clip.FloatTracks[idx];
+                // K (add-keyframe) button, checked before the rename/reorder/delete gestures. On a left
+                // click it creates a keyframe at the playhead with the lane's current sampled value —
+                // unless the playhead is outside the clip or already on a key (no keyframes on top of each
+                // other). A click on the button is always swallowed, so it never starts a reorder drag.
+                var (kMin, kMax) = FloatKeyButtonRect(idx);
+                if (IG.IsMouseClicked(ImGuiMouseButton.Left) && InRect(mouse, kMin, kMax))
+                {
+                    int local = Document.Playhead - fc.clip.Start;
+                    bool within = local >= 0 && local < fc.clip.Length;
+                    bool onKey = within && ft.Keys.Any(k => k.Frame == local);
+                    if (within && !onKey) { ft.SetKeyframe(local, ft.SampleAt(local)); Commit(); }
+                    return;
+                }
                 if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditFloatTrackName(ft);
                 else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
                 { fc.clip.FloatTracks.RemoveAll(t => t.Id == ft.Id); Commit(); }
