@@ -37,6 +37,13 @@ public sealed class InterpoleDocument
     public float ViewScrollX { get; set; }
     public float ViewScrollY { get; set; }
 
+    // Edit lock: when true the editor blocks every document mutation (clip / keyframe / track / marker /
+    // loop-region edits, add / delete, paste, undo-redo) so a running show can't be changed by accident.
+    // Playback, the playhead, pan / zoom, tab switching and the audio mix (volume / mute / solo) stay
+    // live; the inspector still shows values but read-only. Toggled by the transport-bar padlock and
+    // persisted here, so a locked document stays locked across reload. Absent from old JSON → false.
+    public bool Locked { get; set; }
+
     // The last frame covered by any clip — the natural end of the timeline (0 if empty).
     public int ContentEnd()
     {

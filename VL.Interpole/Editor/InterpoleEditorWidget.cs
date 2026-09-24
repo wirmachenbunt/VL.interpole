@@ -84,6 +84,13 @@ public sealed class InterpoleEditorWidget : IDisposable
     public enum PlayCache { Off, Static, Overlay }
     public PlayCache PlayPass = PlayCache.Off;
 
+    // Edit lock, persisted on the document (InterpoleDocument.Locked). While set, every document-mutating
+    // gesture is gated off (the !Locked guards in the interaction handlers) and the inspector / keyframe
+    // ImGui fields are drawn disabled; playback, playhead, pan / zoom, tabs and the audio mix stay live.
+    // Toggled by the transport-bar padlock (DrawTransport / the transport hit-tests in both handlers).
+    private bool Locked => Document.Locked;
+    private void ToggleLock() { Document.Locked = !Document.Locked; Changed?.Invoke(); }
+
     // Read by the node (before Update) to drive the per-page cache: the node follows the playhead in
     // whole-page steps from the lane width + zoom, sets the scroll, and keys the cache by that scroll.
     public float ViewScrollX => _scrollX;
@@ -456,7 +463,14 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (_mode == EditorMode.Timeline)
             {
                 DrawInspectorStrip(dl, mouse);
-                if (_inspectorOpen) DrawInspector(dl);
+                // The inspector's fields edit clip / marker data, so while locked it is drawn disabled
+                // (greyed, read-only) — you can still see a selected item's values, just not change them.
+                if (_inspectorOpen)
+                {
+                    if (Locked) IG.BeginDisabled();
+                    DrawInspector(dl);
+                    if (Locked) IG.EndDisabled();
+                }
             }
             DrawTabBar(dl, mouse);
         }
@@ -1370,6 +1384,17 @@ public sealed class InterpoleEditorWidget : IDisposable
         return (new Vector2(x1 - h, bmin.Y), new Vector2(x1, bmax.Y));
     }
 
+    // The edit-lock (padlock) toggle — a square button just left of the time/frames toggle, same size.
+    // Placed on the always-handled transport strip so it stays reachable to unlock (and works in play).
+    private (Vector2 min, Vector2 max) LockToggleRect()
+    {
+        const float gap = 8f;
+        var (tmin, tmax) = TimeToggleRect();
+        float h = tmax.Y - tmin.Y;
+        float x1 = tmin.X - gap;
+        return (new Vector2(x1 - h, tmin.Y), new Vector2(x1, tmax.Y));
+    }
+
     // The larger baked font used for the playhead readout (font index 1 — see InterpoleNode.EditorFonts).
     // Falls back to the default font when only one font is baked (e.g. no custom fonts on non-Windows).
     private static ImFontPtr ReadoutFont()
@@ -1404,6 +1429,40 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRectFilled(rmin, rmax, rbg, 4f);
         dl.AddRect(rmin, rmax, Col(0f, 0f, 0f, 0.4f), 4f);
         DrawStopwatchIcon(dl, rmin, rmax, Col(0.95f, 0.97f, 1f));
+
+        // Edit-lock padlock, left of the time toggle. Amber "engaged" fill when locked (a clear cue that
+        // editing is off), and its glyph is drawn shut/open to match.
+        var (lmin, lmax) = LockToggleRect();
+        bool lhov = InRect(mouse, lmin, lmax);
+        uint lbg = Locked ? Col(0.62f, 0.44f, 0.16f) : lhov ? Col(0.28f, 0.30f, 0.34f) : Col(0.22f, 0.24f, 0.27f);
+        dl.AddRectFilled(lmin, lmax, lbg, 4f);
+        dl.AddRect(lmin, lmax, Col(0f, 0f, 0f, 0.4f), 4f);
+        DrawLockIcon(dl, lmin, lmax, Locked, Col(0.97f, 0.95f, 0.9f));
+    }
+
+    // A small padlock glyph from DrawList primitives, matching the transport icons. Body is a filled
+    // rounded rect; the shackle is a stroked arc above it — closed (down onto the body) when locked,
+    // lifted and rotated open when unlocked, so the state reads at a glance even ignoring the tint.
+    private static void DrawLockIcon(ImDrawListPtr dl, Vector2 bmin, Vector2 bmax, bool locked, uint col)
+    {
+        // The glyph's envelope is ≈1× s, so basing s on ~half the button leaves it covering ~50% of the
+        // button area with even padding all round (fractions below are relative to this reduced s).
+        float s = MathF.Min(bmax.X - bmin.X, bmax.Y - bmin.Y) * 0.52f;
+        var mid = (bmin + bmax) * 0.5f;
+        float bw = s * 0.46f, bh = s * 0.34f;                 // body half-extents
+        var bodyC = new Vector2(mid.X, mid.Y + s * 0.14f);    // body sits low; shackle above
+        dl.AddRectFilled(new Vector2(bodyC.X - bw, bodyC.Y - bh), new Vector2(bodyC.X + bw, bodyC.Y + bh), col, 2f);
+        dl.AddCircleFilled(new Vector2(bodyC.X, bodyC.Y), s * 0.06f, Col(0.12f, 0.10f, 0.06f));   // keyhole
+
+        // Shackle: a half-ring whose ends drop toward the body. When unlocked, shift it up-left and open.
+        float r = s * 0.24f;
+        var shC = new Vector2(locked ? bodyC.X : bodyC.X - s * 0.12f, bodyC.Y - bh - r * (locked ? 0.35f : 0.65f));
+        dl.PathArcTo(shC, r, MathF.PI, MathF.PI * 2f, 16);    // top half circle (left → right)
+        dl.PathStroke(col, ImDrawFlags.None, 2f);
+        // Legs down from the arc ends to (or above) the body.
+        float legY = locked ? bodyC.Y - bh + 1f : shC.Y + r * 0.2f;
+        dl.AddLine(new Vector2(shC.X - r, shC.Y), new Vector2(shC.X - r, legY), col, 2f);
+        if (locked) dl.AddLine(new Vector2(shC.X + r, shC.Y), new Vector2(shC.X + r, legY), col, 2f);
     }
 
     // The playhead readout on the left of the transport bar — the value only: timecode in time mode,
@@ -1431,7 +1490,9 @@ public sealed class InterpoleEditorWidget : IDisposable
     // DrawList primitives to match the transport icons.
     private static void DrawStopwatchIcon(ImDrawListPtr dl, Vector2 bmin, Vector2 bmax, uint col)
     {
-        float s = MathF.Min(bmax.X - bmin.X, bmax.Y - bmin.Y);
+        // The glyph's envelope is ≈0.8× s, so basing s on ~0.62 of the button keeps it covering ~50% of
+        // the button (matching the transport glyphs' weight) with even padding (fractions below relative to s).
+        float s = MathF.Min(bmax.X - bmin.X, bmax.Y - bmin.Y) * 0.62f;
         var mid = (bmin + bmax) * 0.5f;
         var body = new Vector2(mid.X, mid.Y + s * 0.06f);   // nudge down to leave room for the crown
         float r = s * 0.30f;
@@ -1888,8 +1949,9 @@ public sealed class InterpoleEditorWidget : IDisposable
                 dl.PopClipRect();
 
                 // K button: creates a key at the playhead with the lane's current sampled value. Enabled
-                // only inside the clip and not already on a key (no stacking); disabled = dim, no action.
-                DrawKeyButton(dl, kMin, kMax, InRect(mouse, kMin, kMax), within && !onKey);
+                // only inside the clip and not already on a key (no stacking), and never while locked;
+                // disabled = dim, no action.
+                DrawKeyButton(dl, kMin, kMax, InRect(mouse, kMin, kMax), within && !onKey && !Locked);
 
                 // Value AT THE PLAYHEAD (After-Effects style) — the only live widget in the header. The
                 // field shows the sampled value, and editing it creates a keyframe at the playhead (or
@@ -1900,11 +1962,12 @@ public sealed class InterpoleEditorWidget : IDisposable
                 IG.SetCursorScreenPos(new Vector2(valX, wy));
                 IG.SetNextItemWidth(valueW);
                 IG.PushStyleColor(ImGuiCol.FrameBg, onKey ? Col(0.44f, 0.35f, 0.12f) : Col(0.20f, 0.21f, 0.24f));
-                if (!within) IG.BeginDisabled();
+                bool kfDisabled = !within || Locked;   // outside the clip span, or the whole editor is locked
+                if (kfDisabled) IG.BeginDisabled();
                 float val = ft.SampleAt(within ? local : Math.Clamp(local, 0, clip.Length - 1));
-                if (IG.DragFloat("##value", ref val, 0.01f) && within) ft.SetKeyframe(local, val);
-                if (IG.IsItemDeactivatedAfterEdit() && within) Commit();
-                if (!within) IG.EndDisabled();
+                if (IG.DragFloat("##value", ref val, 0.01f) && within && !Locked) ft.SetKeyframe(local, val);
+                if (IG.IsItemDeactivatedAfterEdit() && within && !Locked) Commit();
+                if (kfDisabled) IG.EndDisabled();
                 IG.PopStyleColor();
                 IG.PopID();
             }
@@ -1935,7 +1998,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         IG.PushStyleColor(ImGuiCol.Button, Col(0.22f, 0.4f, 0.6f));
         IG.PushStyleColor(ImGuiCol.ButtonHovered, Col(0.28f, 0.5f, 0.75f));
         IG.PushStyleColor(ImGuiCol.ButtonActive, Col(0.24f, 0.44f, 0.66f));
+        if (Locked) IG.BeginDisabled();
         if (IG.Button("+ Float Track", new Vector2(bMax.X - bMin.X, bMax.Y - bMin.Y))) AddFloatTrack(clip);
+        if (Locked) IG.EndDisabled();
         IG.PopStyleColor(3);
     }
 
@@ -1999,7 +2064,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             if (FindClip(_activeClipId) is not { } fc) return;
             int idx = FloatTrackIndexAtY(fc.clip, mouse.Y);
-            if (idx >= 0)
+            // The header holds only edits (add-key, rename, reorder, delete) — all blocked while locked.
+            if (idx >= 0 && !Locked)
             {
                 var ft = fc.clip.FloatTracks[idx];
                 // K (add-keyframe) button, checked before the rename/reorder/delete gestures. On a left
@@ -2026,7 +2092,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (mouse.X < _laneLeft || mouse.X >= LaneRight || mouse.Y < _lanesTop || mouse.Y >= LanesBottom) return;
         if (HitKeyframe(mouse) is { } h)
         {
-            if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+            // Locked: selecting a keyframe is allowed (to inspect); deleting and dragging it are not.
+            if (!Locked && (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left))))
             { DeleteKeyframe(h.trackIndex, h.kf); return; }
             if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
@@ -2035,8 +2102,7 @@ public sealed class InterpoleEditorWidget : IDisposable
                 // Grabbing a keyframe already in a multi-selection keeps the group so they drag
                 // together; grabbing any other selects just it. A click with no movement = select.
                 if (!_kfSelection.Contains(h.kf.Id)) { _kfSelection.Clear(); _kfSelection.Add(h.kf.Id); }
-                BeginKeyframeMove(h.kf, mouse);
-                _drag = DragMode.MoveKeyframe;
+                if (!Locked) { BeginKeyframeMove(h.kf, mouse); _drag = DragMode.MoveKeyframe; }
             }
             return;
         }
@@ -2220,8 +2286,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         {
             if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
-                var (rmin, rmax) = TimeToggleRect();
-                if (InRect(mouse, rmin, rmax)) _showTimecode = !_showTimecode;
+                if (InRect(mouse, LockToggleRect().min, LockToggleRect().max)) ToggleLock();
+                else if (InRect(mouse, TimeToggleRect().min, TimeToggleRect().max)) _showTimecode = !_showTimecode;
                 else
                     for (int i = 0; i < 4; i++)
                     {
@@ -2270,22 +2336,27 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Escape leaves the keyframe page and drops back to the timeline (the clip's tab stays open).
         if (_mode == EditorMode.Clip && IG.IsKeyPressed(ImGuiKey.Escape, false)) { _mode = EditorMode.Timeline; return; }
 
-        // Space toggles play / stop. B / N set the loop in / out to the playhead. Undo/redo apply in
-        // both views (float-track edits are undoable too). These are all axis/transport-level, so they
-        // work identically on the clip page.
+        // Space toggles play / stop — a transport action, allowed even while locked.
         if (IG.IsKeyPressed(ImGuiKey.Space, false)) OnTransport(_playing ? TButton.Stop : TButton.Play);
-        if (IG.IsKeyPressed(ImGuiKey.B, false)) SetLoopInToPlayhead();
-        if (IG.IsKeyPressed(ImGuiKey.N, false)) SetLoopOutToPlayhead();
 
-        // Delete / copy / paste act on clips in the timeline, and on keyframes on the clip page.
-        if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false))
-        { if (_mode == EditorMode.Timeline) DeleteSelection(); else DeleteSelectedKeyframes(); }
+        // Everything below mutates the document (loop region, clips, keyframes, undo/redo, paste) — all
+        // blocked while locked. Copy stays allowed (it reads, doesn't change the document).
+        if (!Locked)
+        {
+            // B / N set the loop in / out to the playhead.
+            if (IG.IsKeyPressed(ImGuiKey.B, false)) SetLoopInToPlayhead();
+            if (IG.IsKeyPressed(ImGuiKey.N, false)) SetLoopOutToPlayhead();
+
+            // Delete acts on clips in the timeline, and on keyframes on the clip page.
+            if (IG.IsKeyPressed(ImGuiKey.Delete, false) || IG.IsKeyPressed(ImGuiKey.Backspace, false))
+            { if (_mode == EditorMode.Timeline) DeleteSelection(); else DeleteSelectedKeyframes(); }
+        }
 
         if (!io.KeyCtrl) return;
-        if (IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
-        else if (IG.IsKeyPressed(ImGuiKey.Y, false)) Redo();
-        else if (IG.IsKeyPressed(ImGuiKey.C, false)) { if (_mode == EditorMode.Timeline) CopySelection(); else CopyKeyframes(); }
-        else if (IG.IsKeyPressed(ImGuiKey.V, false)) { if (_mode == EditorMode.Timeline) PasteClipboard(); else PasteKeyframes(); }
+        if (IG.IsKeyPressed(ImGuiKey.C, false)) { if (_mode == EditorMode.Timeline) CopySelection(); else CopyKeyframes(); }
+        else if (!Locked && IG.IsKeyPressed(ImGuiKey.Z, false)) { if (io.KeyShift) Redo(); else Undo(); }
+        else if (!Locked && IG.IsKeyPressed(ImGuiKey.Y, false)) Redo();
+        else if (!Locked && IG.IsKeyPressed(ImGuiKey.V, false)) { if (_mode == EditorMode.Timeline) PasteClipboard(); else PasteKeyframes(); }
     }
 
     private void HandleInteraction(bool hovered, Vector2 mouse, ImGuiIOPtr io)
@@ -2347,8 +2418,9 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         // Right-click a keyframe (clip page) opens its interpolation menu instead of panning. Applies
         // the selection rule: a key already in the selection keeps the whole selection (menu edits them
-        // all); any other becomes the sole selection first. Right-clicking empty space still pans.
-        if (_mode == EditorMode.Clip && IG.IsMouseClicked(ImGuiMouseButton.Right) && HitKeyframe(mouse) is { } hk)
+        // all); any other becomes the sole selection first. Right-clicking empty space still pans. While
+        // locked the menu (an edit) is suppressed, so right-click just pans as everywhere else.
+        if (!Locked && _mode == EditorMode.Clip && IG.IsMouseClicked(ImGuiMouseButton.Right) && HitKeyframe(mouse) is { } hk)
         {
             if (!_kfSelection.Contains(hk.kf.Id)) { _kfSelection.Clear(); _kfSelection.Add(hk.kf.Id); }
             OpenKeyframeMenu(mouse);
@@ -2358,13 +2430,13 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Right-drag pans.
         if (IG.IsMouseClicked(ImGuiMouseButton.Right)) { _panning = true; return; }
 
-        // Transport bar (topmost strip): click a button or the time/frames toggle.
+        // Transport bar (topmost strip): click a button, the time/frames toggle or the edit-lock padlock.
         if (mouse.Y >= _origin.Y && mouse.Y < _rulerTop)
         {
             if (IG.IsMouseClicked(ImGuiMouseButton.Left))
             {
-                var (rmin, rmax) = TimeToggleRect();
-                if (InRect(mouse, rmin, rmax)) _showTimecode = !_showTimecode;
+                if (InRect(mouse, LockToggleRect().min, LockToggleRect().max)) ToggleLock();
+                else if (InRect(mouse, TimeToggleRect().min, TimeToggleRect().max)) _showTimecode = !_showTimecode;
                 else
                     for (int i = 0; i < 4; i++)
                     {
@@ -2389,6 +2461,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         // scrub so the strip claims its clicks.
         if (mouse.X >= _laneLeft && mouse.Y >= _rulerTop && mouse.Y < _loopBottom)
         {
+            if (Locked) return;   // loop region is document data — no edits while locked
             if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
             {
                 if (Document.LoopIn != 0 || Document.LoopOut != 0) { Document.LoopIn = 0; Document.LoopOut = 0; Changed?.Invoke(); }
@@ -2425,18 +2498,22 @@ public sealed class InterpoleEditorWidget : IDisposable
             var hitM = HitMarker(mouse);
             if (hitM is not null)
             {
-                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) { OpenEditMarkerDialog(hitM); return; }
-                if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+                // Locked: only selection (show it read-only in the inspector) — no edit dialog, delete or move.
+                if (!Locked && IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) { OpenEditMarkerDialog(hitM); return; }
+                if (!Locked && (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (io.KeyAlt && IG.IsMouseClicked(ImGuiMouseButton.Left))))
                 { RemoveMarker(hitM); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     SelectMarker(hitM.Id);   // show it in the inspector
-                    _drag = DragMode.MoveMarker;
-                    _dragMarkerId = hitM.Id;
-                    _dragGrabFrame = XToFrame(mouse.X) - hitM.Frame;
+                    if (!Locked)
+                    {
+                        _drag = DragMode.MoveMarker;
+                        _dragMarkerId = hitM.Id;
+                        _dragGrabFrame = XToFrame(mouse.X) - hitM.Frame;
+                    }
                 }
             }
-            else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            else if (!Locked && IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 OpenNewMarkerDialog(XToFrame(mouse.X));
             }
@@ -2450,15 +2527,15 @@ public sealed class InterpoleEditorWidget : IDisposable
 
         bool alt = io.KeyAlt;
 
-        // Corner "add track" buttons — a standard track and an audio track.
+        // Corner "add track" buttons — a standard track and an audio track (blocked while locked).
         if (InRect(mouse, AddTrackButtonRect().min, AddTrackButtonRect().max))
         {
-            if (IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Standard);
+            if (!Locked && IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Standard);
             return;
         }
         if (InRect(mouse, AddAudioTrackButtonRect().min, AddAudioTrackButtonRect().max))
         {
-            if (IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Audio);
+            if (!Locked && IG.IsMouseClicked(ImGuiMouseButton.Left)) AddTrack(TrackKind.Audio);
             return;
         }
 
@@ -2469,19 +2546,24 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (tr is not null)
             {
                 // Mute / Solo buttons take a plain left click first (audio tracks only).
+                // Mute / Solo are mix controls — allowed even while locked (audio tracks only).
                 if (tr.Kind == TrackKind.Audio && !alt && IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
                     var (mMin, mMax, sMin, sMax) = TrackToggleRects(Document.Tracks.IndexOf(tr));
                     if (InRect(mouse, mMin, mMax)) { tr.Mute = !tr.Mute; Commit(); return; }
                     if (InRect(mouse, sMin, sMax)) { tr.Solo = !tr.Solo; Commit(); return; }
                 }
-                if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditTrackName(tr);
-                else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
-                    RemoveTrack(tr.Id);
-                else if (IG.IsMouseClicked(ImGuiMouseButton.Left))   // plain click-drag reorders the track
-                    { _drag = DragMode.MoveTrack; _dragTrackId = tr.Id; }
+                // Rename / remove / reorder are edits — blocked while locked.
+                if (!Locked)
+                {
+                    if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) StartEditTrackName(tr);
+                    else if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+                        RemoveTrack(tr.Id);
+                    else if (IG.IsMouseClicked(ImGuiMouseButton.Left))   // plain click-drag reorders the track
+                        { _drag = DragMode.MoveTrack; _dragTrackId = tr.Id; }
+                }
             }
-            else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) AddTrack();
+            else if (!Locked && IG.IsMouseDoubleClicked(ImGuiMouseButton.Left)) AddTrack();
             return;
         }
 
@@ -2493,23 +2575,26 @@ public sealed class InterpoleEditorWidget : IDisposable
             {
                 var (tr, clip, zone) = hit.Value;
                 // Hover cue: the cursor previews the gesture — resize the edges, adjust a fade handle,
-                // or move the whole clip — so it's clear before pressing which one you'll get.
-                IG.SetMouseCursor(zone switch
-                {
-                    ClipZone.ResizeL or ClipZone.ResizeR => ImGuiMouseCursor.ResizeEW,
-                    ClipZone.FadeIn or ClipZone.FadeOut => ImGuiMouseCursor.Hand,
-                    _ => ImGuiMouseCursor.ResizeAll,
-                });
+                // or move the whole clip — so it's clear before pressing which one you'll get. Suppressed
+                // while locked, since none of those gestures are available (the default cursor reads inert).
+                if (!Locked)
+                    IG.SetMouseCursor(zone switch
+                    {
+                        ClipZone.ResizeL or ClipZone.ResizeR => ImGuiMouseCursor.ResizeEW,
+                        ClipZone.FadeIn or ClipZone.FadeOut => ImGuiMouseCursor.Hand,
+                        _ => ImGuiMouseCursor.ResizeAll,
+                    });
                 if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 {
                     // The double-click splits by where you land: on the clip's label text it edits the
                     // clip (inline rename + colour); anywhere else on the clip body it opens the clip's
-                    // keyframe page. Audio clips have no keyframes yet, so they always edit.
+                    // keyframe page. Audio clips have no keyframes yet, so they always edit. While locked,
+                    // opening the keyframe page (read-only viewing) is allowed but the inline rename is not.
                     if (!clip.IsAudio && !HitClipLabel(clip, mouse)) OpenClipKeyframes(clip);
-                    else StartEditClipLabel(clip);
+                    else if (!Locked) StartEditClipLabel(clip);
                     return;
                 }
-                if (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left)))
+                if (!Locked && (IG.IsMouseClicked(ImGuiMouseButton.Middle) || (alt && IG.IsMouseClicked(ImGuiMouseButton.Left))))
                 { RemoveClip(tr, clip); return; }
                 if (IG.IsMouseClicked(ImGuiMouseButton.Left))
                 {
@@ -2520,19 +2605,23 @@ public sealed class InterpoleEditorWidget : IDisposable
                     // Grabbing a clip that's already in a multi-selection keeps the selection so the
                     // whole group drags together; grabbing any other clip selects just it.
                     if (!_selection.Contains(clip.Id)) SelectSingle(clip.Id);
-                    _dragClipId = clip.Id;
-                    _drag = zone switch
+                    // Selection is allowed while locked; the move / resize / fade drag it seeds is not.
+                    if (!Locked)
                     {
-                        ClipZone.ResizeL => DragMode.ResizeL,
-                        ClipZone.ResizeR => DragMode.ResizeR,
-                        ClipZone.FadeIn => DragMode.FadeIn,
-                        ClipZone.FadeOut => DragMode.FadeOut,
-                        _ => DragMode.MoveClip
-                    };
-                    if (_drag == DragMode.MoveClip) _dragGrabFrame = XToFrame(mouse.X) - clip.Start;
+                        _dragClipId = clip.Id;
+                        _drag = zone switch
+                        {
+                            ClipZone.ResizeL => DragMode.ResizeL,
+                            ClipZone.ResizeR => DragMode.ResizeR,
+                            ClipZone.FadeIn => DragMode.FadeIn,
+                            ClipZone.FadeOut => DragMode.FadeOut,
+                            _ => DragMode.MoveClip
+                        };
+                        if (_drag == DragMode.MoveClip) _dragGrabFrame = XToFrame(mouse.X) - clip.Start;
+                    }
                 }
             }
-            else if (IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            else if (!Locked && IG.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
                 var tr = TrackAtY(mouse.Y);
                 if (tr is not null)
