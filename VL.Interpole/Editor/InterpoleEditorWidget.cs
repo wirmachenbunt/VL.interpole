@@ -403,7 +403,12 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (overlay)
         {
             // Play/Overlay pass: draw ONLY the moving overlay over the blitted cache (the window is
-            // NoBackground here, so nothing else is painted). Playhead + timecode readout only.
+            // NoBackground here, so nothing else is painted). Playhead + timecode readout, plus the
+            // audio tracks' mix controls (volume + Mute/Solo) — kept live in play so the mix can be
+            // auditioned without stopping (the audio picks changes up on the next frame; see the
+            // per-frame AudioTransport.Build in the node). Timeline mode only: the clip page has no
+            // audio-track headers. Drawn over the cache, which baked each control at its capture value.
+            if (_mode == EditorMode.Timeline) DrawPlayHeaderControls(dl, mouse);
             DrawReadout(dl);
             DrawPlayhead(dl);
         }
@@ -961,17 +966,43 @@ public sealed class InterpoleEditorWidget : IDisposable
         return (new Vector2(x1 - w, cy - h * 0.5f), new Vector2(x1, cy + h * 0.5f));
     }
 
+    // Redraw the audio tracks' mix controls (volume field + Mute/Solo toggles) over the cached still
+    // during playback, so they stay usable — and thus audible — while playing without stopping. Same
+    // rects as DrawHeaders; each control's opaque fill covers the value the still baked at capture.
+    // Clicks are handled in HandlePlayInteraction (M/S) and by ImGui itself (the volume DragFloat).
+    private void DrawPlayHeaderControls(ImDrawListPtr dl, Vector2 mouse)
+    {
+        for (int i = 0; i < Document.Tracks.Count; i++)
+        {
+            var tr = Document.Tracks[i];
+            if (tr.Kind != TrackKind.Audio) continue;
+            float top = TrackTop(i), bottom = top + TrackHeightOf(i);
+            if (bottom < _lanesTop || top > LanesBottom) continue;   // off-screen row
+            var (mMin, mMax, sMin, sMax) = TrackToggleRects(i);
+            DrawTrackToggle(dl, mMin, mMax, tr.Mute, InRect(mouse, mMin, mMax), Col(0.78f, 0.26f, 0.24f), "M");
+            DrawTrackToggle(dl, sMin, sMax, tr.Solo, InRect(mouse, sMin, sMax), Col(0.82f, 0.72f, 0.22f), "S");
+            var (vMin, vMax) = TrackVolumeRect(i);
+            DrawTrackVolume(tr, vMin, vMax);
+        }
+    }
+
     // The track volume as a real ImGui DragFloat (0..1), submitted over the full-canvas InvisibleButton
     // (whose SetNextItemAllowOverlap lets this later item take hover). Live-previews into the track so
     // audio responds during the drag; one undo step + persist on release, like the inspector's fields.
+    // The opaque frame bg matters in the play overlay pass: the field is drawn over the cached still,
+    // so it must fully cover the value the still baked (a translucent default bg would let it show).
     private void DrawTrackVolume(TrackData tr, Vector2 vMin, Vector2 vMax)
     {
+        IG.PushStyleColor(ImGuiCol.FrameBg, Col(0.16f, 0.17f, 0.19f));
+        IG.PushStyleColor(ImGuiCol.FrameBgHovered, Col(0.22f, 0.23f, 0.26f));
+        IG.PushStyleColor(ImGuiCol.FrameBgActive, Col(0.24f, 0.25f, 0.28f));
         IG.SetCursorScreenPos(vMin);
         IG.SetNextItemWidth(vMax.X - vMin.X);
         float vol = tr.Volume;
         if (IG.DragFloat($"##vol{tr.Id}", ref vol, 0.005f, 0f, 1f, "%.2f"))
             tr.Volume = Math.Clamp(vol, 0f, 1f);
         if (IG.IsItemDeactivatedAfterEdit()) Commit();
+        IG.PopStyleColor(3);
     }
 
     private void DrawTrackToggle(ImDrawListPtr dl, Vector2 mn, Vector2 mx, bool on, bool hov, uint onColor, string label)
@@ -2202,6 +2233,21 @@ public sealed class InterpoleEditorWidget : IDisposable
                             break;
                         }
                     }
+            }
+            return;
+        }
+
+        // Track-header column: Mute / Solo stay live in play so tracks drop in and out of the mix while
+        // auditioning (audio tracks only, plain left click, same toggle as full mode). The volume field
+        // to their left is a real ImGui item that took hover above (so !hovered returned early); the
+        // rest of the header — rename, reorder, remove — stays locked, being edits.
+        if (mouse.X < _laneLeft && mouse.Y >= _lanesTop)
+        {
+            if (IG.IsMouseClicked(ImGuiMouseButton.Left) && TrackAtY(mouse.Y) is { Kind: TrackKind.Audio } tr)
+            {
+                var (mMin, mMax, sMin, sMax) = TrackToggleRects(Document.Tracks.IndexOf(tr));
+                if (InRect(mouse, mMin, mMax)) { tr.Mute = !tr.Mute; Commit(); }
+                else if (InRect(mouse, sMin, sMax)) { tr.Solo = !tr.Solo; Commit(); }
             }
             return;
         }
