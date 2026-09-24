@@ -103,6 +103,10 @@ public class InterpoleNode : IDisposable
     // Time-axis scroll (device px) the page grid is anchored to for the current play session — captured
     // when play starts (so the view doesn't jump), re-anchored on a backward jump (loop wrap / reset).
     private float _playAnchorScroll;
+    // The zoom + scroll used for the previous play frame, so a zoom mid-playback can re-anchor the page
+    // grid to keep the playhead's on-screen position fixed (zoom toward the playhead — see the play block).
+    private float _prevPlayPx;
+    private float _prevPlayScroll;
 
     // JSON strings this node has written back into the Data pin. SetPinValue echoes our own write
     // back into the incoming 'data' over the next frame(s); we must not mistake that echo for an
@@ -360,7 +364,22 @@ public class InterpoleNode : IDisposable
                 if (laneW > 1f && px > 0f)
                 {
                     float pageFrames = laneW / px;
-                    if (!_wasPlaying) _playAnchorScroll = _editor.ViewScrollX;   // anchor to current view → no jump on play
+                    if (!_wasPlaying)
+                    {
+                        _playAnchorScroll = _editor.ViewScrollX;   // anchor to current view → no jump on play
+                        _prevPlayPx = px;
+                        _prevPlayScroll = _editor.ViewScrollX;
+                    }
+                    else if (px != _prevPlayPx)
+                    {
+                        // Zoom happened mid-playback (the editor changed only the zoom; see its play-zoom
+                        // handler). Re-anchor the page grid so the playhead keeps the SAME on-screen X it
+                        // had last frame — i.e. we zoom toward the playhead, not the mouse. playheadOffset
+                        // is its pixels from the lane's left edge before the zoom; solving for the new
+                        // anchor at the new zoom that preserves it makes relPage below resolve to 0.
+                        float playheadOffset = _editor.Document.Playhead * _prevPlayPx - _prevPlayScroll;
+                        _playAnchorScroll = MathF.Max(0f, _editor.Document.Playhead * px - playheadOffset);
+                    }
                     float anchorFrame = _playAnchorScroll / px;
                     int relPage = (int)MathF.Floor((_editor.Document.Playhead - anchorFrame) / pageFrames);
                     if (relPage < 0)   // playhead jumped left of the anchor (loop wrap / reset) → re-anchor
@@ -370,6 +389,8 @@ public class InterpoleNode : IDisposable
                     }
                     scroll = _playAnchorScroll + relPage * laneW;
                     _editor.SetPlayScroll(scroll);
+                    _prevPlayPx = px;
+                    _prevPlayScroll = scroll;
                 }
 
                 var key = new PageKey((int)MathF.Round(scroll), (int)MathF.Round(px * 1000f), (int)_editor.ViewSize.X, (int)_editor.ViewSize.Y, _editor.ViewContentTag);

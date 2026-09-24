@@ -749,12 +749,26 @@ gone; verified in gamma at 175% DPI.
   `BlitOverlay` (blit the cached page + draw the overlay on top).
 - **Widget `PlayCache` passes** (`PlayPass`, set by the node): `Static` draws the full editor minus
   playhead/snap-guide/readout (captured); `Overlay` draws only the playhead + `DrawReadout` timecode
-  (over the blit, window forced `NoBackground`). Editing is locked in play — `HandlePlayShortcuts`/
-  `HandlePlayInteraction` allow only Space, transport, zoom, playhead scrub, **and the bottom tab bar**
-  (Timeline ↔ a clip's keyframe page + Escape back to the timeline). Switching views is not a document
-  edit, and *must* stay allowed: otherwise pressing play on a clip's keyframe page would strand you there
-  with no way back to the sequencer (the reported bug). `TryHandleTabBarClick` only flips
-  `_mode`/`_activeClipId`/`_openTabs`, so it's safe mid-play.
+  **plus the audio tracks' mix controls** (`DrawPlayHeaderControls` — volume field + Mute/Solo, redrawn
+  over the blit so a level/mute can be auditioned mid-play; the audio picks it up next frame via the
+  per-frame `AudioTransport.Build`), all over the blit with the window forced `NoBackground`. Clip/
+  keyframe editing is locked in play — `HandlePlayShortcuts`/`HandlePlayInteraction` allow only Space,
+  transport, **playhead-anchored zoom** (below), playhead scrub, the audio mix (volume/mute/solo),
+  **and the bottom tab bar** (Timeline ↔ a clip's keyframe page + Escape back to the timeline).
+  Switching views is not a document edit, and *must* stay allowed: otherwise pressing play on a clip's
+  keyframe page would strand you there with no way back to the sequencer (the reported bug).
+  `TryHandleTabBarClick` only flips `_mode`/`_activeClipId`/`_openTabs`, so it's safe mid-play.
+- **Zoom toward the playhead while playing (2026-09-24).** Wheel-zoom during playback used to anchor the
+  scroll to the cursor like stopped-mode does — but the node owns the scroll in play (page-stepping the
+  grid the cache keys on), so a cursor-anchored scroll fought the grid and the view flipped erratically
+  as the playhead neared a page edge. Now the editor's play-zoom changes *only* `_pxPerFrame`, and the
+  node re-anchors the page grid on a zoom (`px != _prevPlayPx`) so the **playhead keeps its exact
+  on-screen X**: it takes the playhead's pre-zoom pixel offset from the lane's left edge
+  (`Playhead*_prevPlayPx - _prevPlayScroll`) and solves for the new anchor at the new zoom that preserves
+  it (which makes `relPage` resolve to 0 that frame). `_prevPlayPx`/`_prevPlayScroll` carry last frame's
+  zoom+scroll. Non-zoom frames are byte-for-byte unchanged; after the zoom settles (and the next loop
+  wrap re-anchors to the left edge) the grid is deterministic again, so laps re-hit the cache. Stopped-
+  mode zoom is untouched (still cursor-anchored — the playhead-anchor is *play-only*).
 - **Per-page LRU** keyed `(page, zoom, size, view)` (`PageKey`, cap 8). The **view** tag
   (`ViewContentTag`: 0 = timeline, else the active clip id's hash) is what lets a mid-play view switch
   work — the timeline and a clip page share the same scroll/zoom/size, so without it a cache hit would
@@ -772,9 +786,13 @@ gone; verified in gamma at 175% DPI.
 
 Other levers:
 
-- **Idle-skip rendering (not done).** Skip the ImGui frame when *stopped* and nothing changed (no
-  drag/edit/dialog/hover/resize). The snapshot cache already handles the *playing* case (the one that
-  stuttered); idle-skip would additionally save the stopped-but-idle CPU. Needs "wake on input" gating.
+- **Idle-skip rendering (not done — design captured in `IDLE_CACHE_PLAN.md`).** Extend the snapshot
+  cache to the *stopped-but-idle* case: blit a cached still when the editor isn't being hovered/edited,
+  flip to live the instant anything that affects appearance changes. The plan file has the mechanism
+  (a fourth "idle" pass like Overlay but with no moving overlay), the invalidation approach (any live
+  frame invalidates; capture once on settle), the trigger scopes (conservative window-not-hovered vs.
+  aggressive over-inert-background), and the caveats (one-frame switch latency; ImGui widgets bypass
+  routing). The snapshot cache already handles the *playing* case (the one that stuttered).
 - **Waveform envelope cache (done).** `DrawWaveform` used to recompute a per-pixel min/max envelope
   every frame (each column summing peak buckets — costly zoomed out on long files). Now `GetWaveEnvelope`
   caches the per-column min/max per clip (`_waveEnv`, keyed by clip Id), rebuilt only when peaks /
@@ -790,6 +808,49 @@ by the renderer, and VL.ImGui.Skia's `SkiaContext` (which owns `AddLayer`/`Textu
 inaccessible). The only public route is the retained `SkiaWidget` (set `.Layer` to an `ILayer`), which
 clashes with our all-imperative draw-list editor. Don't retry the texture route without either an
 internal API opening up or a widget-tree rewrite.
+
+## Live audio mix while playing (2026-09-24)
+
+Track **volume**, **Mute** and **Solo** are editable during playback (previously you had to stop,
+change, replay). Nothing on the audio side was needed — the node rebuilds the transport every frame
+from the live document (`AudioTransport.Build`, which folds `tr.Volume` into gain and derives the
+`audible` flag from Mute/Solo), so a change is heard on the next frame. The only work was making the
+controls *reachable* in play: the play `Overlay` pass draws only playhead+timecode, so the volume
+`DragFloat` + M/S toggles are now redrawn over the cache each overlay frame (`DrawPlayHeaderControls`,
+timeline mode only — the clip page has no audio headers), and `HandlePlayInteraction` hit-tests the M/S
+buttons (the volume field is a real ImGui item that takes its own input). The volume field pushes an
+**opaque frame bg** so it covers the value the cache baked at capture (the cache is keyed on scroll/zoom/
+size, *not* volume, so it doesn't re-capture on a level change — the live overlay is what you see).
+
+## Edit lock (2026-09-24) — `InterpoleDocument.Locked`
+
+A transport-bar **padlock** toggle that blocks **every document mutation** so a running show can't be
+changed by accident. Persisted on the document (`Locked`, serialized on the `Data` pin → survives
+reload; excluded from `StructuralSnapshot` so toggling it makes no undo step). Toggled by
+`ToggleLock()` (flips `Document.Locked` + fires `Changed`); hit-tested in **both** `HandleInteraction`
+and `HandlePlayInteraction`'s transport blocks so it's reachable to unlock and works while playing.
+
+- **Allowed while locked:** transport, playhead scrub, **pan + zoom**, tab switching, timecode toggle,
+  the audio mix (volume/mute/solo), clip/keyframe **selection** (to inspect), opening a clip's keyframe
+  page (read-only view), and **copy**. The inspector still opens but is drawn **`BeginDisabled`** (greyed,
+  read-only).
+- **Blocked:** clip move/resize/fade/add/delete/rename, keyframe add (K + value field)/move/delete/
+  interpolation-menu/`+ Float Track`, track add/remove/reorder/rename, marker create/edit/move/delete,
+  loop-region ribbon drag + B/N, paste, undo/redo, delete.
+- **The trap that shaped the design:** edit-blocking works by *routing* (the mutation gestures are gated
+  with `!Locked` guards in `HandleInteraction`/`HandleClipLaneInteraction`/`HandleShortcuts`), but
+  **ImGui-native widgets process their own input regardless of routing** — so the inspector fields, the
+  clip-page keyframe-value `DragFloat`, and the `+ Float Track` button are wrapped in
+  `IG.BeginDisabled(Locked)`. The track-volume `DragFloat` is deliberately left *outside* that, so it
+  stays live. The misleading resize/move cursor cue over clips is also suppressed while locked.
+- Scope is intentionally **broad** (tracks/markers/loop-region locked too, not just clips+keyframes) —
+  "prevent accidental editing" reads broadly for a show-lock. Node input pins (`Loop In/Out`, `Set`/
+  `Time`, transport) are unaffected: they're programmatic control, not UI editing.
+
+**Transport-bar icons (2026-09-24):** the padlock (`DrawLockIcon`) and stopwatch (`DrawStopwatchIcon`)
+glyphs base their size on ~half the button (`min(w,h)*0.52`/`*0.62`) so each covers ~50% of its button
+with even padding, matching the transport glyphs' weight. The lock/clock buttons were already the same
+size as the transport buttons (all `bh × bh` off `TransportButtonRect`); the icons just filled them.
 
 ## Known issues / rough edges
 
@@ -859,7 +920,10 @@ internal API opening up or a widget-tree rewrite.
    playback **outputs** — `Current Frame` + per-track `Active Clip Name` / `Clip Frame` /
    `Clip Length` / `Fade Gain` / `Active Color` — and the real-time `dt × Fps` timebase with the
    legacy mode behind `Frame Step Playback`; **audio tracks** — waveform authoring + a sample-accurate
-   stereo mixer with audio-master sync, built but pending gamma verification.)
+   stereo mixer with audio-master sync, built but pending gamma verification; **live audio mix while
+   playing** — volume/mute/solo editable mid-playback; an **edit lock** (padlock) that blocks all
+   document editing while keeping playback/scrub/pan/zoom/mix live, persisted on the document;
+   **playhead-anchored zoom** during playback.)
 
 ## Build
 

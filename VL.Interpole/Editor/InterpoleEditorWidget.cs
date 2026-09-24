@@ -2270,16 +2270,13 @@ public sealed class InterpoleEditorWidget : IDisposable
         // playback on the keyframe page would strand you there with no way back to the sequencer.
         if (mouse.Y >= LanesBottom) { TryHandleTabBarClick(mouse); return; }
 
-        // Zoom the time axis around the cursor (over the lanes / ruler). Changes _pxPerFrame → the node
-        // sees the view change and re-captures the cache at the new zoom.
+        // Zoom the time axis. While PLAYING we only change the zoom here — we deliberately do NOT anchor
+        // the scroll to the cursor (as the stopped-mode zoom does). The node owns the scroll during play,
+        // stepping it in whole pages, and re-anchors that grid on a zoom to keep the PLAYHEAD pinned on
+        // screen (zoom toward the playhead). Cursor-anchored scroll would fight that grid and make the
+        // view flip erratically as the playhead nears a page edge.
         if (io.MouseWheel != 0f && mouse.X >= _laneLeft)
-        {
-            float old = _pxPerFrame;
             _pxPerFrame = Math.Clamp(_pxPerFrame * MathF.Pow(1.1f, io.MouseWheel), MinPxPerFrame, MaxPxPerFrame);
-            float frameUnder = (mouse.X - _laneLeft + _scrollX) / old;
-            _scrollX = frameUnder * _pxPerFrame - (mouse.X - _laneLeft);
-            if (_scrollX < 0) _scrollX = 0;
-        }
 
         // Transport bar (topmost strip): buttons + time/frames toggle. Same behaviour as full mode.
         if (mouse.Y >= _origin.Y && mouse.Y < _rulerTop)
