@@ -828,8 +828,10 @@ internal API opening up or a widget-tree rewrite.
 - **Audio playback is unverified on-screen as of this writing** — it builds clean (0 warnings) but the
   audio path (engine pulling, device output, sync-holds-over-time, fades/loop by ear) needs a gamma
   session with an audio device wired to VL.Audio's engine/output. That is the immediate next step.
-- **README doesn't yet document the audio surface** (`+ Audio` track, audio clips, the `Audio`
-  output pin) — update it once the above is verified, so usage docs don't claim unverified behaviour.
+- **README now documents the audio surface** (the `### Audio tracks` section: `+ Audio` track, adding
+  audio clips via the file picker, waveform, head-trim, per-clip gain/fades, per-track volume + M/S, and
+  the `Audio` / `Track Levels` output pins). Kept honest about the still-unverified-in-gamma status and
+  the absolute-path caveat.
 - **The playhead/timecode readout is drawn at the base font size** (`ReadoutTextScale = 1`). It was
   `2.4×`, but the node loads no font (`fonts: Spread<FontConfig?>.Empty`), so ImGui uses its default
   **bitmap atlas** font (ProggyClean, baked ~13px) — magnifying that looked pixelated. A crisp
@@ -842,8 +844,9 @@ internal API opening up or a widget-tree rewrite.
 1. **Verify audio in gamma** (M5 gate): wire the `Audio` `Spread<AudioSignal>` into VL.Audio's
    engine/output, confirm sound, that the playhead/waveform stay locked to the audio over a long clip
    (no drift), that fades ramp and the loop region wraps seamlessly by ear, and that No UI Mode plays
-   headless. Then finish M5: **update README** with the audio surface; decide which audio caveats to
-   address (async file dialog; rebuild the transport snapshot only on `Changed`; relative WAV paths).
+   headless. (**README audio surface: done** — the `### Audio tracks` section.) Remaining M5: decide which
+   audio caveats to address (async file dialog; rebuild the transport snapshot only on `Changed`; relative
+   WAV paths).
 2. **On-screen verification in gamma** of all the non-audio interactions (ongoing).
 3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
 4. Audio nice-to-haves: **slip-edit** (drag inside an audio clip to move `FileInPoint` without moving

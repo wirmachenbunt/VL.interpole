@@ -59,7 +59,7 @@ Interpole/
 | out | `Active Color` | Spread&lt;Color4&gt; | per track: the active clip's palette colour, or transparent (alpha 0) in a gap. |
 | out | `Upcoming Clip Names` | Spread&lt;string&gt; | per track (aligned by track order): the name of that track's **next clip to play** — for preloading — or `""` if the track has none. Normally the soonest clip starting after the playhead; **when looping it wraps**, so a track with nothing left before `Loop Out` reports the clip the loop replays from its start (a looping timeline always looks ahead). |
 | out | `Audio` | Spread&lt;AudioSignal&gt; | the timeline's audio as a fixed stereo mix bus — every audio clip on every audio track, summed with its fades + gain and played in sync with the playhead. Wire straight into VL.Audio's engine / output. |
-| out | `Track Levels` | Spread&lt;float&gt; | per **audio track** (aligned by audio-track order, index 0 = the first `TrackKind.Audio` track): that track's current loudness, `0..~1` — an **RMS meter** of everything the track is playing (all clips summed, post fade + gain), with a fast attack and a smooth (~0.3 s) release, like a VU meter. `0` while the track is silent or playback is stopped. Standard tracks are not included. |
+| out | `Track Levels` | Spread&lt;float&gt; | per **audio track** (aligned by audio-track order, index 0 = the first `TrackKind.Audio` track): that track's current loudness, `0..~1` — an **RMS meter** of everything the track is playing (all clips summed, post fade, clip gain **and track volume**), with a fast attack and a smooth (~0.3 s) release, like a VU meter. `0` while the track is silent or playback is stopped. Standard tracks are not included. |
 | out | `Info` | InterpoleInfo | **one-cable bundle** of every value output above (`Current Frame`, `Is Playing`, `Active Marker`, the per-track **track names**, and the per-track spreads) as a single immutable record — route "the whole timeline state" on one wire and unpack only what you need with the **`GetTransport` / `GetActiveClips` / `GetUpcomingClips` / `GetTrack` / `GetActiveMarker` / `GetKeyframes`** splitter nodes. Costs one small record per frame; the spreads are shared by reference. (`Audio` and `Track Levels` are not bundled — they're audio-thread outputs and stay on their own pins.) |
 
 A freshly dropped node seeds itself with **Track 1** (two sample clips) + **Track 2** so you
@@ -90,8 +90,8 @@ even in the renderer's **default** `Normalized` Space.
    Loop ⟳** buttons centered, and a **stopwatch** toggle button on the right that switches the
    ruler + readout between **timecode** (`M:SS` / `M:SS:FF`, at the `Fps` pin's rate) and raw
    **frame numbers**. Defaults to **timecode** (stopwatch on).
-2. **Ruler** (frame numbers or timecode, per the stopwatch toggle) + top-left **corner** holding
-   the **+ Track** button. A thin **loop ribbon** runs along the **top of the ruler**: a green bar
+2. **Ruler** (frame numbers or timecode, per the stopwatch toggle) + top-left **corner** holding the
+   **+ Track** and **+ Audio** buttons. A thin **loop ribbon** runs along the **top of the ruler**: a green bar
    with a **grip at each end** showing the **loop region**. Drag a grip to set loop-in / loop-out,
    drag the bar to slide the whole region, drag empty ribbon to draw a fresh one, **Alt/Middle-click**
    to clear it. When no region is authored the bar is faint and spans the **whole content** (the
@@ -116,6 +116,8 @@ action** (**stop** or **jump to marker**), and a **delete** button. For a clip i
 - **Start**, **Length**, **Fade In**, **Fade Out** — shown in **frames** or **seconds** depending
   on the stopwatch (timecode) toggle; drag or Ctrl-click to type. Numeric edits clamp to the
   non-overlap rules, and each field edit is one undo step.
+- for an **audio clip** an extra **AUDIO** block shows the **file** name (read-only), the **In-point
+  (s)** trim (where in the file playback starts), and a per-clip **Gain** — see [Audio tracks](#audio-tracks).
 
 ### Interactions
 
@@ -124,10 +126,12 @@ Tracks (header column):
 - **double-click** a track header → rename it (inline)
 - **drag** a track header → reorder the tracks
 - **Alt-click** or **Middle-click** a track header → delete the track (and its clips)
-- **audio tracks** carry two buttons right of the name — a **loudspeaker** (mute) and an **ear** (solo);
-  they light **red** when muted / **yellow** when soloed.
-  Solo isolates — if any audio track is soloed, only soloed tracks are heard; mute always silences (and a
-  muted / soloed-out track meters `0`). Both persist with the patch and are undoable.
+- **audio tracks** carry, right of the name, a **volume** value and two letter buttons — **M** (mute,
+  lights **red**) and **S** (solo, lights **yellow**). **Volume** is a draggable `0..1` number that
+  scales the **whole lane** (multiplied into every clip's gain); drag it like any ImGui value, or
+  double-click to type. Solo isolates — if any audio track is soloed, only soloed tracks are heard; mute
+  always silences (and a muted / soloed-out track meters `0`). All three persist with the patch and are
+  undoable.
 
 Markers (the lane just below the ruler) — named points on the frame axis, global to the timeline:
 - **double-click** empty marker-lane space → a modal asks for a **name**, a **colour** (the shared
@@ -154,7 +158,8 @@ Clips (lanes) — clips in a track can never overlap; all edits clamp to neighbo
   lands on the playhead and the rest keep their relative track + time; each pasted clip is trimmed
   to the gap on its track so it never overlaps
 - **Del / Backspace** → delete every selected clip
-- **double-click** empty lane → add a clip there
+- **double-click** empty lane → add a clip there (on an **audio track** this opens a **file picker** —
+  see [Audio tracks](#audio-tracks))
 - **drag** a clip body → move it in time; **drag a selected clip** → move the **whole selection**
   together; **drag up/down onto another track** → move the clip(s) to that track (only when the
   whole selection fits there without overlapping — otherwise it stays put and just slides in time).
@@ -212,6 +217,37 @@ History:
 
 All units are **integer frames**; the **stopwatch** toggle only changes how the ruler and
 readout are *labelled* (timecode is derived from the inspector-only **`Fps`** pin, default 60).
+
+### Audio tracks
+
+Besides standard (abstract) clip tracks, the timeline has **audio tracks** that play real sound files
+in sync with the playhead, mixed internally and emitted on the **`Audio`** output pin.
+
+- **Add an audio track** with the **+ Audio** button in the top-left corner (next to **+ Track**).
+  Audio tracks are drawn a little **taller** and slightly darker so they read apart from standard tracks.
+- **Add an audio clip** by **double-clicking an empty spot** on an audio track — a **file picker** opens
+  (WAV / MP3 / …); the chosen file becomes a clip **sized to its duration** (at the `Fps` rate), clamped
+  to the gap. The clip is labelled with the file name and defaults to a green colour. WAV loads cheapest;
+  compressed formats decode lazily.
+- The **waveform** is drawn inside the clip (a min/max envelope that follows zoom and the trim). To keep
+  playback cheap only the **selected or hovered** audio clip renders its waveform; while a file is still
+  decoding it shows `loading…`, and a missing file shows `! missing file`.
+- **Trim** the audio without moving it on the timeline by **dragging the clip's left edge** — that
+  advances the **file in-point** (a proper NLE head-trim), and the waveform shifts to match. You can also
+  set the in-point precisely in the inspector's **AUDIO** block.
+- Each audio clip has its own **Gain** (inspector) and the usual **fade-in / fade-out** handles; the fade
+  envelope shapes the audio too. Copy/paste carries the file, in-point and gain.
+- **Per-track mix controls** live in the track header (right of the name): a draggable **volume** `0..1`
+  that scales the whole lane, and the **M** (mute) / **S** (solo) buttons. Volume multiplies into every
+  clip's gain; **solo** isolates (any soloed track mutes the rest); **mute** always silences. All three
+  persist and are undoable.
+- **Wire it up**: connect the node's **`Audio`** output (a fixed stereo `Spread<AudioSignal>`) into
+  VL.Audio's engine / output. Per-audio-track loudness is on **`Track Levels`** (a post-fade, post-gain,
+  post-volume VU meter). Audio keeps playing in **No UI Mode** (the editor render is skipped, not the mixer).
+
+> Paths are stored **absolute** for now, so moving the patch to another machine can break audio-file
+> references (relative-to-patch paths are a planned improvement). Audio clips have **no keyframes**, so
+> they never open a keyframe page.
 
 ### Keyframe editor (per-clip float tracks)
 
@@ -374,6 +410,11 @@ Done:
 - **Keyframe values split (`GetKeyframes`)** — looks a clip up **by name** in `Info` and outputs its
   float-track **names** and **current values** (sampled at the playhead) as two aligned spreads. First
   clip wins on a duplicate name; unknown/empty name → empty spreads.
+- **Audio tracks** — **+ Audio** track kind; **double-click** an empty audio lane opens a **file picker**
+  and drops a clip sized to the file; **waveform** display (selected/hovered clip), **left-edge head-trim**
+  (advances the file in-point), per-clip **gain** + **fades**, and per-track **volume `0..1`** / **M**ute /
+  **S**olo in the header. Summed into a stereo mix on the **`Audio`** pin (wire to VL.Audio) with a
+  per-audio-track **`Track Levels`** VU; plays in **No UI Mode** too. *(File paths are absolute for now.)*
 - **Pins** — `Data` / `No UI Mode` / `Play` / `Stop` / `Rewind` / `Loop` / `Loop In` / `Loop Out` /
   `Time` / `Set` / `Marker` / `Jump` / `Active State` in, `Editor` / `Current Frame` / `Is Playing` / `Active Marker` / `Active Clip Name` /
   `Clip Frame` / `Clip Length` / `Active Clip Progress` / `Fade Gain` / `Active Color` /
