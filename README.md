@@ -1,6 +1,6 @@
 # VL.Interpole — a clip timeline editor for vvvv gamma
 
-![VL.Interpole timeline editor](https://raw.githubusercontent.com/wirmachenbunt/Interpole/master/interpole_screenshot.png)
+![VL.Interpole timeline editor](https://raw.githubusercontent.com/wirmachenbunt/VL.interpole/master/interpole_screenshot.png)
 
 A Premiere-style **clip timeline** node for vvvv gamma: tracks on the left, a frame-based
 clip area on the right, a scrubbable **playhead**, and a **transport bar** (play / stop /

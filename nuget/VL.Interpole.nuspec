@@ -16,12 +16,11 @@
     <license type="expression">MIT</license>
     <icon>icon.png</icon>
     <readme>README.md</readme>
-    <!-- TODO: point these at the real project page / repo before publishing. -->
-    <projectUrl>https://discourse.vvvv.org/</projectUrl>
+    <projectUrl>https://github.com/wirmachenbunt/VL.interpole</projectUrl>
     <description>An interactive timeline / sequencer editor node for vvvv gamma: multi-track clips, after-effects-style keyframe animation, named markers, loop regions and a sample-accurate stereo audio mixer, rendered as a VL.Skia layer. Drives downstream patches through value outputs (active clip, fade gain, colour, keyframes) and a live Audio bus.</description>
     <copyright>2026 wirmachenbunt</copyright>
     <tags>vvvv VL timeline sequencer keyframe audio editor imgui skia</tags>
-    <repository type="git" url="https://github.com/wirmachenbunt/Interpole" />
+    <repository type="git" url="https://github.com/wirmachenbunt/VL.interpole" />
     <dependencies>
       <!-- Non-core vvvv packages Interpole needs (VL.CoreLib ships with gamma + is declared in the .vl). -->
       <group targetFramework="net8.0-windows7.0">
