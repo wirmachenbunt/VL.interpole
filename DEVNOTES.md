@@ -867,12 +867,36 @@ glyphs base their size on ~half the button (`min(w,h)*0.52`/`*0.62`) so each cov
 with even padding, matching the transport glyphs' weight. The lock/clock buttons were already the same
 size as the transport buttons (all `bh × bh` off `TransportButtonRect`); the icons just filled them.
 
-## Known issues / rough edges
+## DPI / UI scaling (2026-10-14)
 
-- **DPI: the editor renders 2× on 200% Windows scaling** (shared with Automata — see the
-  `vl-automata-editor-dpi-pixel-lock` memory). This is why several sizing constants (ruler
-  height especially) were bumped by hand. A proper fix is to fold `1/DIPFactor` into the editor
-  scale rather than chasing pixel constants — **not done yet**.
+The editor now **scales its hand-drawn geometry with the Windows display scaling**, so the
+graphics↔text ratio stays constant at 100% / 150% / 200% (previously the DIP-sized ImGui fonts
+scaled with DPI but the raw-pixel geometry did not, so the ratio drifted — the font grew relative to
+the fixed-pixel ruler/clips at high DPI, which is why several constants, ruler height especially, had
+been bumped by hand).
+
+- **`_scale` = (live baked font px ÷ its DIP size) × `GfxDensity`.** The font ratio recovers the DPI
+  factor from the thing we're matching — the DIP-sized font itself — so it reads **exactly 1.0 at 100%**
+  (the change is a no-op there) and the DPI factor above it. The node feeds the DPI-independent base
+  (`InterpoleNode.BaseFontDip` = `FontConfig.Default.Size × 100`) each frame like it feeds `Fps`; the
+  editor samples `IG.GetFontSize()` at the top of `Draw` (after `Begin` pushed the default face) and
+  computes `_scale`. Off-Windows (`FontConfig.Default` null) `BaseFontDip` is 0 → `_scale` falls back to
+  the density knob alone.
+- **`GfxDensity` (0.8) is the single tuning knob** for how big the graphics sit *relative to the type* —
+  it multiplies all geometry, never the text (ImGui's own font). The DPI fix locks the ratio; this sets
+  what the ratio is. `1.0` = the original (100%-era) proportions, which read too graphics-heavy; `0.8`
+  (tuned by eye, confirmed good at both 100% and 150%) trims every graphical element 20% against the
+  type. Lives next to `_scale`.
+- **Mechanism: author in DIP, multiply at the accessor.** Every pixel layout constant is a `…Px` base
+  const plus a same-named `private float X => XPx * _scale` property, so the ~hundreds of call sites
+  scale with **zero changes**. Per-method local layout consts (transport/tab/track-toggle/float-header/
+  marker/playhead/swatch geometry) were de-`const`ed to `× _scale`. Values that are **not** pixels stay
+  plain consts: `AudioTrackScale` (a ratio), `DefaultClipLen` (frames), the `*PxPerFrame` zoom bounds,
+  `ReadoutTextScale`. Hit-testing scales for free because draw and hit read the same scaled accessors.
+- **Not scaled (deliberate, so far):** the **time axis** (`_pxPerFrame`) — clip *width* follows the
+  user's literal zoom, not DPI (also keeps the node's play-cache + persisted view out of it); and the
+  **long tail of inline pixel literals** (small text insets, ruler-label spacing, line/stroke
+  thicknesses) — cosmetically minor. Candidates if a fully uniform scale is ever wanted.
 - Playback is real-time by default (dt × Fps), driven from the node's `Update` via `Tick` so it runs in
   No UI Mode; per-`Update` stepping is opt-in via the hidden `Frame Step Playback` pin (see timebase
   decision above). Real-time relies on the wall-clock `dt` being sane — a very long stall (or the node
@@ -924,7 +948,9 @@ size as the transport buttons (all `bh × bh` off `TransportButtonRect`); the ic
    audio caveats to address (async file dialog; rebuild the transport snapshot only on `Changed`; relative
    WAV paths).
 2. **On-screen verification in gamma** of all the non-audio interactions (ongoing).
-3. **DPI pixel-lock** (fold `1/DIPFactor` into the editor scale).
+3. ~~**DPI pixel-lock**~~ — **done** (2026-10-14): geometry scales with display scaling via `_scale`,
+   tuned against the type with the `GfxDensity` knob (see the *DPI / UI scaling* section). Remaining:
+   optionally scale the time-axis zoom and the inline-literal long tail for a fully uniform scale.
 4. Audio nice-to-haves: **slip-edit** (drag inside an audio clip to move `FileInPoint` without moving
    the clip); per-clip **waveform colour/scale**; a master **gain/meter**; embedding or
    relative-path WAV references; scrub-audio preview while paused.

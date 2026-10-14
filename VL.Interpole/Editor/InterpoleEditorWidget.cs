@@ -43,28 +43,63 @@ namespace VL.Interpole;
 // clip's immediate neighbours (see LeftBound / RightBound / AddClip).
 public sealed class InterpoleEditorWidget : IDisposable
 {
-    // ---- layout constants (screen pixels / frames) ----
-    private const float HeaderWidth = 340f;   // track-name column (timeline) — matches the clip page
-    private const float ClipHeaderWidth = 340f;// wider track column on the clip (keyframe) page
-    private const float TransportHeight = 88f;// transport toolbar (playhead readout + buttons)
-    private const float RulerHeight = 64f;    // frame ruler strip (tall enough for the labels)
-    private const float LoopStripHeight = 14f;// loop-range ribbon, carved from the top of the ruler
-    private const float MarkerLaneHeight = TrackHeight;// marker strip; same height as a normal track lane
-    private const float MarkerPinHeight = MarkerLaneHeight - 10f;// pin height (fills the lane bar a small margin), centred vertically
-    private const float TrackHeight = 54f;    // one standard lane
-    private const float AudioTrackScale = 1.2f; // audio tracks/clips are 20% taller
-    private const float ClipPadY = 6f;        // vertical inset of a clip within its lane
-    private const float ClipRounding = 4f;    // corner radius of a clip's rounded rect
-    private const float EdgeGrabPx = 6f;      // width of a clip's resize handle
-    private const float FadeHandlePx = 11f;   // size of a clip's top-corner fade handle
+    // ---- layout constants (authored in DIP — device-INDEPENDENT pixels — then × _scale for the live
+    //      Windows DPI factor; see _scale). The `…Px` base holds the 100%-scale value; the same-named
+    //      property returns it scaled, so every call site scales automatically. Values that are NOT
+    //      pixels (frame counts, zoom px/frame, pure multipliers) stay plain consts below. ----
+    private const float HeaderWidthPx = 340f;   // track-name column (timeline) — matches the clip page
+    private const float ClipHeaderWidthPx = 340f;// wider track column on the clip (keyframe) page
+    private const float TransportHeightPx = 88f;// transport toolbar (playhead readout + buttons)
+    private const float RulerHeightPx = 64f;    // frame ruler strip (tall enough for the labels)
+    private const float LoopStripHeightPx = 14f;// loop-range ribbon, carved from the top of the ruler
+    private const float TrackHeightPx = 54f;    // one standard lane
+    private const float ClipPadYPx = 6f;        // vertical inset of a clip within its lane
+    private const float ClipRoundingPx = 4f;    // corner radius of a clip's rounded rect
+    private const float EdgeGrabPxPx = 6f;      // width of a clip's resize handle
+    private const float FadeHandlePxPx = 11f;   // size of a clip's top-corner fade handle
+    private const float InspectorWidthPx = 280f;   // right-side clip inspector panel
+    private const float ToggleStripPxPx = 18f;     // inspector open/close strip at the far right
+    private const float ReadoutPadXPx = 24f;     // left inset of the readout from the bar edge
+    private const float TabBarHeightPx = 52f;    // bottom page-switcher strip [Timeline] [◆ clip]
+
+    private float HeaderWidth => HeaderWidthPx * _scale;
+    private float ClipHeaderWidth => ClipHeaderWidthPx * _scale;
+    private float TransportHeight => TransportHeightPx * _scale;
+    private float RulerHeight => RulerHeightPx * _scale;
+    private float LoopStripHeight => LoopStripHeightPx * _scale;
+    private float TrackHeight => TrackHeightPx * _scale;
+    private float ClipPadY => ClipPadYPx * _scale;
+    private float ClipRounding => ClipRoundingPx * _scale;
+    private float EdgeGrabPx => EdgeGrabPxPx * _scale;
+    private float FadeHandlePx => FadeHandlePxPx * _scale;
+    private float InspectorWidth => InspectorWidthPx * _scale;
+    private float ToggleStripPx => ToggleStripPxPx * _scale;
+    private float ReadoutPadX => ReadoutPadXPx * _scale;
+    private float TabBarHeight => TabBarHeightPx * _scale;
+    private float MarkerLaneHeight => TrackHeight;        // marker strip; same height as a normal track lane
+    private float MarkerPinHeight => MarkerLaneHeight - 10f * _scale;// pin fills the lane bar less a small margin, centred vertically
+
+    private const float AudioTrackScale = 1.2f; // audio tracks/clips are 20% taller (a ratio, not pixels)
     private const int DefaultClipLen = 30;    // frames, for a freshly added clip
     private const float MinPxPerFrame = 0.06f, MaxPxPerFrame = 40f;   // 0.06/6 ≈ 1% zoom floor
     private const float DefaultPxPerFrame = 6f;  // the 100% zoom reference (mirrored by InterpoleDocument.ViewPxPerFrame's default)
     private const float ReadoutTextScale = 1f; // playhead/timecode readout size, x the base font
-    private const float InspectorWidth = 280f;   // right-side clip inspector panel
-    private const float ToggleStripPx = 18f;     // inspector open/close strip at the far right
-    private const float ReadoutPadX = 24f;     // left inset of the readout from the bar edge
-    private const float TabBarHeight = 52f;    // bottom page-switcher strip [Timeline] [◆ clip]
+
+    // ---- DPI / UI scale ----
+    // Every pixel dimension above is authored in DIP and multiplied by _scale so the whole editor scales
+    // with the Windows display scaling, the SAME way the DIP-sized fonts already do — keeping the text↔
+    // geometry ratio constant across 100% / 150% / 200%. _scale = (live baked font px) / (its DIP size):
+    // exactly 1.0 at 100% (so this is a no-op there), the DPI factor above it. Recomputed each Draw.
+    private float _scale = 1f;
+    // THE tuning knob: a global multiplier on ALL hand-drawn geometry (NOT the text, which is ImGui's own
+    // DIP-sized font). The DPI fix locks the graphics↔text ratio across display scalings; this sets what
+    // that ratio IS. 1.0 keeps the original (100%-era) proportions; < 1 makes every graphical element
+    // (track/clip height, bands, buttons, handles…) smaller relative to the type. Tune by eye — it folds
+    // into _scale, so it applies identically at 100% / 150% / 200%.
+    private const float GfxDensity = 0.8f;
+    // The default font's DIP size, fed by the node each frame (FontConfig.Default.Size × 100). 0 until set
+    // (or non-Windows) → _scale stays at the density knob alone. See InterpoleNode.BaseFontDip.
+    public float BaseFontDip { get; set; }
 
     private readonly string _title;
     private int _trackCounter;
@@ -211,7 +246,8 @@ public sealed class InterpoleEditorWidget : IDisposable
     private bool _inspNameActive;      // the name field is being typed in (don't re-seed then)
 
     // ---- Shift-snapping (playhead scrub + clip move/resize) ----
-    private const float SnapPx = 8f;                 // snap radius in screen pixels (zoom-independent)
+    private const float SnapPxPx = 8f;               // snap radius in screen pixels (zoom-independent)
+    private float SnapPx => SnapPxPx * _scale;       // scaled for DPI like the rest of the geometry
     private readonly List<int> _snapTargets = new(); // reused each frame to avoid allocation
     private bool _clipSnapActive;                    // a clip drag is currently snapped (draws a guide)
     private int _clipSnapFrame;                       // frame the clip drag snapped to
@@ -353,6 +389,12 @@ public sealed class InterpoleEditorWidget : IDisposable
         bool open = IG.Begin("Interpole — " + _title, flags);
         IG.PopStyleVar();
         if (!open) { IG.End(); return; }
+
+        // Derive the UI scale from the live baked font size vs its DIP size (see _scale). Sampled here,
+        // after Begin pushed the default font, so GetFontSize() is the default face's pixel height.
+        float fontPx = IG.GetFontSize();
+        float dpi = (BaseFontDip > 0f && fontPx > 0f) ? Math.Clamp(fontPx / BaseFontDip, 0.5f, 4f) : 1f;
+        _scale = dpi * GfxDensity;   // DPI factor × the graphics-density knob (see GfxDensity)
 
         _origin = IG.GetCursorScreenPos();
         _size = IG.GetContentRegionAvail();
@@ -654,7 +696,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // A bright vertical grip hugging the inside of a clip's in/out edge — the resize affordance.
     private void DrawEdgeGrip(ImDrawListPtr dl, float edgeX, float y0, float y1, bool left)
     {
-        const float w = 3.5f;
+        float w = 3.5f * _scale;
         float gx0 = left ? edgeX : edgeX - w;
         float gx1 = left ? edgeX + w : edgeX;
         dl.AddRectFilled(new Vector2(gx0, y0 + 1f), new Vector2(gx1, y1 - 1f), Col(1f, 1f, 1f, 0.9f),
@@ -887,13 +929,13 @@ public sealed class InterpoleEditorWidget : IDisposable
         // Snapped (Shift-scrub) turns the playhead cyan and a touch thicker as feedback.
         bool snapped = _drag == DragMode.Playhead && _playheadSnapped;
         uint col = snapped ? Col(0.30f, 0.85f, 0.98f) : Col(0.95f, 0.32f, 0.30f);
-        dl.AddLine(new Vector2(x, _loopBottom + 12), new Vector2(x, LanesBottom), col, snapped ? 2.5f : 1.5f);
+        dl.AddLine(new Vector2(x, _loopBottom + 12f * _scale), new Vector2(x, LanesBottom), col, snapped ? 2.5f : 1.5f);
         // Downward-pointing handle sitting in the ruler, just below the loop strip.
-        const float hw = 7f, top = 1f;
+        float hw = 7f * _scale, top = 1f * _scale;
         dl.AddTriangleFilled(
             new Vector2(x - hw, _loopBottom + top),
             new Vector2(x + hw, _loopBottom + top),
-            new Vector2(x, _loopBottom + top + 13f), col);
+            new Vector2(x, _loopBottom + top + 13f * _scale), col);
         dl.PopClipRect();
     }
 
@@ -958,7 +1000,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // with the track name. Only meaningful for audio tracks; used by both the draw and the hit-testing.
     private (Vector2 mMin, Vector2 mMax, Vector2 sMin, Vector2 sMax) TrackToggleRects(int i)
     {
-        const float bh = 30f, gap = 4f, margin = 8f;
+        float bh = 30f * _scale, gap = 4f * _scale, margin = 8f * _scale;
         float y0 = TrackTop(i) + TrackHeightOf(i) * 0.5f - bh * 0.5f;
         float sx1 = _laneLeft - margin;   // S right edge (rightmost)
         float sx0 = sx1 - bh;
@@ -972,7 +1014,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // centred on the row and matched to the current ImGui frame height so it lines up with M / S.
     private (Vector2 min, Vector2 max) TrackVolumeRect(int i)
     {
-        const float w = 44f, gap = 6f;
+        float w = 44f * _scale, gap = 6f * _scale;
         var (mMin, _, _, _) = TrackToggleRects(i);
         float h = IG.GetFrameHeight();
         float cy = TrackTop(i) + TrackHeightOf(i) * 0.5f;
@@ -1361,7 +1403,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     private (Vector2 min, Vector2 max) TransportButtonRect(int i)
     {
-        const float pad = 8f, gap = 8f, maxBtn = 44f;
+        float pad = 8f * _scale, gap = 8f * _scale, maxBtn = 44f * _scale;
         // Square buttons: bar height minus padding, but capped so they don't grow with a tall bar.
         float bh = MathF.Min(TransportHeight - 2 * pad, maxBtn);
         float by0 = _origin.Y + (TransportHeight - bh) * 0.5f;   // vertically centered in the bar
@@ -1377,7 +1419,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // the transport bar, matching the transport buttons' size and vertical extent.
     private (Vector2 min, Vector2 max) TimeToggleRect()
     {
-        const float pad = 8f;
+        float pad = 8f * _scale;
         var (bmin, bmax) = TransportButtonRect(3);
         float h = bmax.Y - bmin.Y;
         float x1 = LaneRight - pad;
@@ -1388,7 +1430,7 @@ public sealed class InterpoleEditorWidget : IDisposable
     // Placed on the always-handled transport strip so it stays reachable to unlock (and works in play).
     private (Vector2 min, Vector2 max) LockToggleRect()
     {
-        const float gap = 8f;
+        float gap = 8f * _scale;
         var (tmin, tmax) = TimeToggleRect();
         float h = tmax.Y - tmin.Y;
         float x1 = tmin.X - gap;
@@ -1550,9 +1592,9 @@ public sealed class InterpoleEditorWidget : IDisposable
         dl.AddRectFilled(new Vector2(_origin.X, top), new Vector2(right, bottom), Col(0.10f, 0.11f, 0.12f));
         dl.AddLine(new Vector2(_origin.X, top), new Vector2(right, top), Col(0f, 0f, 0f, 0.5f));
 
-        const float padX = 16f, gap = 3f, tabTopInset = 3f;
+        float padX = 16f * _scale, gap = 3f * _scale, tabTopInset = 3f * _scale;
         float textY = top + (bottom - top) * 0.5f + 1f;   // vertical centre for text / diamond / ✕
-        float x = _origin.X + 8f;
+        float x = _origin.X + 8f * _scale;
 
         // Timeline tab (always present).
         {
@@ -1865,14 +1907,14 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // The name column's width in a float-track header — the row width minus the fixed value field.
     // Shared by the header draw and the inline rename box so the two line up.
-    private float FloatHeaderNameWidth() => MathF.Max(60f, (_laneLeft - 12f) - (_origin.X + 12f) - 96f - 8f);
+    private float FloatHeaderNameWidth() => MathF.Max(60f * _scale, (_laneLeft - 12f * _scale) - (_origin.X + 12f * _scale) - 96f * _scale - 8f * _scale);
 
     // The "K" (add-keyframe) button rect in float-track header row i — a small square just left of the
     // value field, centred on the row. Used by both the header draw and the click hit-test so they agree.
     private (Vector2 min, Vector2 max) FloatKeyButtonRect(int i)
     {
-        const float bh = 26f, kGap = 8f;
-        float valX = _origin.X + 12f + FloatHeaderNameWidth() + 8f;   // 8 = the value field's gap
+        float bh = 26f * _scale, kGap = 8f * _scale;
+        float valX = _origin.X + 12f * _scale + FloatHeaderNameWidth() + 8f * _scale;   // 8 = the value field's gap
         float cy = FloatRowTop(i) + TrackHeight * 0.5f;
         float x1 = valX - kGap;
         return (new Vector2(x1 - bh, cy - bh * 0.5f), new Vector2(x1, cy + bh * 0.5f));
@@ -1918,7 +1960,7 @@ public sealed class InterpoleEditorWidget : IDisposable
             // Name + value, only when the row fully fits (keeps them off the tab bar).
             if (rowBot <= LanesBottom)
             {
-                const float valueW = 96f, gap = 8f;
+                float valueW = 96f * _scale, gap = 8f * _scale;
                 float nameW = FloatHeaderNameWidth();
                 float rowCy = (top + rowBot) * 0.5f;
 
@@ -3443,7 +3485,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         bool overLane = InRect(mouse, new Vector2(_laneLeft, top), new Vector2(LaneRight, bottom));
         var hover = (overLane && _drag == DragMode.None && !_markerDialogOpen) ? HitMarker(mouse) : null;
 
-        const float mkHW = 8f;   // half-width of the marker pin (Unity-style: rounded-top rect → point)
+        float mkHW = 8f * _scale;   // half-width of the marker pin (Unity-style: rounded-top rect → point)
         foreach (var m in Document.Markers)
         {
             float x = FrameToX(m.Frame);
@@ -3522,8 +3564,8 @@ public sealed class InterpoleEditorWidget : IDisposable
         foreach (var m in Document.Markers)
         {
             float x = FrameToX(m.Frame);
-            float w = string.IsNullOrEmpty(m.Name) ? 0f : IG.CalcTextSize(m.Name).X + 12f;
-            if (mouse.X >= x - 9f && mouse.X <= x + 9f + w)
+            float w = string.IsNullOrEmpty(m.Name) ? 0f : IG.CalcTextSize(m.Name).X + 12f * _scale;
+            if (mouse.X >= x - 9f * _scale && mouse.X <= x + 9f * _scale + w)
             {
                 float dx = MathF.Abs(mouse.X - x);
                 if (dx < bestDx) { bestDx = dx; best = m; }
@@ -4095,15 +4137,15 @@ public sealed class InterpoleEditorWidget : IDisposable
     {
         var dl = IG.GetWindowDrawList();
         Vector2 mouse = IG.GetMousePos();
-        const float sw = 22f, gap = 4f, pad = 5f;
+        float sw = 22f * _scale, gap = 4f * _scale, pad = 5f * _scale;
         int n = ClipPalette.Length;
         float rowW = n * sw + (n - 1) * gap;
         float panelW = rowW + pad * 2, panelH = sw + pad * 2;
 
-        float minX = _laneLeft + 4f, maxX = LaneRight - 4f - panelW;
+        float minX = _laneLeft + 4f * _scale, maxX = LaneRight - 4f * _scale - panelW;
         float px = maxX < minX ? minX : Math.Clamp(editPos.X - pad, minX, maxX);   // avoid min>max
-        float py = editPos.Y + IG.GetFrameHeight() + 6f;
-        if (py + panelH > LanesBottom - 4f) py = editPos.Y - 6f - panelH;   // flip above near the bottom
+        float py = editPos.Y + IG.GetFrameHeight() + 6f * _scale;
+        if (py + panelH > LanesBottom - 4f * _scale) py = editPos.Y - 6f * _scale - panelH;   // flip above near the bottom
 
         dl.AddRectFilled(new Vector2(px, py), new Vector2(px + panelW, py + panelH), Col(0.10f, 0.11f, 0.12f, 0.97f), 4f);
         dl.AddRect(new Vector2(px, py), new Vector2(px + panelW, py + panelH), Col(0f, 0f, 0f, 0.5f), 4f);

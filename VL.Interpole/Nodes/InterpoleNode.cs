@@ -59,6 +59,11 @@ public class InterpoleNode : IDisposable
         FontConfig.Default is { } def
             ? new FontConfig?[] { def, def with { Size = ReadoutFontSize, Name = "readout" } }.ToSpread()
             : Spread<FontConfig?>.Empty;
+    // The default editor font's size in DIP (device-INDEPENDENT pixels) — FontConfig.Size is hecto-DIP
+    // (1 = 100 DIP). The editor divides the live baked pixel size (IG.GetFontSize(), which VL.ImGui bakes
+    // at this × the Windows DPI factor) by this to recover its UI scale: exactly 1.0 at 100% scaling,
+    // the DPI factor above it. 13 DIP is the fallback when FontConfig.Default is null (non-Windows).
+    private static readonly float BaseFontDip = (FontConfig.Default is { } fd ? fd.Size : 0.13f) * 100f;
 
     // Wraps the ImGui editor widget as a Skia layer so the node outputs an ILayer directly —
     // no ToSkiaLayer node needed in the patch.
@@ -327,6 +332,7 @@ public class InterpoleNode : IDisposable
         {
             _editor.Fps = fps;
             _editor.FrameStepPlayback = frameStepPlayback;
+            _editor.BaseFontDip = BaseFontDip;   // DPI-independent default-font size, so the editor can derive its UI scale
             _editor.Tick();
 
             // Feed the audio mixer this frame's transport: the audio-clip layout plus the playhead
