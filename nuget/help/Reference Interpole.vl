@@ -367,5 +367,5 @@
   </Patch>
   <NugetDependency Id="LAoYrcP5hijQbibP6nTopo" Location="VL.Skia" Version="2025.7.4" />
   <NugetDependency Id="J1vNh9qYCJYOPZo6l3JX8S" Location="VL.Audio" Version="1.9.19" />
-  <DocumentDependency Id="SplmirawlGDOvIB0LIO6dR" Location="./VL.Interpole.vl" />
+  <NugetDependency Id="RUPqoCImccBMX6k1kXzHLL" Location="VL.Interpole" Version="0.1.1" />
 </Document>

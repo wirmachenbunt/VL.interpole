@@ -8,7 +8,7 @@
   <metadata>
     <id>VL.Interpole</id>
     <!-- Bump for every published release (semver). nuget.org rejects re-pushing an existing version. -->
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <title>VL.Interpole</title>
     <authors>wirmachenbunt</authors>
     <owners></owners>
@@ -43,4 +43,5 @@
     <file src="icon.png" target="" />
   </files>
 </package>
+
 
