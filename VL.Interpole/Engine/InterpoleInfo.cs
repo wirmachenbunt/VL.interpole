@@ -47,14 +47,18 @@ public sealed record InterpoleInfo(
     // tracks' names + current values sampled at the playhead. Used by GetKeyframes to look a clip up by
     // name. Only clips with at least one float track are included; duplicate names keep both (first wins
     // on lookup).
-    Spread<ClipKeyframeSnapshot> ClipKeyframes)
+    Spread<ClipKeyframeSnapshot> ClipKeyframes,
+    // Every clip on the timeline, in track-then-clip order, each with its playback state at the playhead.
+    // Used by GetClip to look a clip up by name (active same-named clip wins, else the first same-named).
+    // Unlike ClipKeyframes this includes all clips, not just those with float tracks.
+    Spread<ClipSnapshot> Clips)
 {
     // A harmless empty snapshot (e.g. before the first Update, or a null/unconnected input).
     public static readonly InterpoleInfo Empty = new(
         0, false, "",
         Spread<string>.Empty, Spread<string>.Empty, Spread<int>.Empty, Spread<int>.Empty,
         Spread<float>.Empty, Spread<float>.Empty, Spread<Color4>.Empty, Spread<string>.Empty,
-        Spread<ClipKeyframeSnapshot>.Empty);
+        Spread<ClipKeyframeSnapshot>.Empty, Spread<ClipSnapshot>.Empty);
 }
 
 // One clip's float-track state at the playhead: the clip's name, its float-track names, their current
@@ -62,3 +66,18 @@ public sealed record InterpoleInfo(
 // each frame in the node. GetKeyframes resolves a name to the ACTIVE same-named clip (so a played copy
 // animates), falling back to the first same-named clip's held value when none is active.
 public sealed record ClipKeyframeSnapshot(string ClipName, Spread<string> TrackNames, Spread<float> TrackValues, bool Active);
+
+// One clip's playback state at the playhead, the per-clip twin of the per-track domain outputs
+// (EvaluateOutputs). Name is the real clip label (the GetClip lookup key). Active = the playhead is
+// inside this clip's span. The remaining fields reproduce GetTrack's clip values exactly, already
+// sentinel-encoded for the inactive case: when Active is false they carry the "no active clip" values
+// ("" / -1 / -1 / 0 / 0 / transparent), so a lookup that lands on an inactive clip reads as a gap — the
+// strict-parity behaviour chosen for GetClip. Built each frame in the node for every clip.
+public sealed record ClipSnapshot(
+    string Name,
+    bool Active,
+    int ClipFrame,
+    int ClipLength,
+    float ClipProgress,
+    float FadeGain,
+    Color4 Color);

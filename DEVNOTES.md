@@ -586,7 +586,7 @@ one wire — a direct port of VL.Automata's `AutomataInfo`. It's a **snapshot**,
 `Update` builds a fresh record each frame from the values it already computed (`EvaluateOutputs`), so
 scalars are copied and the spreads are shared **by reference** (they're immutable) — one small record
 per frame, no list copying. Splitter getters (`GetTransport` / `GetActiveClips` / `GetUpcomingClips` /
-`GetTrack` / `GetActiveMarker` / `GetKeyframes`, zero-field `[ProcessNode]`s that tolerate a null input)
+`GetTrack` / `GetActiveMarker` / `GetKeyframes` / `GetClip`, zero-field `[ProcessNode]`s that tolerate a null input)
 unpack it downstream, same convention as Automata's `GetActiveState` etc. **`Audio` is deliberately excluded** — it's a live `Spread<AudioSignal>`
 bus wired straight into VL.Audio, not information to route/unpack, so it keeps its own pin.
 
@@ -604,6 +604,20 @@ bus wired straight into VL.Audio, not information to route/unpack, so it keeps i
   empty/unknown `Track`, or a track sitting in a gap all resolve to the same "nothing" values
   (`""` / `-1` / `-1` / `0` / `0` / transparent), so `Clip Length == -1` reads as "no active clip / no such
   track". Shares the safe-index (`At<T>`) + null-tolerant conventions of the other Get… nodes.
+- **`GetClip` single-clip split by name (2026-10-14).** The per-clip twin of `GetTrack`: looks a clip up
+  **by name** and reports an **`Active`** bool (playhead inside its span) plus the same clip scalars
+  (`Active Clip Name` / `Clip Frame` / `Clip Length` / `Clip Progress` / `Fade Gain` / `Active Color`).
+  Resolution is **playhead-aware like `GetKeyframes`** — among same-named clips the one *active* under the
+  playhead wins (so a played *copy* reports its own state), first wins among several active. Fed by a new
+  `Spread<ClipSnapshot> Clips` in the bundle (`BuildClips`, track-then-clip order, **all** clips — unlike
+  `ClipKeyframes` which is float-track clips only), whose playback fields reuse `EvaluateOutputs`' active-
+  branch maths verbatim and are **sentinel-encoded for the inactive case**. Decision (the user's call):
+  **inactive = strict gap parity** with `GetTrack` (`""` / `-1` / `-1` / `0` / `0` / transparent) rather
+  than leaking the clip's static length/colour while parked; so `Active` says "playing?" and `Active Clip
+  Name == ""` (≡ `Clip Length == -1`) says "nothing active for that name this frame". Because inactive
+  snapshots already hold the gap sentinels, `GetClip` only has to find the *active* same-named clip and
+  otherwise lets the defaults stand — no fallback lookup needed. (Clip Start/End were considered and
+  **dropped** — not wanted.)
 
 ## Keyframe editor — per-clip float tracks (2026-09-05)
 

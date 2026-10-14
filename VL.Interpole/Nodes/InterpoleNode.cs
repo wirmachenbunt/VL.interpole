@@ -456,7 +456,34 @@ public class InterpoleNode : IDisposable
         // Bundle the same values into the one-cable snapshot. Scalars copied; the spreads are the ones
         // just built above, shared by reference (they're immutable). Mirrors VL.Automata's AutomataInfo.
         info = new InterpoleInfo(currentFrame, isPlaying, activeMarker, trackNames, activeClipName, clipFrame, clipLength, clipProgress, fadeGain, activeColor, upcomingClipNames,
-                                 BuildClipKeyframes(_editor?.Document, currentFrame));
+                                 BuildClipKeyframes(_editor?.Document, currentFrame),
+                                 BuildClips(_editor?.Document, currentFrame));
+    }
+
+    // Snapshot every clip's playback state at the playhead — the per-clip twin of EvaluateOutputs' per-
+    // track values — in track-then-clip order, so GetClip can look a clip up by name. Includes ALL clips
+    // (not just those with float tracks, unlike BuildClipKeyframes). The playback fields are sentinel-
+    // encoded for the inactive case (same values EvaluateOutputs emits for a gap), so an inactive clip
+    // reads as a gap through GetClip; only Name and Active are meaningful when the playhead is outside.
+    private static Spread<ClipSnapshot> BuildClips(InterpoleDocument? doc, int frame)
+    {
+        if (doc is null) return Spread<ClipSnapshot>.Empty;
+        var b = new SpreadBuilder<ClipSnapshot>();
+        foreach (var track in doc.Tracks)
+            foreach (var clip in track.Clips)
+            {
+                bool active = clip.Contains(frame);
+                if (!active)
+                {
+                    b.Add(new ClipSnapshot(clip.Label ?? "", false, -1, -1, 0f, 0f, new Color4(0f, 0f, 0f, 0f)));
+                    continue;
+                }
+                var (r, g, bl) = InterpolePalette.Rgb(clip.Color);
+                // Identical maths to EvaluateOutputs' active branch (see the per-track clip values there).
+                float progress = clip.Length > 1 ? Math.Clamp((frame - clip.Start) / (float)(clip.Length - 1), 0f, 1f) : 0f;
+                b.Add(new ClipSnapshot(clip.Label ?? "", true, frame - clip.Start, clip.Length, progress, clip.GainAt(frame), new Color4(r, g, bl, 1f)));
+            }
+        return b.ToSpread();
     }
 
     // Snapshot every clip that has float (keyframe) tracks — its name plus each float track's name and
