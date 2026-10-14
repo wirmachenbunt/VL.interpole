@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   Package staging nuspec. Paths are relative to THIS folder (nuget/), which mirrors the final package
-  layout 1:1 — so VL.Interpole.vl's "./lib/net8.0-windows7.0/VL.Interpole.dll" resolves the same here
+  layout 1:1 â€” so VL.Interpole.vl's "./lib/net8.0-windows7.0/VL.Interpole.dll" resolves the same here
   and inside the installed package. Repack with pack.ps1 (it refreshes the Release dll/xml + README).
 -->
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>VL.Interpole</id>
     <!-- Bump for every published release (semver). nuget.org rejects re-pushing an existing version. -->
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <title>VL.Interpole</title>
     <authors>wirmachenbunt</authors>
     <owners></owners>
@@ -43,3 +43,4 @@
     <file src="icon.png" target="" />
   </files>
 </package>
+
