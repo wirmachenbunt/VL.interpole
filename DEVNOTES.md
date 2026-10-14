@@ -650,8 +650,9 @@ and multi-lane tracks): what's built is simpler and reuses the timeline wholesal
   `DrawMarquee` (new `KfMarquee` drag mode), move via a new `MoveKeyframe` drag that shifts the whole
   selection by a delta and re-sorts `Keys`, Shift-snapping the grabbed key through the shared
   `Snap`/`_snapTargets` (clip edges + playhead + *other* keys) with the same cyan `DrawSnapGuide`.
-  Copy buffer is `(trackIndex, frame, value)`; paste offsets so the earliest key lands on the playhead,
-  into the same track index. Playhead Shift-scrub also adds the active clip's keys to the snap targets.
+  Copy buffer is `(trackIndex, frame, value, interp)`; paste offsets so the earliest key lands on the
+  playhead, into the same track index, and **carries each key's `Interp`** (the easing type — otherwise
+  pasted keys would all come out `Linear`; fixed 2026-10-14). Playhead Shift-scrub also adds the active clip's keys to the snap targets.
 - **Bottom tab bar.** `[Timeline]` + one tab per opened clip (`_openTabs` ordered list, `_activeClipId`
   = shown clip), each a colour diamond + name + ✕. Hand-drawn on the draw list with **bottom-rounded
   corners** (`ImDrawFlags.RoundCornersBottom`) so they read as hanging from the content (a top-rounded

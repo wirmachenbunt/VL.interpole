@@ -190,7 +190,7 @@ public sealed class InterpoleEditorWidget : IDisposable
 
     // ---- keyframe selection / drag (clip page) ----
     private readonly HashSet<string> _kfSelection = new();          // selected keyframe ids (active clip)
-    private readonly List<(int trackIndex, int frame, float value)> _kfClipboard = new();  // copied keyframes
+    private readonly List<(int trackIndex, int frame, float value, InterpMode interp)> _kfClipboard = new();  // copied keyframes
     private readonly List<(Keyframe kf, int orig)> _kfDragOrig = new();  // MoveKeyframe: frames captured at grab
     private int _kfDragGrabbedOrig;        // MoveKeyframe: the grabbed keyframe's frame at grab
     private float _kfDragGrabMouseFrame;   // MoveKeyframe: XToFrame(mouseX) at grab
@@ -2166,7 +2166,7 @@ public sealed class InterpoleEditorWidget : IDisposable
         if (_kfSelection.Count == 0 || FindClip(_activeClipId) is not { } f) return;
         for (int i = 0; i < f.clip.FloatTracks.Count; i++)
             foreach (var k in f.clip.FloatTracks[i].Keys)
-                if (_kfSelection.Contains(k.Id)) _kfClipboard.Add((i, k.Frame, k.Value));
+                if (_kfSelection.Contains(k.Id)) _kfClipboard.Add((i, k.Frame, k.Value, k.Interp));
     }
 
     // Paste copied keyframes at the playhead: the earliest copied keyframe lands on the playhead, the
@@ -2183,7 +2183,9 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (c.trackIndex >= clip.FloatTracks.Count) continue;   // no matching track in this clip
             int newFrame = baseLocal + (c.frame - minFrame);
             if (newFrame < 0) continue;
-            _kfSelection.Add(clip.FloatTracks[c.trackIndex].SetKeyframe(newFrame, c.value).Id);
+            var pasted = clip.FloatTracks[c.trackIndex].SetKeyframe(newFrame, c.value);
+            pasted.Interp = c.interp;   // carry the easing/interpolation type (was lost → always linear)
+            _kfSelection.Add(pasted.Id);
         }
         Commit();
     }
