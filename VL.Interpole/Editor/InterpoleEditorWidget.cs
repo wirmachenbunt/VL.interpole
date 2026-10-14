@@ -3746,7 +3746,9 @@ public sealed class InterpoleEditorWidget : IDisposable
             if (_markerDialogFocus) { IG.SetKeyboardFocusHere(); _markerDialogFocus = false; }
             bool enter = IG.InputText("Name", ref _markerNameBuffer, 128, ImGuiInputTextFlags.EnterReturnsTrue);
 
-            // Colour swatches from the shared clip palette; the selected one gets a white outline.
+            // Colour swatches from the shared clip palette; the selected one gets the same amber outline
+            // as the inspectors (rounded, on the swatch bounds — a sharp outline expanded outside the
+            // button leaves white gaps against ColorButton's rounded frame).
             IG.Dummy(new Vector2(0f, 2f));
             IG.TextDisabled("Colour");
             var pdl = IG.GetWindowDrawList();
@@ -3758,8 +3760,8 @@ public sealed class InterpoleEditorWidget : IDisposable
                         ImGuiColorEditFlags.NoTooltip | ImGuiColorEditFlags.NoDragDrop, new Vector2(18f, 18f)))
                     _markerColorBuffer = i;
                 if (_markerColorBuffer == i)
-                    pdl.AddRect(IG.GetItemRectMin() - new Vector2(1f, 1f), IG.GetItemRectMax() + new Vector2(1f, 1f),
-                                Col(1f, 1f, 1f, 0.95f), 0f, ImDrawFlags.None, 2f);
+                    pdl.AddRect(IG.GetItemRectMin(), IG.GetItemRectMax(),
+                                Col(1f, 0.93f, 0.5f, 1f), 2f, ImDrawFlags.None, 2.5f);
             }
             IG.Dummy(new Vector2(0f, 4f));
 
