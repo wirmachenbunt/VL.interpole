@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Package staging nuspec. Paths are relative to THIS folder (nuget/), which mirrors the final package
+  layout 1:1 — so VL.Interpole.vl's "./lib/net8.0-windows7.0/VL.Interpole.dll" resolves the same here
+  and inside the installed package. Repack with pack.ps1 (it refreshes the Release dll/xml + README).
+-->
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>VL.Interpole</id>
+    <!-- Bump for every published release (semver). nuget.org rejects re-pushing an existing version. -->
+    <version>0.1.0</version>
+    <title>VL.Interpole</title>
+    <authors>wirmachenbunt</authors>
+    <owners></owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <!-- Drop icon.png (128x128) in this folder, then uncomment this and the <file> below. -->
+    <!-- <icon>icon.png</icon> -->
+    <readme>README.md</readme>
+    <!-- TODO: point these at the real project page / repo before publishing. -->
+    <projectUrl>https://discourse.vvvv.org/</projectUrl>
+    <description>An interactive timeline / sequencer editor node for vvvv gamma: multi-track clips, after-effects-style keyframe animation, named markers, loop regions and a sample-accurate stereo audio mixer, rendered as a VL.Skia layer. Drives downstream patches through value outputs (active clip, fade gain, colour, keyframes) and a live Audio bus.</description>
+    <copyright>2026 wirmachenbunt</copyright>
+    <tags>vvvv VL timeline sequencer keyframe audio editor imgui skia</tags>
+    <repository type="git" url="https://github.com/wirmachenbunt/Interpole" />
+    <dependencies>
+      <!-- Non-core vvvv packages Interpole needs (VL.CoreLib ships with gamma + is declared in the .vl). -->
+      <group targetFramework="net8.0-windows7.0">
+        <dependency id="VL.ImGui" version="2025.7.4" exclude="Build,Analyzers" />
+        <dependency id="VL.ImGui.Skia" version="2025.7.4" exclude="Build,Analyzers" />
+        <dependency id="VL.Audio" version="1.9.19" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- Entry point at package root (name = package id). Its PlatformDependency points at ./lib below. -->
+    <file src="VL.Interpole.vl" target="" />
+    <!-- Compiled nodes + XML tooltips, laid out exactly as referenced by the .vl. -->
+    <file src="lib\net8.0-windows7.0\VL.Interpole.dll" target="lib\net8.0-windows7.0" />
+    <file src="lib\net8.0-windows7.0\VL.Interpole.xml" target="lib\net8.0-windows7.0" />
+    <!-- README shown on nuget.org. -->
+    <file src="README.md" target="" />
+    <!-- <file src="icon.png" target="" /> -->
+  </files>
+</package>

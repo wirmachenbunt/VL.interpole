@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="IfYyARO69N7NNUXhhp2m18" LanguageVersion="2025.7.4" Version="0.128">
+  <NugetDependency Id="DDJDJC9FN1dLSHuE5grmzC" Location="VL.CoreLib" Version="2025.7.4" />
+  <Patch Id="PYyf6rAkx1qLnqUDsNfW6i">
+    <Canvas Id="EvCjuj0DvTmQc4jEzk3gxk" DefaultCategory="VL.Interpole" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="HtpUW3sU7KvLq3txHPkqwC">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="NCpYE8pBBqXPx9WM2Ieezj">
+        <Canvas Id="QxoDlUSPa5wN9wM84PgS7G" CanvasType="Group" />
+        <Patch Id="UG6xNYdLpamNcsD2CwD7qq" Name="Create" />
+        <Patch Id="FHI8IrmjZpTLU9vJ8tp3lW" Name="Update" />
+        <ProcessDefinition Id="LLHAT87fdooQYqO6uxIxQM">
+          <Fragment Id="Vka2AZ3KmLANaj27C5l6Sd" Patch="UG6xNYdLpamNcsD2CwD7qq" Enabled="true" />
+          <Fragment Id="AHMWmV8W3rYNLjLre8XqZR" Patch="FHI8IrmjZpTLU9vJ8tp3lW" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+  <PlatformDependency Id="Dl40H2dFqxWQdqcVQByGpP" Location="./VL.Interpole/bin/Release/net8.0-windows/VL.Interpole.dll" IsForward="true" />
+</Document>
