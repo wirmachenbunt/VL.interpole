@@ -13,8 +13,8 @@
     <authors>wirmachenbunt</authors>
     <owners></owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <!-- Drop icon.png (128x128) in this folder, then uncomment this and the <file> below. -->
-    <!-- <icon>icon.png</icon> -->
+    <license type="expression">MIT</license>
+    <icon>icon.png</icon>
     <readme>README.md</readme>
     <!-- TODO: point these at the real project page / repo before publishing. -->
     <projectUrl>https://discourse.vvvv.org/</projectUrl>
@@ -39,6 +39,8 @@
     <file src="lib\net8.0-windows7.0\VL.Interpole.xml" target="lib\net8.0-windows7.0" />
     <!-- README shown on nuget.org. -->
     <file src="README.md" target="" />
-    <!-- <file src="icon.png" target="" /> -->
+    <!-- Example / reference patch (depends on ./VL.Interpole.vl, not the .csproj). -->
+    <file src="help\Reference Interpole.vl" target="help" />
+    <file src="icon.png" target="" />
   </files>
 </package>
